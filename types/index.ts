@@ -1,4 +1,4 @@
-export type FileFormat = 'jar' | 'json' | 'lang' | 'xml';
+export type FileFormat = 'jar' | 'zip' | 'json' | 'lang' | 'snbt' | 'toml' | 'cfg' | 'xml' | 'txt';
 export type FileStatus = 'pending' | 'extracting' | 'translating' | 'packing' | 'done' | 'error';
 
 export interface LangEntry {

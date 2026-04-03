@@ -7,20 +7,8 @@ interface DropZoneProps {
   disabled?: boolean;
 }
 
-const ACCEPTED_EXTS = ['.jar', '.json', '.lang', '.xml'];
-const ACCEPTED_MIME = [
-  'application/java-archive',
-  'application/json',
-  'text/plain',
-  'application/xml',
-  'text/xml',
-];
+const ACCEPTED_EXTS = ['.jar', '.zip', '.json', '.lang', '.snbt', '.toml', '.cfg', '.xml', '.txt'];
 
-// ============================================================
-// BLOCK: DropZone Component
-// Supports drag-and-drop and click-to-select
-// Accepts .jar, .json, .lang, .xml
-// ============================================================
 export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -39,11 +27,6 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
     if (valid.length) onFilesAdded(valid);
   }, [disabled, onFilesAdded]);
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled) setIsDragging(true);
-  };
-
   return (
     <label
       className={`
@@ -56,7 +39,7 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         }
       `}
       onDrop={onDrop}
-      onDragOver={onDragOver}
+      onDragOver={e => { e.preventDefault(); if (!disabled) setIsDragging(true); }}
       onDragLeave={() => setIsDragging(false)}
     >
       <input
@@ -76,14 +59,13 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         {isDragging ? '▼' : '▲'}
       </div>
       <p className="text-green-400 text-xs tracking-widest pointer-events-none">
-        {isDragging ? 'ОТПУСТИТЕ ДЛЯ ЗАГРУЗКИ' : 'ПЕРЕТАЩИТЕ ФАЙЛЫ СЮДА'}
+        {isDragging ? 'ОТПУСТИТЕ ДЛЯ ЗАГРУЗКИ' : 'ПЕРЕТАЩИТЕ ФАЙЛЫ ИЛИ МОДПАК'}
       </p>
-      <p className="text-green-900 text-xs tracking-wider pointer-events-none">
-        {ACCEPTED_EXTS.join('  ')}
+      <p className="text-green-900 text-xs tracking-wider pointer-events-none text-center px-4">
+        .jar .zip .json .lang .snbt .toml .cfg .xml .txt
       </p>
 
-      {/* Corner marks */}
-      {['top-1 left-1', 'top-1 right-1', 'bottom-1 left-1', 'bottom-1 right-1'].map((pos, i) => (
+      {['top-1 left-1','top-1 right-1','bottom-1 left-1','bottom-1 right-1'].map((pos, i) => (
         <span key={i} className={`absolute ${pos} text-green-900 text-xs pointer-events-none`}>
           {['┌','┐','└','┘'][i]}
         </span>

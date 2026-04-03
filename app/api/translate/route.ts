@@ -1,83 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractLangFiles, translateLangFiles, repackJar } from '@/lib/jarProcessor';
-import { parseJsonLang, parseDotLang, rebuildJsonLang, rebuildDotLang } from '@/lib/langParsers';
+import { translateModpack } from '@/lib/modpackProcessor';
+import {
+  parseJsonLang, parseDotLang, parseSnbt, parseToml, parseCfg,
+  parseNestedJson, parseXml, parsePlainText,
+  rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml, rebuildCfg,
+  rebuildNestedJson, rebuildXml, rebuildPlainText,
+} from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
 
 // ============================================================
-// BLOCK: POST /api/translate
-// Handles JAR, JSON and .lang files
-// Returns translated file as base64
+// BLOCK: Route handler — dispatches by file format
 // ============================================================
 export async function POST(req: NextRequest) {
   try {
-    const { base64, fileName } = await req.json() as {
-      base64: string;
-      fileName: string;
-    };
-
+    const { base64, fileName } = await req.json() as { base64: string; fileName: string };
     const buffer = Buffer.from(base64, 'base64');
-    const ext = fileName.split('.').pop()?.toLowerCase();
+    const ext    = fileName.split('.').pop()?.toLowerCase();
 
-    // ── JAR path ──────────────────────────────────────────────
+    // ── ZIP modpack (full automatic translation) ───────────────
+    if (ext === 'zip') {
+      const resultBuffer = await translateModpack(buffer);
+      return NextResponse.json({
+        resultBase64: resultBuffer.toString('base64'),
+        translatedCount: -1, // counted inside
+        langFilesCount: -1,
+        outputFileName: fileName.replace('.zip', '_RU.zip'),
+      });
+    }
+
+    // ── JAR mod ────────────────────────────────────────────────
     if (ext === 'jar') {
-      const langFiles = await extractLangFiles(buffer);
-      if (langFiles.length === 0) {
-        return NextResponse.json({ error: 'Нет английских lang файлов в JAR' }, { status: 400 });
-      }
-
+      const langFiles    = await extractLangFiles(buffer);
+      if (!langFiles.length) throw new Error('Нет английских lang файлов в JAR');
       const translations = await translateLangFiles(langFiles);
       const resultBuffer = await repackJar(buffer, translations);
-
       const totalStrings = langFiles.reduce((s, f) => s + f.entries.length, 0);
       return NextResponse.json({
         resultBase64: resultBuffer.toString('base64'),
         translatedCount: totalStrings,
         langFilesCount: langFiles.length,
-        outputFileName: fileName, // same name, ru_ru.json added inside
+        outputFileName: fileName,
       });
     }
 
-    // ── Standalone JSON lang path ──────────────────────────────
-    if (ext === 'json') {
-      const content = buffer.toString('utf-8');
-      const entries = parseJsonLang(content);
-      const translated = await translateTexts(entries.map(e => e.value));
-      const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
-      const result = rebuildJsonLang(content, transMap);
+    // ── Standalone file handlers ───────────────────────────────
+    const content = buffer.toString('utf-8');
+    const { entries, rebuild, outName } = await getStandaloneHandler(ext!, content, fileName);
 
-      return NextResponse.json({
-        resultBase64: Buffer.from(result, 'utf-8').toString('base64'),
-        translatedCount: entries.length,
-        langFilesCount: 1,
-        outputFileName: fileName.replace(/en[_-]?us/i, 'ru_ru').replace(/en\./i, 'ru_ru.'),
-      });
-    }
+    if (!entries.length) throw new Error('Нет строк для перевода');
 
-    // ── Standalone .lang path ──────────────────────────────────
-    if (ext === 'lang') {
-      const content = buffer.toString('utf-8');
-      const entries = parseDotLang(content);
-      const translated = await translateTexts(entries.map(e => e.value));
-      const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
-      const result = rebuildDotLang(content, transMap);
+    const values     = entries.map(e => e.value);
+    const translated = await translateTexts(values);
+    const transMap   = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
+    const result     = rebuild(content, transMap);
 
-      return NextResponse.json({
-        resultBase64: Buffer.from(result, 'utf-8').toString('base64'),
-        translatedCount: entries.length,
-        langFilesCount: 1,
-        outputFileName: fileName.replace(/en[_-]?us/i, 'ru_ru').replace(/en\./i, 'ru_ru.'),
-      });
-    }
-
-    return NextResponse.json({ error: `Неподдерживаемый формат: .${ext}` }, { status: 400 });
+    return NextResponse.json({
+      resultBase64: Buffer.from(result, 'utf-8').toString('base64'),
+      translatedCount: entries.length,
+      langFilesCount: 1,
+      outputFileName: outName,
+    });
 
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
 
-// Allow large JAR uploads (up to 200 MB)
-export const config = {
-  api: { bodyParser: { sizeLimit: '200mb' } },
-};
+// ============================================================
+// BLOCK: Standalone file format router
+// ============================================================
+async function getStandaloneHandler(ext: string, content: string, fileName: string) {
+  const ruName = fileName
+    .replace(/en[_-]?(us|US)?\.json$/i, 'ru_ru.json')
+    .replace(/en[_-]?(us|US)?\.lang$/i, 'ru_ru.lang')
+    .replace(/en\.json$/i, 'ru_ru.json');
+
+  switch (ext) {
+    case 'json': {
+      // Try flat lang first, fall back to nested
+      let entries;
+      try { entries = parseJsonLang(content); } catch { entries = []; }
+      if (!entries.length) entries = parseNestedJson(content);
+      return {
+        entries,
+        rebuild: entries.length ? rebuildJsonLang : rebuildNestedJson,
+        outName: ruName,
+      };
+    }
+    case 'lang':  return { entries: parseDotLang(content),    rebuild: rebuildDotLang,    outName: ruName };
+    case 'snbt':  return { entries: parseSnbt(content),       rebuild: rebuildSnbt,       outName: fileName };
+    case 'toml':  return { entries: parseToml(content),       rebuild: rebuildToml,       outName: fileName };
+    case 'cfg':   return { entries: parseCfg(content),        rebuild: rebuildCfg,        outName: fileName };
+    case 'xml':   return { entries: parseXml(content),        rebuild: rebuildXml,        outName: fileName };
+    case 'txt':   return { entries: parsePlainText(content),  rebuild: rebuildPlainText,  outName: fileName };
+    default:      return { entries: [],                       rebuild: () => content,     outName: fileName };
+  }
+}
