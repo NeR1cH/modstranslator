@@ -7,6 +7,8 @@ import TerminalLog from '@/components/TerminalLog';
 import ProgressBar from '@/components/ProgressBar';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
 
+const MAX_LOG_ENTRIES = 500;
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,11 +45,17 @@ export default function Home() {
   const [results,    setResults]    = useState<Array<{ outputFileName: string; resultBase64: string }>>([]);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
-    setLogs(prev => [...prev, {
-      id: `${Date.now()}-${Math.random()}`,
-      timestamp: new Date().toLocaleTimeString('ru-RU', { hour12: false }),
-      message, type,
-    }]);
+    setLogs(prev => {
+      const entry: LogEntry = {
+        id: `${Date.now()}-${Math.random()}`,
+        timestamp: new Date().toLocaleTimeString('ru-RU', { hour12: false }),
+        message, type,
+      };
+      const next = [...prev, entry];
+      return next.length > MAX_LOG_ENTRIES
+        ? next.slice(next.length - MAX_LOG_ENTRIES)
+        : next;
+    });
   }, []);
 
   // ── File loading ────────────────────────────────────────────

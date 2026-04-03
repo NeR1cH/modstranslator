@@ -211,14 +211,17 @@ export function parseXml(content: string): LangEntry[] {
 }
 
 export function rebuildXml(original: string, translations: Map<string, string>): string {
-  let i = 0;
+  // Reuse parseXml to get the exact same keys as the parse phase,
+  // then build a value→key lookup so replace doesn't need its own counter.
+  const entries = parseXml(original);
+  const keyByValue = new Map(entries.map(e => [e.value, e.key]));
+
   return original.replace(/>([^<]+)</g, (full, content) => {
     const value = content.trim();
-    if (hasTranslatableText(value)) {
-      const key = `xml_${i++}`;
-      return `>${translations.get(key) ?? value}<`;
+    const key = keyByValue.get(value);
+    if (key && translations.has(key)) {
+      return `>${translations.get(key)}<`;
     }
-    i++;
     return full;
   });
 }

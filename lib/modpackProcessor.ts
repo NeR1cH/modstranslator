@@ -74,6 +74,30 @@ function getStrategy(path: string): string | null {
 }
 
 // ============================================================
+// BLOCK: Shared entry extraction (single source of truth)
+// ============================================================
+
+/** Parse file content into LangEntry[] based on strategy. Returns [] on error. */
+function extractEntries(path: string, content: string, strategy: string): LangEntry[] {
+  try {
+    switch (strategy) {
+      case 'lang_json_or_lang':
+        return path.endsWith('.json') ? parseJsonLang(content) : parseDotLang(content);
+      case 'lang_json':    return parseJsonLang(content);
+      case 'snbt':         return parseSnbt(content);
+      case 'toml':         return parseToml(content);
+      case 'cfg':          return parseCfg(content);
+      case 'nested_json':  return parseNestedJson(content);
+      case 'xml':          return parseXml(content);
+      case 'txt':          return parsePlainText(content);
+      default:             return [];
+    }
+  } catch {
+    return [];
+  }
+}
+
+// ============================================================
 // BLOCK: Single file translation
 // ============================================================
 export interface TranslatedFile {
@@ -87,28 +111,7 @@ async function translateSingleFile(
   content: string,
   strategy: string
 ): Promise<TranslatedFile | null> {
-  let entries: LangEntry[] = [];
-
-  try {
-    switch (strategy) {
-      case 'lang_json_or_lang':
-        entries = path.endsWith('.json')
-          ? parseJsonLang(content)
-          : parseDotLang(content);
-        break;
-      case 'lang_json':    entries = parseJsonLang(content);   break;
-      case 'snbt':         entries = parseSnbt(content);       break;
-      case 'toml':         entries = parseToml(content);       break;
-      case 'cfg':          entries = parseCfg(content);        break;
-      case 'nested_json':  entries = parseNestedJson(content); break;
-      case 'xml':          entries = parseXml(content);        break;
-      case 'txt':          entries = parsePlainText(content);  break;
-      default: return null;
-    }
-  } catch {
-    return null;
-  }
-
+  const entries = extractEntries(path, content, strategy);
   if (entries.length === 0) return null;
 
   const values     = entries.map(e => e.value);
@@ -170,19 +173,7 @@ export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
 
     try {
       const content = await file.async('string');
-      let entries: LangEntry[] = [];
-
-      switch (strategy) {
-        case 'lang_json_or_lang':
-        case 'lang_json':
-          entries = path.endsWith('.json') ? parseJsonLang(content) : parseDotLang(content); break;
-        case 'snbt':        entries = parseSnbt(content);       break;
-        case 'toml':        entries = parseToml(content);       break;
-        case 'cfg':         entries = parseCfg(content);        break;
-        case 'nested_json': entries = parseNestedJson(content); break;
-        case 'xml':         entries = parseXml(content);        break;
-        case 'txt':         entries = parsePlainText(content);  break;
-      }
+      const entries = extractEntries(path, content, strategy);
 
       if (entries.length > 0) {
         translatableFiles++;

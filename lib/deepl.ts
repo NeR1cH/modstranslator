@@ -4,6 +4,7 @@
 // NEVER import this file from client components
 // ============================================================
 
+
 const DEEPL_FREE_URL  = 'https://api-free.deepl.com/v2/translate';
 const DEEPL_PRO_URL   = 'https://api.deepl.com/v2/translate';
 const BATCH_SIZE      = 50;   // DeepL max texts per request
