@@ -8,6 +8,7 @@ import {
   rebuildNestedJson, rebuildXml, rebuildPlainText,
 } from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
+import { LangEntry } from '@/types';
 
 // ============================================================
 // BLOCK: Route handler — dispatches by file format
@@ -79,7 +80,7 @@ async function getStandaloneHandler(ext: string, content: string, fileName: stri
   switch (ext) {
     case 'json': {
       // Try flat lang first, fall back to nested
-      let entries;
+      let entries: LangEntry[];
       try { entries = parseJsonLang(content); } catch { entries = []; }
       if (!entries.length) entries = parseNestedJson(content);
       return {

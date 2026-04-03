@@ -89,7 +89,7 @@ export async function repackJar(
 ): Promise<Buffer> {
   const zip = await JSZip.loadAsync(originalJarBuffer);
 
-  for (const [originalPath, translatedContent] of translations.entries()) {
+  for (const [originalPath, translatedContent] of Array.from(translations.entries())) {
     // Generate Russian locale path: en_us.json → ru_ru.json
     const ruPath = originalPath
       .replace(/en[_-]?(us|US)?\.json$/i, 'ru_ru.json')
