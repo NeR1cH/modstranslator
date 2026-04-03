@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   BLOCK: CSS Variables
+   ============================================================ */
+:root {
+  --c-green:      #00FF00;
+  --c-green-dim:  #00cc00;
+  --c-green-dark: #003300;
+  --c-green-deep: #001a00;
+  --c-amber:      #ffb000;
+  --c-red:        #ff3333;
+  --c-cyan:       #00ffff;
+  --c-black:      #000000;
+  --scanlines:    0.07;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--c-black);
+  color: var(--c-green);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   BLOCK: CRT Scanlines overlay
+   ============================================================ */
+.crt-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,var(--scanlines)) 2px,
+    rgba(0,0,0,var(--scanlines)) 4px
+  );
+  animation: screen-flicker 8s infinite;
+  pointer-events: none;
+}
+
+@keyframes screen-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.94; }
+}
+
+/* ============================================================
+   BLOCK: Glitch text effect for header
+   ============================================================ */
+.glitch {
+  position: relative;
+  text-shadow: 0 0 12px rgba(0,255,0,0.6);
+  animation: text-glow 4s ease-in-out infinite alternate;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+}
+
+.glitch::before {
+  color: #ff0040;
+  animation: glitch-a 5s infinite linear;
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 0 30%);
+  transform: translateX(-2px);
+}
+
+.glitch::after {
+  color: #0040ff;
+  animation: glitch-b 5s infinite linear;
+  clip-path: polygon(0 70%, 100% 70%, 100% 100%, 0 100%);
+  transform: translateX(2px);
+}
+
+@keyframes glitch-a {
+  0%, 88%, 100% { opacity: 0; transform: translateX(0); }
+  90% { opacity: 0.6; transform: translateX(-3px); }
+  92% { opacity: 0; transform: translateX(3px); }
+}
+
+@keyframes glitch-b {
+  0%, 82%, 100% { opacity: 0; transform: translateX(0); }
+  84% { opacity: 0.6; transform: translateX(3px); }
+  86% { opacity: 0; transform: translateX(-3px); }
+}
+
+@keyframes text-glow {
+  from { text-shadow: 0 0 8px rgba(0,255,0,0.4); }
+  to   { text-shadow: 0 0 20px rgba(0,255,0,0.8), 0 0 40px rgba(0,255,0,0.3); }
+}
+
+/* ============================================================
+   BLOCK: Section label style
+   ============================================================ */
+.section-label {
+  font-size: 0.6rem;
+  color: #005500;
+  letter-spacing: 0.25em;
+  margin-bottom: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #003300;
+}
+
+/* ============================================================
+   BLOCK: Blinking cursor
+   ============================================================ */
+.cursor::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ============================================================
+   BLOCK: Scrollbar
+   ============================================================ */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #003300; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #00cc00; }
+
+/* ============================================================
+   BLOCK: Boot-up animation
+   ============================================================ */
+@keyframes boot-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.boot-in {
+  animation: boot-in 0.3s ease-out both;
+}
