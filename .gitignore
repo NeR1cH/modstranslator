@@ -1,5 +1,89 @@
-.next/
+```
+# Dependencies
 node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+
+# Environment variables
 .env
 .env.local
-*.jar
+.env.*
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+
+# Next.js
+.next/
+out/
+
+# Compiled JavaScript
+*.min.js
+*.bundle.js
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+.settings/
+.project
+.classpath
+*.launch
+nbproject/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+```
