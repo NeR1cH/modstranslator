@@ -1,89 +1,55 @@
 ```
+# TypeScript build info
+tsconfig.tsbuildinfo
+
 # Dependencies
 node_modules/
 
-# Build outputs
-.next/
-dist/
-build/
-out/
+# Logs and temp files
+*.log
+*.tmp
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# Logs
-*.log
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Editor files
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
 
-# Next.js
-.next/
-out/
+# Build directories
+dist/
+build/
+target/
 
-# Compiled JavaScript
-*.min.js
-*.bundle.js
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.backup
-*.swp
-*.swo
-
-# IDE
-.vscode/
-.idea/
-.settings/
-.project
-.classpath
-*.launch
-nbproject/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Compression files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
