@@ -252,7 +252,7 @@ export default function Home() {
 
       <footer className="mt-8 border-t border-green-950 pt-3 flex flex-wrap justify-between text-xs text-green-900">
         <span>МОДЫ • МОДПАКИ • КВЕСТЫ • ДИАЛОГИ • HUD • КАТСЦЕНЫ • КОНФИГИ</span>
-        <span>DEEPL API // EN→RU // MAX 200MB</span>
+        <span>DEEPL API // EN→RU // MAX 1000MB</span>
       </footer>
     </main>
   );
