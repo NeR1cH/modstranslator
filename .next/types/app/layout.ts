@@ -1,4 +1,4 @@
-// File: /workspace/app/layout.tsx
+// File: C:\VSCODE PROJECTS\modstranslator\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
