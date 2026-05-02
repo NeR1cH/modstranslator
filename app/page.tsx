@@ -44,6 +44,8 @@ export default function Home() {
   const [progress,   setProgress]   = useState(0);
   const [currentFile,setCurrentFile]= useState('');
   const [results,    setResults]    = useState<Array<{ outputFileName: string; resultBase64: string }>>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
     setLogs(prev => {
@@ -61,9 +63,16 @@ export default function Home() {
 
   // ── File loading ────────────────────────────────────────────
   const handleFilesAdded = useCallback(async (newFiles: File[]) => {
+    setIsUploading(true);
+
     for (const file of newFiles) {
+      setUploadProgress(`Обработка: ${file.name}`);
+
       const format = detectFormat(file.name);
-      if (!format) { addLog(`> ПРОПУСК: ${file.name}`, 'warning'); continue; }
+      if (!format) {
+        addLog(`> ПРОПУСК: ${file.name} - неподдерживаемый формат`, 'warning');
+        continue;
+      }
 
       // Validate file size (1000 MB max)
       const MAX_SIZE = 1000 * 1024 * 1024;
@@ -73,18 +82,25 @@ export default function Home() {
       }
 
       const id = `${Date.now()}-${Math.random()}`;
+
+      addLog(`════════════════════════════════════`, 'system');
+      addLog(`> 📁 НОВЫЙ ФАЙЛ: ${file.name}`, 'system');
+      addLog(`> 📊 РАЗМЕР: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
+
       setFiles(prev => [...prev, {
         id, name: file.name, size: file.size, format,
         status: 'extracting', stringsCount: 0, originalBase64: '',
       }]);
 
       const typeLabel = FORMAT_LABELS[format] ?? format.toUpperCase();
-      addLog(`> ЗАГРУЗКА [${typeLabel}]: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'system');
-      addLog(`> АНАЛИЗ: чтение файла...`, 'info');
+      setUploadProgress(`Чтение файла: ${file.name}`);
 
       try {
+        addLog(`> 🔄 ШАГ 1/3: Конвертация в base64...`, 'info');
         const base64 = await fileToBase64(file);
-        addLog(`> АНАЛИЗ: отправка на сервер...`, 'info');
+
+        addLog(`> 🔄 ШАГ 2/3: Отправка на сервер...`, 'info');
+        setUploadProgress(`Анализ на сервере: ${file.name}`);
 
         const res    = await fetch('/api/analyze', {
           method: 'POST',
@@ -97,6 +113,7 @@ export default function Home() {
           throw new Error(errData.error || 'Ошибка анализа файла');
         }
 
+        addLog(`> 🔄 ШАГ 3/3: Обработка результата...`, 'info');
         const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
 
         setFiles(prev => prev.map(f => f.id !== id ? f : {
@@ -107,12 +124,17 @@ export default function Home() {
         const detail = format === 'zip' || format === 'jar'
           ? `[${stats.langFilesCount} файлов, ${stats.stringsCount} строк]`
           : `[${stats.stringsCount} строк]`;
-        addLog(`> ✓ ГОТОВ К ПЕРЕВОДУ: ${file.name} ${detail}`, 'success');
+        addLog(`> ✅ УСПЕШНО ЗАГРУЖЕН: ${file.name} ${detail}`, 'success');
+        addLog(`════════════════════════════════════`, 'system');
       } catch (err) {
         setFiles(prev => prev.map(f => f.id !== id ? f : { ...f, status: 'error', errorMessage: String(err) }));
-        addLog(`> ✕ ОШИБКА АНАЛИЗА: ${file.name} — ${err}`, 'error');
+        addLog(`> ❌ ОШИБКА: ${file.name} — ${err}`, 'error');
+        addLog(`════════════════════════════════════`, 'system');
       }
     }
+
+    setIsUploading(false);
+    setUploadProgress('');
   }, [addLog]);
 
   // ── Translation run ─────────────────────────────────────────
@@ -229,7 +251,24 @@ export default function Home() {
         <div className="space-y-5">
           <div>
             <div className="section-label">// 01. ЗАГРУЗКА — МОДЫ, МОДПАКИ, КВЕСТЫ, КОНФИГИ</div>
-            <DropZone onFilesAdded={handleFilesAdded} disabled={isRunning} />
+            <DropZone onFilesAdded={handleFilesAdded} disabled={isRunning || isUploading} />
+
+            {/* Upload progress indicator */}
+            {isUploading && (
+              <div className="mt-3 border-2 border-yellow-500 bg-yellow-900/20 p-3 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <span className="text-yellow-400 text-xl animate-spin">◐</span>
+                  <div className="flex-1">
+                    <div className="text-yellow-400 font-bold text-sm tracking-wider">
+                      ⏳ ЗАГРУЗКА И АНАЛИЗ...
+                    </div>
+                    <div className="text-yellow-600 text-xs mt-1">
+                      {uploadProgress || 'Обработка файла...'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -241,7 +280,7 @@ export default function Home() {
             <div className="section-label">// 03. УПРАВЛЕНИЕ</div>
             <button
               onClick={handleTranslate}
-              disabled={isRunning || pendingCount === 0}
+              disabled={isRunning || pendingCount === 0 || isUploading}
               className="w-full py-3 border-2 border-green-500 text-green-400 font-bold tracking-widest uppercase text-sm
                          hover:bg-green-500 hover:text-black transition-colors duration-100
                          disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98]"
