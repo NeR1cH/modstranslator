@@ -111,14 +111,29 @@ async function translateSingleFile(
   content: string,
   strategy: string
 ): Promise<TranslatedFile | null> {
-  const entries = extractEntries(path, content, strategy);
-  if (entries.length === 0) return null;
+  console.log('[modpackProcessor] translateSingleFile:', path);
+  console.log('[modpackProcessor]   Strategy:', strategy);
 
-  const values     = entries.map(e => e.value);
+  const entries = extractEntries(path, content, strategy);
+  console.log('[modpackProcessor]   Entries extracted:', entries.length);
+
+  if (entries.length === 0) {
+    console.log('[modpackProcessor]   No entries, returning null');
+    return null;
+  }
+
+  const values = entries.map(e => e.value);
+  console.log('[modpackProcessor]   Calling translateTexts for', values.length, 'values');
+
   const translated = await translateTexts(values);
-  const transMap   = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
+  console.log('[modpackProcessor]   Translation complete, received:', translated.length);
+
+  const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
+  console.log('[modpackProcessor]   Translation map size:', transMap.size);
 
   let newContent = content;
+  console.log('[modpackProcessor]   Rebuilding content...');
+
   switch (strategy) {
     case 'lang_json_or_lang':
     case 'lang_json':
@@ -133,6 +148,8 @@ async function translateSingleFile(
     case 'xml':         newContent = rebuildXml(content, transMap);        break;
     case 'txt':         newContent = rebuildPlainText(content, transMap);  break;
   }
+
+  console.log('[modpackProcessor]   New content length:', newContent.length, 'chars');
 
   return { path, content: newContent, stringsCount: entries.length };
 }
@@ -160,16 +177,27 @@ export interface ModpackStats {
 }
 
 export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
+  console.log('\n[modpackProcessor] analyzeModpack called');
+  console.log('[modpackProcessor] ZIP buffer size:', zipBuffer.length, 'bytes');
+
   const zip = await JSZip.loadAsync(zipBuffer);
+  console.log('[modpackProcessor] ZIP loaded');
+
   let translatableFiles = 0;
   let totalStrings = 0;
   let totalFiles = 0;
 
-  for (const [path, file] of Object.entries(zip.files)) {
+  const allFiles = Object.entries(zip.files);
+  console.log('[modpackProcessor] Total entries in ZIP:', allFiles.length);
+
+  for (const [path, file] of allFiles) {
     if (file.dir) continue;
     totalFiles++;
+
     const strategy = getStrategy(path);
     if (!strategy) continue;
+
+    console.log('[modpackProcessor] Analyzing:', path, '| strategy:', strategy);
 
     try {
       const content = await file.async('string');
@@ -178,52 +206,86 @@ export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
       if (entries.length > 0) {
         translatableFiles++;
         totalStrings += entries.length;
+        console.log('[modpackProcessor]   → Found', entries.length, 'translatable strings');
       }
-    } catch { /* skip malformed files */ }
+    } catch (err) {
+      console.error('[modpackProcessor]   → Error analyzing:', err);
+      /* skip malformed files */
+    }
   }
 
-  return { totalFiles, translatableFiles, totalStrings };
+  const result = { totalFiles, translatableFiles, totalStrings };
+  console.log('[modpackProcessor] Analysis complete:', result);
+  return result;
 }
 
 export async function translateModpack(
   zipBuffer: Buffer,
   onProgress?: (done: number, total: number, currentFile: string) => void
 ): Promise<Buffer> {
+  console.log('\n[modpackProcessor] translateModpack called');
+  console.log('[modpackProcessor] ZIP buffer size:', zipBuffer.length, 'bytes');
+
   const zip    = await JSZip.loadAsync(zipBuffer);
   const result = await JSZip.loadAsync(zipBuffer); // start with copy of original
+  console.log('[modpackProcessor] ZIP loaded, creating result copy');
 
   const entries = Object.entries(zip.files).filter(([, f]) => !f.dir);
+  console.log('[modpackProcessor] Total files to process:', entries.length);
+
   let done = 0;
 
   for (const [path, file] of entries) {
     const strategy = getStrategy(path);
-    if (!strategy) { done++; continue; }
+    if (!strategy) {
+      done++;
+      continue;
+    }
+
+    console.log(`[modpackProcessor] [${done + 1}/${entries.length}] Processing:`, path);
+    console.log('[modpackProcessor]   Strategy:', strategy);
 
     onProgress?.(done, entries.length, path);
 
     try {
-      const content    = await file.async('string');
+      const content = await file.async('string');
+      console.log('[modpackProcessor]   Content length:', content.length, 'chars');
+
       const translated = await translateSingleFile(path, content, strategy);
 
       if (translated) {
+        console.log('[modpackProcessor]   Translated:', translated.stringsCount, 'strings');
         const ruPath = getRuPath(path);
+        console.log('[modpackProcessor]   Output path:', ruPath);
+
         if (ruPath !== path) {
           // For lang files: add ru_ru version, keep original
           result.file(ruPath, translated.content);
+          console.log('[modpackProcessor]   Added as new file (lang)');
         } else {
           // For quests/configs: overwrite in place
           result.file(path, translated.content);
+          console.log('[modpackProcessor]   Overwritten in place');
         }
+      } else {
+        console.log('[modpackProcessor]   No translation needed');
       }
-    } catch { /* skip on error */ }
+    } catch (err) {
+      console.error('[modpackProcessor]   Error:', err);
+      /* skip on error */
+    }
 
     done++;
     onProgress?.(done, entries.length, path);
   }
 
-  return result.generateAsync({
+  console.log('[modpackProcessor] Generating result ZIP...');
+  const resultBuffer = await result.generateAsync({
     type: 'nodebuffer',
     compression: 'DEFLATE',
     compressionOptions: { level: 6 },
   });
+
+  console.log('[modpackProcessor] Result ZIP size:', resultBuffer.length, 'bytes');
+  return resultBuffer;
 }

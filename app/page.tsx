@@ -11,18 +11,30 @@ import { TranslationFile, LogEntry, FileFormat } from '@/types';
 const MAX_LOG_ENTRIES = 500;
 
 function fileToBase64(file: File): Promise<string> {
+  console.log('fileToBase64 called for:', file.name);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = reject;
+    reader.onload = () => {
+      const result = (reader.result as string).split(',')[1];
+      console.log('fileToBase64 success, length:', result.length);
+      resolve(result);
+    };
+    reader.onerror = (error) => {
+      console.error('fileToBase64 error:', error);
+      reject(error);
+    };
     reader.readAsDataURL(file);
   });
 }
 
 function detectFormat(name: string): FileFormat | null {
+  console.log('detectFormat called for:', name);
   const ext = name.split('.').pop()?.toLowerCase();
+  console.log('extracted extension:', ext);
   const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt'];
-  return valid.includes(ext as FileFormat) ? ext as FileFormat : null;
+  const result = valid.includes(ext as FileFormat) ? ext as FileFormat : null;
+  console.log('detectFormat result:', result);
+  return result;
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -46,6 +58,7 @@ export default function Home() {
   const [results,    setResults]    = useState<Array<{ outputFileName: string; resultBase64: string }>>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [uploadPercent, setUploadPercent] = useState(0);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
     setLogs(prev => {
@@ -63,62 +76,103 @@ export default function Home() {
 
   // ── File loading ────────────────────────────────────────────
   const handleFilesAdded = useCallback(async (newFiles: File[]) => {
-    setIsUploading(true);
+    console.log('=== handleFilesAdded START ===');
+    console.log('newFiles:', newFiles);
+    console.log('newFiles.length:', newFiles.length);
 
-    for (const file of newFiles) {
-      setUploadProgress(`Обработка: ${file.name}`);
+    setIsUploading(true);
+    setUploadPercent(0);
+
+    for (let idx = 0; idx < newFiles.length; idx++) {
+      const file = newFiles[idx];
+      const fileNum = idx + 1;
+      const totalFiles = newFiles.length;
+
+      console.log(`\n--- Processing file ${fileNum}/${totalFiles} ---`);
+      console.log('file.name:', file.name);
+      console.log('file.size:', file.size);
+      console.log('file.type:', file.type);
+
+      setUploadProgress(`[${fileNum}/${totalFiles}] ${file.name}`);
 
       const format = detectFormat(file.name);
+      console.log('detected format:', format);
+
       if (!format) {
+        console.warn('SKIP: unsupported format');
         addLog(`> ПРОПУСК: ${file.name} - неподдерживаемый формат`, 'warning');
+        setUploadPercent(Math.round((fileNum / totalFiles) * 100));
         continue;
       }
 
       // Validate file size (1000 MB max)
       const MAX_SIZE = 1000 * 1024 * 1024;
       if (file.size > MAX_SIZE) {
+        console.error('ERROR: file too large');
         addLog(`> ОШИБКА: ${file.name} слишком большой (${(file.size / 1024 / 1024).toFixed(0)} MB). Максимум: 1000 MB`, 'error');
+        setUploadPercent(Math.round((fileNum / totalFiles) * 100));
         continue;
       }
 
       const id = `${Date.now()}-${Math.random()}`;
+      console.log('generated id:', id);
 
       addLog(`════════════════════════════════════`, 'system');
       addLog(`> 📁 НОВЫЙ ФАЙЛ: ${file.name}`, 'system');
       addLog(`> 📊 РАЗМЕР: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
 
-      setFiles(prev => [...prev, {
-        id, name: file.name, size: file.size, format,
-        status: 'extracting', stringsCount: 0, originalBase64: '',
-      }]);
+      setFiles(prev => {
+        const newFile = {
+          id, name: file.name, size: file.size, format,
+          status: 'extracting' as const, stringsCount: 0, originalBase64: '',
+        };
+        console.log('adding file to queue:', newFile);
+        return [...prev, newFile];
+      });
 
       const typeLabel = FORMAT_LABELS[format] ?? format.toUpperCase();
-      setUploadProgress(`Чтение файла: ${file.name}`);
 
       try {
+        console.log('STEP 1: Converting to base64...');
         addLog(`> 🔄 ШАГ 1/3: Конвертация в base64...`, 'info');
         const base64 = await fileToBase64(file);
+        console.log('base64 length:', base64.length);
 
+        console.log('STEP 2: Sending to server...');
         addLog(`> 🔄 ШАГ 2/3: Отправка на сервер...`, 'info');
-        setUploadProgress(`Анализ на сервере: ${file.name}`);
 
-        const res    = await fetch('/api/analyze', {
+        const requestBody = { base64, fileName: file.name };
+        console.log('request body keys:', Object.keys(requestBody));
+        console.log('fileName:', requestBody.fileName);
+
+        const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64, fileName: file.name }),
+          body: JSON.stringify(requestBody),
         });
+
+        console.log('response status:', res.status);
+        console.log('response ok:', res.ok);
 
         if (!res.ok) {
           const errData = await res.json() as { error: string };
+          console.error('API error:', errData);
           throw new Error(errData.error || 'Ошибка анализа файла');
         }
 
+        console.log('STEP 3: Processing result...');
         addLog(`> 🔄 ШАГ 3/3: Обработка результата...`, 'info');
         const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
+        console.log('stats received:', stats);
 
-        setFiles(prev => prev.map(f => f.id !== id ? f : {
-          ...f, status: 'pending', stringsCount: stats.stringsCount,
-          langFilesCount: stats.langFilesCount, originalBase64: base64,
+        setFiles(prev => prev.map(f => {
+          if (f.id !== id) return f;
+          const updated = {
+            ...f, status: 'pending' as const, stringsCount: stats.stringsCount,
+            langFilesCount: stats.langFilesCount, originalBase64: base64,
+          };
+          console.log('updating file status:', updated);
+          return updated;
         }));
 
         const detail = format === 'zip' || format === 'jar'
@@ -126,21 +180,38 @@ export default function Home() {
           : `[${stats.stringsCount} строк]`;
         addLog(`> ✅ УСПЕШНО ЗАГРУЖЕН: ${file.name} ${detail}`, 'success');
         addLog(`════════════════════════════════════`, 'system');
+        console.log('SUCCESS:', file.name);
       } catch (err) {
+        console.error('ERROR processing file:', err);
+        console.error('error stack:', err instanceof Error ? err.stack : 'no stack');
         setFiles(prev => prev.map(f => f.id !== id ? f : { ...f, status: 'error', errorMessage: String(err) }));
         addLog(`> ❌ ОШИБКА: ${file.name} — ${err}`, 'error');
         addLog(`════════════════════════════════════`, 'system');
       }
+
+      const percent = Math.round((fileNum / totalFiles) * 100);
+      console.log('upload percent:', percent);
+      setUploadPercent(percent);
     }
 
+    console.log('=== handleFilesAdded END ===');
     setIsUploading(false);
     setUploadProgress('');
+    setUploadPercent(0);
   }, [addLog]);
 
   // ── Translation run ─────────────────────────────────────────
   const handleTranslate = useCallback(async () => {
+    console.log('=== handleTranslate START ===');
     const pending = files.filter(f => f.status === 'pending');
-    if (!pending.length) { addLog('> ОЧЕРЕДЬ ПУСТА', 'warning'); return; }
+    console.log('pending files:', pending);
+    console.log('pending count:', pending.length);
+
+    if (!pending.length) {
+      console.warn('No pending files');
+      addLog('> ОЧЕРЕДЬ ПУСТА', 'warning');
+      return;
+    }
 
     setIsRunning(true);
     setProgress(0);
@@ -152,24 +223,35 @@ export default function Home() {
 
     for (let i = 0; i < pending.length; i++) {
       const file = pending[i];
+      console.log(`\n--- Translating file ${i+1}/${pending.length} ---`);
+      console.log('file:', file);
+
       const typeLabel = FORMAT_LABELS[file.format] ?? file.format.toUpperCase();
       setCurrentFile(file.name);
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'translating' } : f));
       addLog(`> [${i+1}/${pending.length}] [${typeLabel}] ${file.name}`, 'info');
 
       if (file.format === 'zip') {
+        console.log('MODPACK detected');
         addLog(`> МОДПАК: сканирование всех файлов...`, 'system');
       }
 
       try {
+        console.log('Sending translate request...');
+        console.log('base64 length:', file.originalBase64?.length || 0);
+
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64: file.originalBase64, fileName: file.name }),
         });
 
+        console.log('translate response status:', res.status);
+        console.log('translate response ok:', res.ok);
+
         if (!res.ok) {
           const err = await res.json() as { error: string };
+          console.error('translate API error:', err);
           throw new Error(err.error);
         }
 
@@ -177,20 +259,33 @@ export default function Home() {
           resultBase64: string; translatedCount: number;
           langFilesCount: number; outputFileName: string;
         };
+        console.log('translate result:', {
+          outputFileName: data.outputFileName,
+          translatedCount: data.translatedCount,
+          langFilesCount: data.langFilesCount,
+          resultBase64Length: data.resultBase64?.length || 0
+        });
 
         newResults.push({ outputFileName: data.outputFileName, resultBase64: data.resultBase64 });
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done' } : f));
 
         const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
         addLog(`> ГОТОВО: ${file.name} ${countMsg}`, 'success');
+        console.log('SUCCESS:', file.name);
       } catch (err) {
+        console.error('ERROR translating file:', err);
+        console.error('error stack:', err instanceof Error ? err.stack : 'no stack');
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'error', errorMessage: String(err) } : f));
         addLog(`> СБОЙ: ${file.name} — ${err}`, 'error');
       }
 
-      setProgress(Math.round(((i + 1) / pending.length) * 100));
+      const progressPercent = Math.round(((i + 1) / pending.length) * 100);
+      console.log('progress:', progressPercent);
+      setProgress(progressPercent);
     }
 
+    console.log('=== handleTranslate END ===');
+    console.log('newResults:', newResults);
     setResults(newResults);
     if (newResults.length > 0) addLog('> ГОТОВО. Нажмите [СКАЧАТЬ АРХИВ]', 'system');
     setIsRunning(false);
@@ -200,19 +295,45 @@ export default function Home() {
 
   // ── Export ──────────────────────────────────────────────────
   const handleExport = useCallback(async () => {
-    if (!results.length) return;
+    console.log('=== handleExport START ===');
+    console.log('results:', results);
+    console.log('results.length:', results.length);
+
+    if (!results.length) {
+      console.warn('No results to export');
+      return;
+    }
+
     addLog('> СОЗДАНИЕ АРХИВА...', 'system');
-    const res  = await fetch('/api/export', {
+    console.log('Sending export request...');
+
+    const res = await fetch('/api/export', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ files: results }),
     });
+
+    console.log('export response status:', res.status);
+    console.log('export response ok:', res.ok);
+
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'translated_mods.zip'; a.click();
+    console.log('blob size:', blob.size);
+    console.log('blob type:', blob.type);
+
+    const url = URL.createObjectURL(blob);
+    console.log('blob URL created:', url);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'translated_mods.zip';
+    a.click();
+    console.log('download triggered');
+
     URL.revokeObjectURL(url);
+    console.log('blob URL revoked');
+
     addLog('> АРХИВ СКАЧАН', 'success');
+    console.log('=== handleExport END ===');
   }, [results, addLog]);
 
   const pendingCount = files.filter(f => f.status === 'pending').length;
@@ -255,17 +376,20 @@ export default function Home() {
 
             {/* Upload progress indicator */}
             {isUploading && (
-              <div className="mt-3 border-2 border-yellow-500 bg-yellow-900/20 p-3 animate-pulse">
-                <div className="flex items-center gap-3">
-                  <span className="text-yellow-400 text-xl animate-spin">◐</span>
-                  <div className="flex-1">
-                    <div className="text-yellow-400 font-bold text-sm tracking-wider">
-                      ⏳ ЗАГРУЗКА И АНАЛИЗ...
-                    </div>
-                    <div className="text-yellow-600 text-xs mt-1">
-                      {uploadProgress || 'Обработка файла...'}
+              <div className="mt-3 space-y-2">
+                <div className="border-2 border-yellow-500 bg-yellow-900/20 p-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-yellow-400 text-xl animate-spin">◐</span>
+                    <div className="flex-1">
+                      <div className="text-yellow-400 font-bold text-sm tracking-wider">
+                        ⏳ ЗАГРУЗКА И АНАЛИЗ...
+                      </div>
+                      <div className="text-yellow-600 text-xs mt-1">
+                        {uploadProgress || 'Обработка файла...'}
+                      </div>
                     </div>
                   </div>
+                  <ProgressBar value={uploadPercent} />
                 </div>
               </div>
             )}
@@ -302,7 +426,7 @@ export default function Home() {
           {(isRunning || progress > 0) && (
             <div>
               <div className="section-label">// 04. ПРОГРЕСС</div>
-              <ProgressBar value={progress} />
+              <ProgressBar value={progress} label="TRANSLATION" />
             </div>
           )}
         </div>

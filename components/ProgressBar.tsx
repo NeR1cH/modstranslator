@@ -4,7 +4,7 @@
 // BLOCK: ProgressBar Component
 // Retro segmented progress bar, 40 cells
 // ============================================================
-export default function ProgressBar({ value }: { value: number }) {
+export default function ProgressBar({ value, label }: { value: number; label?: string }) {
   const CELLS = 40;
   const filled = Math.round((value / 100) * CELLS);
 
@@ -27,7 +27,7 @@ export default function ProgressBar({ value }: { value: number }) {
 
       {/* Labels */}
       <div className="flex justify-between text-xs">
-        <span className="text-green-800 tracking-widest">LOADING</span>
+        <span className="text-green-800 tracking-widest">{label || 'LOADING'}</span>
         <span className={`font-bold tracking-widest ${value === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
           {String(value).padStart(3, '0')}%
           {value === 100 && '  [COMPLETE]'}

@@ -16,7 +16,9 @@ const RETRY_DELAY_MS  = 1000;
 // Free keys end with :fx
 // ============================================================
 function getApiUrl(key: string): string {
-  return key.trim().endsWith(':fx') ? DEEPL_FREE_URL : DEEPL_PRO_URL;
+  const isFree = key.trim().endsWith(':fx');
+  console.log('[deepl] API tier:', isFree ? 'FREE' : 'PRO');
+  return isFree ? DEEPL_FREE_URL : DEEPL_PRO_URL;
 }
 
 // ============================================================
@@ -27,7 +29,9 @@ async function translateBatch(
   apiKey: string,
   attempt = 1
 ): Promise<string[]> {
+  console.log(`[deepl] translateBatch attempt ${attempt}, texts count:`, texts.length);
   const url = getApiUrl(apiKey);
+  console.log('[deepl] API URL:', url);
 
   const params = new URLSearchParams();
   params.append('target_lang', 'RU');
@@ -38,7 +42,9 @@ async function translateBatch(
   params.append('ignore_tags', 'keep');
 
   texts.forEach(t => params.append('text', t));
+  console.log('[deepl] Request params size:', params.toString().length, 'bytes');
 
+  console.log('[deepl] Sending request...');
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -48,25 +54,35 @@ async function translateBatch(
     body: params.toString(),
   });
 
+  console.log('[deepl] Response status:', res.status);
+
   if (res.status === 429) {
+    console.warn('[deepl] Rate limit hit (429)');
     if (attempt < RETRY_LIMIT) {
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+      const delay = RETRY_DELAY_MS * attempt;
+      console.log(`[deepl] Retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
       return translateBatch(texts, apiKey, attempt + 1);
     }
     throw new Error('Превышен лимит запросов DeepL API. Попробуйте позже или проверьте остаток символов на deepl.com/account/usage');
   }
 
   if (res.status === 456) {
+    console.error('[deepl] Quota exceeded (456)');
     throw new Error('Исчерпан лимит символов DeepL API. Проверьте ваш план на deepl.com/account/usage');
   }
 
   if (res.status === 403) {
+    console.error('[deepl] Authentication failed (403)');
     throw new Error('Неверный API ключ DeepL. Проверьте DEEPL_API_KEY в файле .env');
   }
 
   if (res.status >= 500) {
+    console.error('[deepl] Server error:', res.status);
     if (attempt < RETRY_LIMIT) {
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+      const delay = RETRY_DELAY_MS * attempt;
+      console.log(`[deepl] Retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
       return translateBatch(texts, apiKey, attempt + 1);
     }
     throw new Error(`Сервер DeepL временно недоступен (ошибка ${res.status}). Попробуйте позже`);
@@ -74,6 +90,7 @@ async function translateBatch(
 
   if (!res.ok) {
     const body = await res.text();
+    console.error('[deepl] API error:', res.status, body);
     throw new Error(`Ошибка DeepL API (${res.status}): ${body}`);
   }
 
@@ -81,6 +98,7 @@ async function translateBatch(
     translations: Array<{ text: string }>;
   };
 
+  console.log('[deepl] Translations received:', data.translations.length);
   return data.translations.map(t => t.text);
 }
 
@@ -98,16 +116,35 @@ function chunk<T>(arr: T[], size: number): T[][] {
 // Handles batching + validates API key presence
 // ============================================================
 export async function translateTexts(texts: string[]): Promise<string[]> {
-  if (texts.length === 0) return [];
+  console.log('\n[deepl] translateTexts called');
+  console.log('[deepl] Total texts to translate:', texts.length);
 
-  const apiKey = process.env.DEEPL_API_KEY;
-  if (!apiKey) throw new Error('DEEPL_API_KEY не задан в .env файле');
-
-  const results: string[] = [];
-  for (const batch of chunk(texts, BATCH_SIZE)) {
-    const translated = await translateBatch(batch, apiKey);
-    results.push(...translated);
+  if (texts.length === 0) {
+    console.log('[deepl] No texts to translate, returning empty array');
+    return [];
   }
 
+  const apiKey = process.env.DEEPL_API_KEY;
+  console.log('[deepl] API key present:', !!apiKey);
+  console.log('[deepl] API key length:', apiKey?.length || 0);
+
+  if (!apiKey) {
+    console.error('[deepl] API key not found in environment');
+    throw new Error('DEEPL_API_KEY не задан в .env файле');
+  }
+
+  const batches = chunk(texts, BATCH_SIZE);
+  console.log('[deepl] Split into batches:', batches.length);
+
+  const results: string[] = [];
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    console.log(`[deepl] Processing batch ${i + 1}/${batches.length}, size: ${batch.length}`);
+    const translated = await translateBatch(batch, apiKey);
+    results.push(...translated);
+    console.log(`[deepl] Batch ${i + 1} complete, total results so far: ${results.length}`);
+  }
+
+  console.log('[deepl] All batches complete, total results:', results.length);
   return results;
 }

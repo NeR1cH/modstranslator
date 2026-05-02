@@ -8,7 +8,8 @@
       "Bash(taskkill //F //PID 5748)",
       "Bash(npm run *)",
       "Bash(curl -s http://localhost:3000)",
-      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
+      "Bash(curl -s http://localhost:3001)"
     ]
   }
 }
