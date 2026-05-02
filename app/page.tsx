@@ -6,6 +6,7 @@ import FileQueue from '@/components/FileQueue';
 import TerminalLog from '@/components/TerminalLog';
 import ProgressBar from '@/components/ProgressBar';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
+import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
 
 
 const MAX_LOG_ENTRIES = 500;
@@ -80,6 +81,31 @@ export default function Home() {
     console.log('newFiles:', newFiles);
     console.log('newFiles.length:', newFiles.length);
 
+    // Check queue limits
+    const currentQueueSize = files.length;
+    const currentTotalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const newTotalSize = newFiles.reduce((sum, f) => sum + f.size, 0);
+
+    console.log('Current queue size:', currentQueueSize);
+    console.log('Current total size:', formatBytes(currentTotalSize));
+    console.log('New files total size:', formatBytes(newTotalSize));
+
+    // Check max files limit
+    if (currentQueueSize + newFiles.length > QUEUE_LIMITS.MAX_FILES) {
+      const msg = `${ERROR_MESSAGES.QUEUE_FULL}${QUEUE_LIMITS.MAX_FILES}. Текущих файлов: ${currentQueueSize}`;
+      console.error(msg);
+      addLog(`> ❌ ${msg}`, 'error');
+      return;
+    }
+
+    // Check total size limit
+    if (currentTotalSize + newTotalSize > QUEUE_LIMITS.MAX_TOTAL_SIZE) {
+      const msg = `${ERROR_MESSAGES.QUEUE_SIZE_EXCEEDED}${formatBytes(QUEUE_LIMITS.MAX_TOTAL_SIZE)}. Текущий размер: ${formatBytes(currentTotalSize)}`;
+      console.error(msg);
+      addLog(`> ❌ ${msg}`, 'error');
+      return;
+    }
+
     setIsUploading(true);
     setUploadPercent(0);
 
@@ -100,16 +126,15 @@ export default function Home() {
 
       if (!format) {
         console.warn('SKIP: unsupported format');
-        addLog(`> ПРОПУСК: ${file.name} - неподдерживаемый формат`, 'warning');
+        addLog(`> ПРОПУСК: ${file.name} - ${ERROR_MESSAGES.UNSUPPORTED_FORMAT}`, 'warning');
         setUploadPercent(Math.round((fileNum / totalFiles) * 100));
         continue;
       }
 
-      // Validate file size (1000 MB max)
-      const MAX_SIZE = 1000 * 1024 * 1024;
-      if (file.size > MAX_SIZE) {
+      // Validate file size
+      if (file.size > QUEUE_LIMITS.MAX_FILE_SIZE) {
         console.error('ERROR: file too large');
-        addLog(`> ОШИБКА: ${file.name} слишком большой (${(file.size / 1024 / 1024).toFixed(0)} MB). Максимум: 1000 MB`, 'error');
+        addLog(`> ОШИБКА: ${file.name} ${ERROR_MESSAGES.FILE_TOO_LARGE}${formatBytes(QUEUE_LIMITS.MAX_FILE_SIZE)}`, 'error');
         setUploadPercent(Math.round((fileNum / totalFiles) * 100));
         continue;
       }
@@ -198,7 +223,7 @@ export default function Home() {
     setIsUploading(false);
     setUploadProgress('');
     setUploadPercent(0);
-  }, [addLog]);
+  }, [addLog, files]);
 
   // ── Translation run ─────────────────────────────────────────
   const handleTranslate = useCallback(async () => {
@@ -338,6 +363,7 @@ export default function Home() {
 
   const pendingCount = files.filter(f => f.status === 'pending').length;
   const doneCount    = files.filter(f => f.status === 'done').length;
+  const totalSize    = files.reduce((sum, f) => sum + f.size, 0);
 
   return (
     <main className="min-h-screen bg-black text-green-400 p-4 md:p-6 lg:p-8">
@@ -358,11 +384,16 @@ export default function Home() {
         <p className="text-xs text-green-900 tracking-wider mt-0.5">
           ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt
         </p>
-        <div className="flex gap-6 mt-3 text-xs font-bold">
+        <div className="flex gap-6 mt-3 text-xs font-bold flex-wrap">
           <span>СТАТУС: <span className={isRunning ? 'text-yellow-400 animate-pulse' : 'text-green-400'}>
             {isRunning ? `► ${currentFile}` : 'ОЖИДАНИЕ'}
           </span></span>
-          <span>ФАЙЛОВ: <span className="text-green-300">{files.length}</span></span>
+          <span>ФАЙЛОВ: <span className={files.length >= QUEUE_LIMITS.MAX_FILES ? 'text-red-400' : 'text-green-300'}>
+            {files.length}/{QUEUE_LIMITS.MAX_FILES}
+          </span></span>
+          <span>РАЗМЕР: <span className={totalSize >= QUEUE_LIMITS.MAX_TOTAL_SIZE ? 'text-red-400' : 'text-green-300'}>
+            {formatBytes(totalSize)}/{formatBytes(QUEUE_LIMITS.MAX_TOTAL_SIZE)}
+          </span></span>
           <span>ГОТОВО: <span className="text-green-300">{doneCount}</span></span>
         </div>
       </header>
