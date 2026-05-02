@@ -5,10 +5,10 @@ import DropZone from '@/components/DropZone';
 import FileQueue from '@/components/FileQueue';
 import TerminalLog from '@/components/TerminalLog';
 import ProgressBar from '@/components/ProgressBar';
-import { TranslationFile, LogEntry, FileFormat, AnalyzeResponse, TranslateResponse, ApiErrorResponse } from '@/types';
+import { TranslationFile, LogEntry, FileFormat } from '@/types';
+
 
 const MAX_LOG_ENTRIES = 500;
-const MAX_FILE_SIZE = 1000 * 1024 * 1024; // 1000 MB
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -65,12 +65,6 @@ export default function Home() {
       const format = detectFormat(file.name);
       if (!format) { addLog(`> ПРОПУСК: ${file.name}`, 'warning'); continue; }
 
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        addLog(`> ОШИБКА: ${file.name} слишком большой (${(file.size / 1024 / 1024).toFixed(0)} MB). Максимум: 1000 MB`, 'error');
-        continue;
-      }
-
       const id = `${Date.now()}-${Math.random()}`;
       setFiles(prev => [...prev, {
         id, name: file.name, size: file.size, format,
@@ -87,13 +81,7 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64, fileName: file.name }),
         });
-
-        if (!res.ok) {
-          const errData = await res.json() as ApiErrorResponse;
-          throw new Error(errData.error || 'Ошибка анализа файла');
-        }
-
-        const stats = await res.json() as AnalyzeResponse;
+        const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
 
         setFiles(prev => prev.map(f => f.id !== id ? f : {
           ...f, status: 'pending', stringsCount: stats.stringsCount,
@@ -143,11 +131,14 @@ export default function Home() {
         });
 
         if (!res.ok) {
-          const err = await res.json() as ApiErrorResponse;
+          const err = await res.json() as { error: string };
           throw new Error(err.error);
         }
 
-        const data = await res.json() as TranslateResponse;
+        const data = await res.json() as {
+          resultBase64: string; translatedCount: number;
+          langFilesCount: number; outputFileName: string;
+        };
 
         newResults.push({ outputFileName: data.outputFileName, resultBase64: data.resultBase64 });
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done' } : f));
@@ -275,3 +266,5 @@ export default function Home() {
     </main>
   );
 }
+
+
