@@ -201,11 +201,21 @@ export function rebuildNestedJson(original: string, translations: Map<string, st
 // ============================================================
 export function parseXml(content: string): LangEntry[] {
   const entries: LangEntry[] = [];
+  // Match text between tags, excluding CDATA and comments
   const regex = />([^<]+)</g;
   let match; let i = 0;
-  while ((match = regex.exec(content)) !== null) {
+
+  // Remove CDATA sections and comments before parsing
+  const cleaned = content
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+
+  while ((match = regex.exec(cleaned)) !== null) {
     const value = match[1].trim();
-    if (hasTranslatableText(value)) entries.push({ key: `xml_${i++}`, value });
+    // Skip empty strings and XML declarations
+    if (value && !value.startsWith('<?') && !value.startsWith('<!') && hasTranslatableText(value)) {
+      entries.push({ key: `xml_${i++}`, value });
+    }
   }
   return entries;
 }
@@ -220,7 +230,10 @@ export function rebuildXml(original: string, translations: Map<string, string>):
     const value = content.trim();
     const key = keyByValue.get(value);
     if (key && translations.has(key)) {
-      return `>${translations.get(key)}<`;
+      // Preserve original whitespace around the translated text
+      const leadingSpace = content.match(/^\s*/)?.[0] || '';
+      const trailingSpace = content.match(/\s*$/)?.[0] || '';
+      return `>${leadingSpace}${translations.get(key)}${trailingSpace}<`;
     }
     return full;
   });

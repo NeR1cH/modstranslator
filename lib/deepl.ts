@@ -48,17 +48,33 @@ async function translateBatch(
     body: params.toString(),
   });
 
-  if (res.status === 429 || res.status >= 500) {
+  if (res.status === 429) {
     if (attempt < RETRY_LIMIT) {
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
       return translateBatch(texts, apiKey, attempt + 1);
     }
-    throw new Error(`DeepL HTTP ${res.status} после ${RETRY_LIMIT} попыток`);
+    throw new Error('Превышен лимит запросов DeepL API. Попробуйте позже или проверьте остаток символов на deepl.com/account/usage');
+  }
+
+  if (res.status === 456) {
+    throw new Error('Исчерпан лимит символов DeepL API. Проверьте ваш план на deepl.com/account/usage');
+  }
+
+  if (res.status === 403) {
+    throw new Error('Неверный API ключ DeepL. Проверьте DEEPL_API_KEY в файле .env');
+  }
+
+  if (res.status >= 500) {
+    if (attempt < RETRY_LIMIT) {
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+      return translateBatch(texts, apiKey, attempt + 1);
+    }
+    throw new Error(`Сервер DeepL временно недоступен (ошибка ${res.status}). Попробуйте позже`);
   }
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`DeepL ${res.status}: ${body}`);
+    throw new Error(`Ошибка DeepL API (${res.status}): ${body}`);
   }
 
   const data = await res.json() as {

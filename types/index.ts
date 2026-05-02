@@ -31,3 +31,25 @@ export interface LogEntry {
   message: string;
   type: 'info' | 'success' | 'error' | 'warning' | 'system';
 }
+
+// API Response types
+export interface AnalyzeResponse {
+  stringsCount: number;
+  langFilesCount?: number;
+  mode?: string;
+}
+
+export interface TranslateResponse {
+  resultBase64: string;
+  translatedCount: number;
+  langFilesCount: number;
+  outputFileName: string;
+}
+
+export interface ExportRequest {
+  files: Array<{ outputFileName: string; resultBase64: string }>;
+}
+
+export interface ApiErrorResponse {
+  error: string;
+}
