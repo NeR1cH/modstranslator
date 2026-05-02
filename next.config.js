@@ -20,11 +20,6 @@ const nextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },
-  api: {
-    bodyParser: {
-      sizeLimit: '1000mb',
-    },
-  },
   experimental: {
     serverActions: { bodySizeLimit: '1000mb' },
   },

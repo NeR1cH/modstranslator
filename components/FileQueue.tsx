@@ -13,7 +13,7 @@ interface FileQueueProps {
 // ============================================================
 const STATUS = {
   pending:     { icon: '○', label: 'ОЖИДАНИЕ',   cls: 'text-green-700' },
-  extracting:  { icon: '◌', label: 'ЧТЕНИЕ...',  cls: 'text-yellow-600 animate-pulse' },
+  extracting:  { icon: '◐', label: 'ЗАГРУЗКА...', cls: 'text-yellow-500 animate-spin' },
   translating: { icon: '◉', label: 'ПЕРЕВОД...', cls: 'text-yellow-400 animate-pulse' },
   packing:     { icon: '◈', label: 'УПАКОВКА...', cls: 'text-cyan-400 animate-pulse' },
   done:        { icon: '●', label: 'ГОТОВО',      cls: 'text-green-400' },
@@ -53,9 +53,10 @@ export default function FileQueue({ files, onRemove, disabled }: FileQueueProps)
           <div
             key={file.id}
             className={`flex items-start gap-3 px-3 py-2 text-xs transition-colors
-              ${file.status === 'translating' ? 'bg-green-900/10' : ''}
+              ${file.status === 'extracting' ? 'bg-yellow-900/10 border-l-2 border-yellow-600' : ''}
+              ${file.status === 'translating' ? 'bg-green-900/10 border-l-2 border-green-500' : ''}
               ${file.status === 'done' ? 'bg-green-950/20' : ''}
-              ${file.status === 'error' ? 'bg-red-950/20' : ''}
+              ${file.status === 'error' ? 'bg-red-950/20 border-l-2 border-red-600' : ''}
             `}
           >
             {/* Status icon */}
@@ -75,11 +76,18 @@ export default function FileQueue({ files, onRemove, disabled }: FileQueueProps)
               </div>
               <div className="flex gap-3 mt-0.5 text-green-800 flex-wrap">
                 <span>{fmtSize(file.size)}</span>
-                {file.langFilesCount != null && (
+                {file.status === 'extracting' && (
+                  <span className="text-yellow-500 animate-pulse">● Анализ файла...</span>
+                )}
+                {file.langFilesCount != null && file.status !== 'extracting' && (
                   <span>{file.langFilesCount} lang</span>
                 )}
-                <span>{file.stringsCount} строк</span>
-                <span className={s.cls}>{s.label}</span>
+                {file.stringsCount > 0 && file.status !== 'extracting' && (
+                  <span>{file.stringsCount} строк</span>
+                )}
+                {file.status !== 'extracting' && (
+                  <span className={s.cls}>{s.label}</span>
+                )}
               </div>
               {file.errorMessage && (
                 <div className="text-red-600 mt-0.5 truncate">{file.errorMessage}</div>

@@ -59,10 +59,13 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         {isDragging ? '▼' : '▲'}
       </div>
       <p className="text-green-400 text-xs tracking-widest pointer-events-none">
-        {isDragging ? 'ОТПУСТИТЕ ДЛЯ ЗАГРУЗКИ' : 'ПЕРЕТАЩИТЕ ФАЙЛЫ ИЛИ МОДПАК'}
+        {isDragging ? '▼ ОТПУСТИТЕ ДЛЯ ЗАГРУЗКИ' : '▲ ПЕРЕТАЩИТЕ ФАЙЛЫ ИЛИ КЛИКНИТЕ'}
+      </p>
+      <p className="text-green-700 text-xs tracking-wider pointer-events-none text-center px-4">
+        ПОДДЕРЖКА: .jar .zip .json .lang .snbt .toml .cfg .xml .txt
       </p>
       <p className="text-green-900 text-xs tracking-wider pointer-events-none text-center px-4">
-        .jar .zip .json .lang .snbt .toml .cfg .xml .txt
+        МАКСИМУМ: 1000 MB
       </p>
 
       {['top-1 left-1','top-1 right-1','bottom-1 left-1','bottom-1 right-1'].map((pos, i) => (

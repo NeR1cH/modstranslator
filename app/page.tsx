@@ -65,6 +65,13 @@ export default function Home() {
       const format = detectFormat(file.name);
       if (!format) { addLog(`> ПРОПУСК: ${file.name}`, 'warning'); continue; }
 
+      // Validate file size (1000 MB max)
+      const MAX_SIZE = 1000 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        addLog(`> ОШИБКА: ${file.name} слишком большой (${(file.size / 1024 / 1024).toFixed(0)} MB). Максимум: 1000 MB`, 'error');
+        continue;
+      }
+
       const id = `${Date.now()}-${Math.random()}`;
       setFiles(prev => [...prev, {
         id, name: file.name, size: file.size, format,
@@ -72,15 +79,24 @@ export default function Home() {
       }]);
 
       const typeLabel = FORMAT_LABELS[format] ?? format.toUpperCase();
-      addLog(`> АНАЛИЗ [${typeLabel}]: ${file.name}`, 'system');
+      addLog(`> ЗАГРУЗКА [${typeLabel}]: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'system');
+      addLog(`> АНАЛИЗ: чтение файла...`, 'info');
 
       try {
         const base64 = await fileToBase64(file);
+        addLog(`> АНАЛИЗ: отправка на сервер...`, 'info');
+
         const res    = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64, fileName: file.name }),
         });
+
+        if (!res.ok) {
+          const errData = await res.json() as { error: string };
+          throw new Error(errData.error || 'Ошибка анализа файла');
+        }
+
         const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
 
         setFiles(prev => prev.map(f => f.id !== id ? f : {
@@ -91,10 +107,10 @@ export default function Home() {
         const detail = format === 'zip' || format === 'jar'
           ? `[${stats.langFilesCount} файлов, ${stats.stringsCount} строк]`
           : `[${stats.stringsCount} строк]`;
-        addLog(`> ОК: ${file.name} ${detail}`, 'success');
+        addLog(`> ✓ ГОТОВ К ПЕРЕВОДУ: ${file.name} ${detail}`, 'success');
       } catch (err) {
         setFiles(prev => prev.map(f => f.id !== id ? f : { ...f, status: 'error', errorMessage: String(err) }));
-        addLog(`> ОШИБКА: ${file.name}`, 'error');
+        addLog(`> ✕ ОШИБКА АНАЛИЗА: ${file.name} — ${err}`, 'error');
       }
     }
   }, [addLog]);
