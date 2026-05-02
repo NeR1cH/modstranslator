@@ -9,7 +9,12 @@
       "Bash(npm run *)",
       "Bash(curl -s http://localhost:3000)",
       "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
-      "Bash(curl -s http://localhost:3001)"
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(taskkill *)",
+      "Bash(powershell *)",
+      "Bash(./dev.bat)",
+      "Bash(awk '{print $5}')",
+      "Bash(xargs -I {} powershell -Command \"Stop-Process -Id {} -Force\")"
     ]
   }
 }

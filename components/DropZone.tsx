@@ -13,18 +13,33 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const filterFiles = (list: FileList | null): File[] => {
+    console.log('[DropZone] filterFiles called, list:', list);
     if (!list) return [];
-    return Array.from(list).filter(f =>
+    const files = Array.from(list);
+    console.log('[DropZone] Total files:', files.length);
+    const filtered = files.filter(f =>
       ACCEPTED_EXTS.some(ext => f.name.toLowerCase().endsWith(ext))
     );
+    console.log('[DropZone] Filtered files:', filtered.length);
+    return filtered;
   };
 
   const onDrop = useCallback((e: React.DragEvent) => {
+    console.log('[DropZone] onDrop called');
     e.preventDefault();
     setIsDragging(false);
-    if (disabled) return;
+    if (disabled) {
+      console.log('[DropZone] Disabled, ignoring drop');
+      return;
+    }
     const valid = filterFiles(e.dataTransfer.files);
-    if (valid.length) onFilesAdded(valid);
+    console.log('[DropZone] Valid files:', valid);
+    if (valid.length) {
+      console.log('[DropZone] Calling onFilesAdded with', valid.length, 'files');
+      onFilesAdded(valid);
+    } else {
+      console.warn('[DropZone] No valid files to add');
+    }
   }, [disabled, onFilesAdded]);
 
   return (
@@ -49,8 +64,16 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         className="hidden"
         disabled={disabled}
         onChange={e => {
+          console.log('[DropZone] onChange called');
+          console.log('[DropZone] e.target.files:', e.target.files);
           const valid = filterFiles(e.target.files);
-          if (valid.length) onFilesAdded(valid);
+          console.log('[DropZone] Valid files from input:', valid);
+          if (valid.length) {
+            console.log('[DropZone] Calling onFilesAdded with', valid.length, 'files');
+            onFilesAdded(valid);
+          } else {
+            console.warn('[DropZone] No valid files from input');
+          }
           e.target.value = '';
         }}
       />

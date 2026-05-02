@@ -8,7 +8,7 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval'", // unsafe-eval нужен Next.js в dev
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-inline нужен для Next.js dev
       "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
       "font-src 'self' fonts.gstatic.com",
       "connect-src 'self' api-free.deepl.com api.deepl.com",
