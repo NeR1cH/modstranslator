@@ -9,7 +9,7 @@ export const MAX_BASE64_SIZE = 1.1 * 1024 * 1024 * 1024;
 
 /**
  * Sanitize file paths to prevent path traversal attacks
- * Ensures paths stay within the assets/ directory
+ * Ensures paths stay within safe directories (assets/, config/, etc.)
  */
 export function sanitizePath(filePath: string): string {
   // Remove .. and leading slashes
@@ -18,9 +18,20 @@ export function sanitizePath(filePath: string): string {
     .replace(/^\/+/, '')
     .replace(/\\+/g, '/');
 
-  // Ensure path is inside assets/
-  if (!normalized.startsWith('assets/')) {
-    throw new Error('Invalid file path: must be inside assets/');
+  // Allow paths in safe directories
+  const safePrefixes = [
+    'assets/',
+    'config/',
+    'data/',
+    'saves/',
+    'local/',
+    'dynamic-resource-pack-cache/',
+  ];
+
+  const isSafe = safePrefixes.some(prefix => normalized.startsWith(prefix));
+
+  if (!isSafe) {
+    throw new Error(`Invalid file path: must be inside safe directories (${safePrefixes.join(', ')})`);
   }
 
   return normalized;
