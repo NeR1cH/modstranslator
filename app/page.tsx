@@ -365,6 +365,7 @@ export default function Home() {
           if (file.tempPath) {
             console.log('Processing streaming-uploaded file:', file.tempPath);
             addLog(`> 🔄 Обработка большого файла...`, 'system');
+            setProgress(10);
 
             // Call process-upload endpoint
             const res = await fetch('/api/process-upload', {
@@ -388,17 +389,43 @@ export default function Home() {
               }
             }
 
+            addLog(`> 🔄 Перевод завершён, получение результата...`, 'system');
+            setProgress(50);
+
             // Get output filename from header
             outputFileName = res.headers.get('X-Output-Filename') || file.name.replace(/\.(zip|jar)$/i, '_translated.$1');
 
-            // Convert blob to base64 for storage
+            // Convert blob to base64 for storage with progress
+            addLog(`> 🔄 Чтение результата...`, 'system');
             const blob = await res.blob();
+            const totalSize = blob.size;
+
+            addLog(`> 🔄 Конвертация результата (${(totalSize / 1024 / 1024).toFixed(2)} MB)...`, 'system');
+            setProgress(70);
+
             const arrayBuffer = await blob.arrayBuffer();
             const bytes = new Uint8Array(arrayBuffer);
+
+            // Convert to base64 in chunks to show progress
+            const chunkSize = 1024 * 1024; // 1MB chunks
             let binary = '';
-            for (let i = 0; i < bytes.length; i++) {
-              binary += String.fromCharCode(bytes[i]);
+
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+              for (let j = 0; j < chunk.length; j++) {
+                binary += String.fromCharCode(chunk[j]);
+              }
+
+              // Update progress
+              const progressPercent = 70 + Math.round((i / bytes.length) * 25);
+              setProgress(progressPercent);
+
+              // Allow UI to update
+              await new Promise(resolve => setTimeout(resolve, 0));
             }
+
+            addLog(`> 🔄 Финализация...`, 'system');
+            setProgress(95);
             const resultBase64 = btoa(binary);
 
             newResults.push({
