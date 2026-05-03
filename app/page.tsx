@@ -530,7 +530,7 @@ export default function Home() {
           АВТОМАТИЧЕСКИЙ ПЕРЕВОДЧИК МОДОВ MINECRAFT // EN→RU
         </p>
         <p className="text-xs text-green-900 tracking-wider mt-0.5">
-          ПОДДЕРЖКА: Моды (.jar) • Модпаки (.zip) • Квесты (.snbt) • Конфиги (.toml, .cfg) • Языковые файлы (.json, .lang)
+          ПОДДЕРЖКА: Моды (jar) • Модпаки (zip) • Квесты (snbt) • Конфиги (toml, cfg) • Языковые файлы (json, lang)
         </p>
         <div className="flex gap-6 mt-3 text-xs font-bold flex-wrap">
           <span>СТАТУС: <span className={isRunning ? 'text-yellow-400 animate-pulse' : 'text-green-400'}>
