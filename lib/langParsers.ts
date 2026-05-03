@@ -18,6 +18,7 @@ export function detectFormat(filename: string): string | null {
   if (lower.endsWith('.txt'))   return 'txt';
   if (lower.endsWith('.xml'))   return 'xml';
   if (lower.endsWith('.properties')) return 'properties';
+  if (lower.endsWith('.yml') || lower.endsWith('.yaml')) return 'yaml';
   return null;
 }
 
@@ -348,6 +349,102 @@ export function rebuildProperties(original: string, translations: Map<string, st
       result.push(`${indent}${trimmedKey}${separator}${translated}`);
     } else {
       result.push(fullLine);
+    }
+  }
+
+  return result.join('\n');
+}
+
+// ============================================================
+// BLOCK: .yml/.yaml parser (YAML format)
+// ============================================================
+export function parseYaml(content: string): LangEntry[] {
+  const entries: LangEntry[] = [];
+  const lines = content.split('\n');
+
+  // Simple YAML parser for flat key-value pairs
+  // Supports: key: value, "key": "value", 'key': 'value'
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip empty lines, comments, and complex structures
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('-') || trimmed.startsWith('[')) {
+      continue;
+    }
+
+    // Match key: value pattern
+    const match = trimmed.match(/^(['"]?)([^'":\s]+)\1\s*:\s*(['"]?)(.+)\3$/);
+    if (!match) continue;
+
+    const key = match[2];
+    let value = match[4];
+
+    // Remove quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    // Unescape common YAML escapes
+    value = value
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'");
+
+    if (hasTranslatableText(value)) {
+      entries.push({ key, value });
+    }
+  }
+
+  return entries;
+}
+
+export function rebuildYaml(original: string, translations: Map<string, string>): string {
+  const lines = original.split('\n');
+  const result: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Keep empty lines, comments, and complex structures as-is
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('-') || trimmed.startsWith('[')) {
+      result.push(line);
+      continue;
+    }
+
+    // Match key: value pattern
+    const match = trimmed.match(/^(['"]?)([^'":\s]+)\1\s*:\s*(['"]?)(.+)\3$/);
+    if (!match) {
+      result.push(line);
+      continue;
+    }
+
+    const indent = line.match(/^(\s*)/)?.[1] || '';
+    const keyQuote = match[1];
+    const key = match[2];
+    const valueQuote = match[3];
+
+    if (translations.has(key)) {
+      let translated = translations.get(key)!;
+
+      // Escape special characters for YAML
+      translated = translated
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t')
+        .replace(/\r/g, '\\r')
+        .replace(/"/g, '\\"')
+        .replace(/'/g, "\\'");
+
+      // Use same quote style as original
+      const quote = valueQuote || (translated.includes(':') || translated.includes('#') ? '"' : '');
+      result.push(`${indent}${keyQuote}${key}${keyQuote}: ${quote}${translated}${quote}`);
+    } else {
+      result.push(line);
     }
   }
 

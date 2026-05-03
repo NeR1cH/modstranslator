@@ -3,9 +3,9 @@ import { extractLangFiles, translateLangFiles, repackJar } from '@/lib/jarProces
 import { translateModpack } from '@/lib/modpackProcessor';
 import {
   parseJsonLang, parseDotLang, parseSnbt, parseToml, parseCfg,
-  parseNestedJson, parseXml, parsePlainText, parseProperties,
+  parseNestedJson, parseXml, parsePlainText, parseProperties, parseYaml,
   rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml, rebuildCfg,
-  rebuildNestedJson, rebuildXml, rebuildPlainText, rebuildProperties,
+  rebuildNestedJson, rebuildXml, rebuildPlainText, rebuildProperties, rebuildYaml,
 } from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
@@ -187,6 +187,9 @@ async function getStandaloneHandler(ext: string, content: string, fileName: stri
     case 'properties':
       console.log('Parsing .properties format...');
       return { entries: parseProperties(content), rebuild: rebuildProperties, outName: fileName };
+    case 'yaml':
+      console.log('Parsing .yaml format...');
+      return { entries: parseYaml(content), rebuild: rebuildYaml, outName: fileName };
     default:
       console.warn('Unknown format, returning empty');
       return { entries: [], rebuild: () => content, outName: fileName };

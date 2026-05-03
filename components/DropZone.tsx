@@ -7,7 +7,7 @@ interface DropZoneProps {
   disabled?: boolean;
 }
 
-const ACCEPTED_EXTS = ['.jar', '.zip', '.json', '.lang', '.snbt', '.toml', '.cfg', '.xml', '.txt', '.properties'];
+const ACCEPTED_EXTS = ['.jar', '.zip', '.json', '.lang', '.snbt', '.toml', '.cfg', '.xml', '.txt', '.properties', '.yml', '.yaml'];
 
 export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -85,7 +85,7 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         {isDragging ? '▼ ОТПУСТИТЕ ДЛЯ ЗАГРУЗКИ' : '▲ ПЕРЕТАЩИТЕ ФАЙЛЫ ИЛИ КЛИКНИТЕ'}
       </p>
       <p className="text-green-700 text-xs tracking-wider pointer-events-none text-center px-4">
-        ПОДДЕРЖКА: .jar .zip .json .lang .snbt .toml .cfg .xml .txt .properties
+        ПОДДЕРЖКА: .jar .zip .json .lang .snbt .toml .cfg .xml .txt .properties .yml .yaml
       </p>
       <p className="text-green-900 text-xs tracking-wider pointer-events-none text-center px-4">
         МАКСИМУМ: 1000 MB

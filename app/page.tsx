@@ -8,6 +8,7 @@ import ProgressBar from '@/components/ProgressBar';
 import { UsageIndicator } from '@/components/UsageIndicator';
 import { CacheIndicator } from '@/components/CacheIndicator';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
 import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
 import { getTranslationHistory } from '@/lib/translationHistory';
@@ -36,7 +37,7 @@ function detectFormat(name: string): FileFormat | null {
   console.log('detectFormat called for:', name);
   const ext = name.split('.').pop()?.toLowerCase();
   console.log('extracted extension:', ext);
-  const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt','properties'];
+  const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt','properties','yaml'];
   const result = valid.includes(ext as FileFormat) ? ext as FileFormat : null;
   console.log('detectFormat result:', result);
   return result;
@@ -53,6 +54,7 @@ const FORMAT_LABELS: Record<string, string> = {
   xml:  'XML',
   txt:  'ТЕКСТ',
   properties: 'PROPERTIES',
+  yaml: 'YAML',
 };
 
 export default function Home() {
@@ -231,9 +233,9 @@ export default function Home() {
     setUploadPercent(0);
   }, [addLog, files]);
 
-  // ── Translation run ─────────────────────────────────────────
+  // ── Translation run with streaming ─────────────────────────
   const handleTranslate = useCallback(async () => {
-    console.log('=== handleTranslate START ===');
+    console.log('=== handleTranslate START (STREAMING) ===');
     const pending = files.filter(f => f.status === 'pending');
     console.log('pending files:', pending);
     console.log('pending count:', pending.length);
@@ -253,100 +255,145 @@ export default function Home() {
     setResults([]);
     addLog('════════════════════════════════════', 'system');
     addLog(`> СТАРТ // ${pending.length} объект(ов) в очереди`, 'system');
+    addLog('> РЕЖИМ: STREAMING (real-time прогресс)', 'info');
 
     const newResults: typeof results = [];
 
     try {
-      for (let i = 0; i < pending.length; i++) {
-        // Check if aborted
-        if (controller.signal.aborted) {
-          console.log('Translation aborted by user');
-          addLog('> ⚠️ ПЕРЕВОД ОТМЕНЕН ПОЛЬЗОВАТЕЛЕМ', 'warning');
+      // Prepare files for streaming API
+      const filesPayload = pending.map(f => ({
+        id: f.id,
+        fileName: f.name,
+        base64: f.originalBase64,
+      }));
+
+      console.log('Sending streaming request...');
+      const res = await fetch('/api/translate-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: filesPayload }),
+        signal: controller.signal,
+      });
+
+      console.log('streaming response status:', res.status);
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      // Read SSE stream
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          console.log('Stream finished');
           break;
         }
 
-        const file = pending[i];
-        console.log(`\n--- Translating file ${i+1}/${pending.length} ---`);
-        console.log('file:', file);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-        const typeLabel = FORMAT_LABELS[file.format] ?? file.format.toUpperCase();
-        setCurrentFile(file.name);
-        setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'translating' } : f));
-        addLog(`> [${i+1}/${pending.length}] [${typeLabel}] ${file.name}`, 'info');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
 
-        if (file.format === 'zip') {
-          console.log('MODPACK detected');
-          addLog(`> МОДПАК: сканирование всех файлов...`, 'system');
-        }
+          const data = JSON.parse(line.slice(6));
+          console.log('[SSE]', data.type, data);
 
-        try {
-          console.log('Sending translate request...');
-          console.log('base64 length:', file.originalBase64?.length || 0);
+          switch (data.type) {
+            case 'start':
+              addLog(`> НАЧАЛО: ${data.totalFiles} файл(ов)`, 'system');
+              break;
 
-          const res = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64: file.originalBase64, fileName: file.name }),
-            signal: controller.signal, // Pass abort signal to fetch
-          });
+            case 'file_start':
+              const typeLabel = FORMAT_LABELS[files.find(f => f.id === data.fileId)?.format || ''] || 'FILE';
+              setCurrentFile(data.fileName);
+              setFiles(prev => prev.map(f =>
+                f.id === data.fileId ? { ...f, status: 'translating' } : f
+              ));
+              addLog(`> [${data.current}/${data.total}] [${typeLabel}] ${data.fileName}`, 'info');
+              break;
 
-          console.log('translate response status:', res.status);
-          console.log('translate response ok:', res.ok);
+            case 'progress':
+              const stageLabels: Record<string, string> = {
+                extracting: 'ИЗВЛЕЧЕНИЕ',
+                translating: 'ПЕРЕВОД',
+                packing: 'УПАКОВКА',
+              };
+              const stageLabel = stageLabels[data.stage] || data.stage.toUpperCase();
+              addLog(`> ${stageLabel}: ${data.fileName}`, 'system');
+              break;
 
-          if (!res.ok) {
-            const err = await res.json() as { error: string };
-            console.error('translate API error:', err);
-            throw new Error(err.error);
+            case 'file_complete':
+              newResults.push({
+                outputFileName: data.outputFileName,
+                resultBase64: data.resultBase64,
+              });
+              setFiles(prev => prev.map(f =>
+                f.id === data.fileId ? { ...f, status: 'done' } : f
+              ));
+
+              // Save to history
+              const file = files.find(f => f.id === data.fileId);
+              if (file) {
+                const history = getTranslationHistory();
+                await history.save({
+                  fileName: data.fileName,
+                  outputFileName: data.outputFileName,
+                  stringsCount: data.translatedCount,
+                  format: file.format,
+                  resultBase64: data.resultBase64,
+                  fileSize: file.size,
+                });
+              }
+
+              const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
+              addLog(`> ГОТОВО: ${data.fileName} ${countMsg}`, 'success');
+
+              const progressPercent = Math.round((data.current / data.total) * 100);
+              setProgress(progressPercent);
+              break;
+
+            case 'file_error':
+              setFiles(prev => prev.map(f =>
+                f.id === data.fileId ? { ...f, status: 'error', errorMessage: data.error } : f
+              ));
+              addLog(`> СБОЙ: ${data.fileName} — ${data.error}`, 'error');
+              break;
+
+            case 'complete':
+              addLog(`> ВСЕ ФАЙЛЫ ОБРАБОТАНЫ (${data.totalFiles})`, 'success');
+              break;
+
+            case 'error':
+              addLog(`> КРИТИЧЕСКАЯ ОШИБКА: ${data.error}`, 'error');
+              throw new Error(data.error);
           }
-
-          const data = await res.json() as {
-            resultBase64: string; translatedCount: number;
-            langFilesCount: number; outputFileName: string;
-          };
-          console.log('translate result:', {
-            outputFileName: data.outputFileName,
-            translatedCount: data.translatedCount,
-            langFilesCount: data.langFilesCount,
-            resultBase64Length: data.resultBase64?.length || 0
-          });
-
-          newResults.push({ outputFileName: data.outputFileName, resultBase64: data.resultBase64 });
-          setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done' } : f));
-
-          // Save to history
-          const history = getTranslationHistory();
-          await history.save({
-            fileName: file.name,
-            outputFileName: data.outputFileName,
-            stringsCount: data.translatedCount,
-            format: file.format,
-            resultBase64: data.resultBase64,
-            fileSize: file.size
-          });
-
-          const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
-          addLog(`> ГОТОВО: ${file.name} ${countMsg}`, 'success');
-          console.log('SUCCESS:', file.name);
-        } catch (err) {
-          // Check if error is due to abort
-          if (err instanceof Error && err.name === 'AbortError') {
-            console.log('Fetch aborted for file:', file.name);
-            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'pending' } : f));
-            break;
-          }
-
-          console.error('ERROR translating file:', err);
-          console.error('error stack:', err instanceof Error ? err.stack : 'no stack');
-          setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'error', errorMessage: String(err) } : f));
-          addLog(`> СБОЙ: ${file.name} — ${err}`, 'error');
         }
+      }
 
-        const progressPercent = Math.round(((i + 1) / pending.length) * 100);
-        console.log('progress:', progressPercent);
-        setProgress(progressPercent);
+    } catch (err) {
+      // Check if error is due to abort
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('Translation aborted by user');
+        addLog('> ⚠️ ПЕРЕВОД ОТМЕНЕН ПОЛЬЗОВАТЕЛЕМ', 'warning');
+        setFiles(prev => prev.map(f =>
+          f.status === 'translating' ? { ...f, status: 'pending' } : f
+        ));
+      } else {
+        console.error('ERROR in streaming translation:', err);
+        addLog(`> ОШИБКА STREAMING: ${err}`, 'error');
       }
     } finally {
-      console.log('=== handleTranslate END ===');
+      console.log('=== handleTranslate END (STREAMING) ===');
       console.log('newResults:', newResults);
       setResults(newResults);
       if (newResults.length > 0) addLog('> ГОТОВО. Нажмите [СКАЧАТЬ АРХИВ]', 'system');
@@ -452,6 +499,9 @@ export default function Home() {
     <main className="min-h-screen bg-black text-green-400 p-4 md:p-6 lg:p-8">
       <div className="fixed inset-0 pointer-events-none z-50 crt-overlay" />
 
+      {/* Theme Toggle */}
+      <ThemeToggle />
+
       {/* Header */}
       <header className="mb-6 border-b-2 border-green-900 pb-4">
         <div className="flex items-baseline gap-3 mb-1 flex-wrap">
@@ -462,10 +512,10 @@ export default function Home() {
           <span className="text-green-900 text-sm select-none">█▓▒░</span>
         </div>
         <p className="text-xs text-green-800 tracking-widest mt-1">
-          MINECRAFT FULL LOCALIZATION ENGINE v4.0 // DeepL API // EN→RU
+          MINECRAFT FULL LOCALIZATION ENGINE v4.1 // DeepL API // EN→RU // STREAMING
         </p>
         <p className="text-xs text-green-900 tracking-wider mt-0.5">
-          ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt .properties
+          ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt .properties .yml .yaml
         </p>
         <div className="flex gap-6 mt-3 text-xs font-bold flex-wrap">
           <span>СТАТУС: <span className={isRunning ? 'text-yellow-400 animate-pulse' : 'text-green-400'}>

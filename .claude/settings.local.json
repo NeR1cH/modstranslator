@@ -17,7 +17,10 @@
       "Bash(xargs -I {} powershell -Command \"Stop-Process -Id {} -Force\")",
       "Bash(curl -s http://localhost:3000/api/usage)",
       "Bash(curl -s http://localhost:3000/api/cache-stats)",
-      "Bash(curl -s http://localhost:3005)"
+      "Bash(curl -s http://localhost:3005)",
+      "Bash(curl -s http://localhost:3007)",
+      "Bash(curl -s http://localhost:3008)",
+      "Bash(curl -s http://localhost:3009)"
     ]
   }
 }
