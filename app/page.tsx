@@ -178,26 +178,56 @@ export default function Home() {
           console.log('LARGE FILE: Using streaming upload');
           addLog(`> 🔄 Загрузка большого файла (streaming)...`, 'info');
 
-          // Upload file using FormData (no base64 conversion)
+          // Upload file using XMLHttpRequest to track progress
           const formData = new FormData();
           formData.append('file', file);
 
-          const uploadRes = await fetch('/api/upload-stream', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!uploadRes.ok) {
-            const errData = await uploadRes.json() as { error: string };
-            throw new Error(errData.error || 'Ошибка загрузки файла');
-          }
-
-          const uploadData = await uploadRes.json() as {
+          const uploadData = await new Promise<{
             tempId: string;
             tempPath: string;
             fileName: string;
             fileSize: number;
-          };
+          }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+              if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                setUploadPercent(percentComplete);
+                addLog(`> 📤 Загрузка: ${percentComplete}%`, 'info');
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status === 200) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  resolve(data);
+                } catch (err) {
+                  reject(new Error('Ошибка парсинга ответа'));
+                }
+              } else {
+                try {
+                  const errData = JSON.parse(xhr.responseText);
+                  reject(new Error(errData.error || 'Ошибка загрузки файла'));
+                } catch {
+                  reject(new Error(`HTTP ${xhr.status}`));
+                }
+              }
+            });
+
+            xhr.addEventListener('error', () => {
+              reject(new Error('Ошибка сети'));
+            });
+
+            xhr.addEventListener('abort', () => {
+              reject(new Error('Загрузка отменена'));
+            });
+
+            xhr.open('POST', '/api/upload-stream');
+            xhr.send(formData);
+          });
 
           console.log('File uploaded to server:', uploadData);
           addLog(`> ✅ Файл загружен на сервер`, 'success');
