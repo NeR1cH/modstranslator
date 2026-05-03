@@ -155,8 +155,10 @@ function getRuPath(originalPath: string): string {
   return originalPath
     .replace(/en[_-]?(us|US)?\.json$/i, 'ru_ru.json')
     .replace(/en[_-]?(us|US)?\.lang$/i, 'ru_ru.lang')
+    .replace(/en[_-]?(us|US)?\.snbt$/i, 'ru_ru.snbt')
     .replace(/en\.json$/i, 'ru_ru.json')
-    .replace(/en\.lang$/i, 'ru_ru.lang');
+    .replace(/en\.lang$/i, 'ru_ru.lang')
+    .replace(/en\.snbt$/i, 'ru_ru.snbt');
 }
 
 // ============================================================

@@ -80,32 +80,129 @@ const SNBT_TEXT_KEYS = /\b(title|subtitle|description|text|name|header|footer|de
 
 export function parseSnbt(content: string): LangEntry[] {
   const entries: LangEntry[] = [];
-  content.split('\n').forEach((line, i) => {
-    if (!SNBT_TEXT_KEYS.test(line)) return;
-    // Match both simple format: description: "text"
-    // And array format: description: ["text"]
-    const simpleMatch = line.match(/:\s*"((?:[^"\\]|\\.)*)"/);
-    const arrayMatch = line.match(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/);
-    const match = arrayMatch || simpleMatch;
-    if (!match) return;
-    const value = match[1].replace(/\\"/g, '"');
-    if (hasTranslatableText(value)) entries.push({ key: `snbt_line_${i}`, value });
-  });
+
+  // Check if this is FTB Quests lang file format (key: "value" or key: ["value"])
+  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-F0-9]+\./m.test(content);
+
+  if (isFTBQuestsLang) {
+    // FTB Quests lang format: quest.ID.quest_desc: ["text"] or quest.ID.title: "text"
+    content.split('\n').forEach((line, i) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) return;
+
+      // Match: key: "value" or key: ["value", "more"]
+      const match = trimmed.match(/^([^:]+):\s*(.+)$/);
+      if (!match) return;
+
+      const key = match[1].trim();
+      const valueStr = match[2].trim();
+
+      // Extract text from "value" or ["value1", "value2"]
+      let values: string[] = [];
+
+      if (valueStr.startsWith('[')) {
+        // Array format: ["text1", "text2"]
+        const arrayMatch = valueStr.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
+        if (arrayMatch) {
+          values = arrayMatch.map(s => s.slice(1, -1).replace(/\\"/g, '"'));
+        }
+      } else if (valueStr.startsWith('"')) {
+        // Simple format: "text"
+        const simpleMatch = valueStr.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/);
+        if (simpleMatch) {
+          values = [simpleMatch[1].replace(/\\"/g, '"')];
+        }
+      }
+
+      values.forEach((value, idx) => {
+        if (hasTranslatableText(value)) {
+          entries.push({ key: `${key}[${idx}]`, value });
+        }
+      });
+    });
+  } else {
+    // Original SNBT format for quest files (description: "text")
+    content.split('\n').forEach((line, i) => {
+      if (!SNBT_TEXT_KEYS.test(line)) return;
+      const simpleMatch = line.match(/:\s*"((?:[^"\\]|\\.)*)"/);
+      const arrayMatch = line.match(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/);
+      const match = arrayMatch || simpleMatch;
+      if (!match) return;
+      const value = match[1].replace(/\\"/g, '"');
+      if (hasTranslatableText(value)) entries.push({ key: `snbt_line_${i}`, value });
+    });
+  }
+
   return entries;
 }
 
 export function rebuildSnbt(original: string, translations: Map<string, string>): string {
-  return original.split('\n').map((line, i) => {
-    const key = `snbt_line_${i}`;
-    if (!translations.has(key)) return line;
-    const translated = translations.get(key)!.replace(/"/g, '\\"');
-    // Handle both simple format: description: "text"
-    // And array format: description: ["text"]
-    if (/:\s*\[/.test(line)) {
-      return line.replace(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/, `: ["${translated}"]`);
-    }
-    return line.replace(/:\s*"((?:[^"\\]|\\.)*)"/, `: "${translated}"`);
-  }).join('\n');
+  // Check if this is FTB Quests lang file format
+  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-F0-9]+\./m.test(original);
+
+  if (isFTBQuestsLang) {
+    // FTB Quests lang format
+    return original.split('\n').map(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) return line;
+
+      const match = trimmed.match(/^([^:]+):\s*(.+)$/);
+      if (!match) return line;
+
+      const key = match[1].trim();
+      const valueStr = match[2].trim();
+
+      // Check if we have translations for this key
+      let hasTranslation = false;
+      let newValueStr = valueStr;
+
+      if (valueStr.startsWith('[')) {
+        // Array format: ["text1", "text2"]
+        const arrayMatch = valueStr.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
+        if (arrayMatch) {
+          const newValues = arrayMatch.map((s, idx) => {
+            const translationKey = `${key}[${idx}]`;
+            if (translations.has(translationKey)) {
+              hasTranslation = true;
+              const translated = translations.get(translationKey)!.replace(/"/g, '\\"');
+              return `"${translated}"`;
+            }
+            return s;
+          });
+          if (hasTranslation) {
+            newValueStr = '[' + newValues.join(', ') + ']';
+          }
+        }
+      } else if (valueStr.startsWith('"')) {
+        // Simple format: "text"
+        const translationKey = `${key}[0]`;
+        if (translations.has(translationKey)) {
+          const translated = translations.get(translationKey)!.replace(/"/g, '\\"');
+          newValueStr = `"${translated}"`;
+          hasTranslation = true;
+        }
+      }
+
+      if (hasTranslation) {
+        // Preserve original indentation
+        const indent = line.match(/^\s*/)?.[0] || '';
+        return `${indent}${key}: ${newValueStr}`;
+      }
+
+      return line;
+    }).join('\n');
+  } else {
+    // Original SNBT format for quest files
+    return original.split('\n').map((line, i) => {
+      const key = `snbt_line_${i}`;
+      if (!translations.has(key)) return line;
+      const translated = translations.get(key)!.replace(/"/g, '\\"');
+      if (/:\s*\[/.test(line)) {
+        return line.replace(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/, `: ["${translated}"]`);
+      }
+      return line.replace(/:\s*"((?:[^"\\]|\\.)*)"/, `: "${translated}"`);
+    }).join('\n');
+  }
 }
 
 // ============================================================
@@ -465,8 +562,14 @@ export function rebuildYaml(original: string, translations: Map<string, string>)
 // BLOCK: JAR lang file detection helpers
 // ============================================================
 export function isTargetLangFile(path: string): boolean {
-  return /assets\/[^/]+\/lang\/en[_-]?(us|US)?(\.(json|lang))?$/.test(path) ||
-         /assets\/[^/]+\/lang\/en\.(json|lang)$/.test(path);
+  // Mod lang files (assets/*/lang/en_us.json or en_us.lang)
+  const modLang = /assets\/[^/]+\/lang\/en[_-]?(us|US)?(\.(json|lang))?$/.test(path) ||
+                  /assets\/[^/]+\/lang\/en\.(json|lang)$/.test(path);
+
+  // FTB Quests lang files (config/ftbquests/quests/lang/en_us.snbt)
+  const ftbQuestsLang = /config\/ftbquests\/quests\/lang\/en[_-]?(us|US)?\.snbt$/i.test(path);
+
+  return modLang || ftbQuestsLang;
 }
 
 export function detectLangFormat(filename: string): 'json' | 'lang' | null {
