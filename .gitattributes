@@ -1,0 +1,10 @@
+# Exclude generated files from language statistics
+package-lock.json linguist-generated=true
+*.css linguist-vendored=true
+
+# Mark documentation as documentation
+*.md linguist-documentation=true
+
+# Set repository language
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
