@@ -14,7 +14,10 @@
       "Bash(powershell *)",
       "Bash(./dev.bat)",
       "Bash(awk '{print $5}')",
-      "Bash(xargs -I {} powershell -Command \"Stop-Process -Id {} -Force\")"
+      "Bash(xargs -I {} powershell -Command \"Stop-Process -Id {} -Force\")",
+      "Bash(curl -s http://localhost:3000/api/usage)",
+      "Bash(curl -s http://localhost:3000/api/cache-stats)",
+      "Bash(curl -s http://localhost:3005)"
     ]
   }
 }

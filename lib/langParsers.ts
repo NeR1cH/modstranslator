@@ -17,6 +17,7 @@ export function detectFormat(filename: string): string | null {
   if (lower.endsWith('.cfg'))   return 'cfg';
   if (lower.endsWith('.txt'))   return 'txt';
   if (lower.endsWith('.xml'))   return 'xml';
+  if (lower.endsWith('.properties')) return 'properties';
   return null;
 }
 
@@ -252,6 +253,105 @@ export function rebuildPlainText(original: string, translations: Map<string, str
   return original.split('\n')
     .map((line, i) => translations.get(`txt_${i}`) ?? line)
     .join('\n');
+}
+
+// ============================================================
+// BLOCK: .properties parser (Java properties format)
+// ============================================================
+export function parseProperties(content: string): LangEntry[] {
+  const entries: LangEntry[] = [];
+  const lines = content.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+
+    // Skip empty lines and comments
+    if (!line || line.startsWith('#') || line.startsWith('!')) {
+      continue;
+    }
+
+    // Handle line continuation (backslash at end)
+    while (line.endsWith('\\') && i + 1 < lines.length) {
+      line = line.slice(0, -1) + lines[++i].trim();
+    }
+
+    // Find separator (= or : or space)
+    const separatorMatch = line.match(/^([^=:]+?)\s*[=:]\s*(.*)$/);
+    if (!separatorMatch) continue;
+
+    const key = separatorMatch[1].trim();
+    let value = separatorMatch[2].trim();
+
+    // Unescape Java properties escapes
+    value = value
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\=/g, '=')
+      .replace(/\\:/g, ':')
+      .replace(/\\#/g, '#')
+      .replace(/\\!/g, '!');
+
+    if (hasTranslatableText(value)) {
+      entries.push({ key, value });
+    }
+  }
+
+  return entries;
+}
+
+export function rebuildProperties(original: string, translations: Map<string, string>): string {
+  const lines = original.split('\n');
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const trimmed = line.trim();
+
+    // Keep empty lines and comments as-is
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) {
+      result.push(line);
+      continue;
+    }
+
+    // Handle line continuation
+    let fullLine = line;
+    while (fullLine.trimEnd().endsWith('\\') && i + 1 < lines.length) {
+      fullLine += '\n' + lines[++i];
+    }
+
+    // Parse key=value
+    const separatorMatch = fullLine.match(/^(\s*)([^=:]+?)\s*([=:])\s*(.*)$/);
+    if (!separatorMatch) {
+      result.push(fullLine);
+      continue;
+    }
+
+    const [, indent, key, separator, value] = separatorMatch;
+    const trimmedKey = key.trim();
+
+    if (translations.has(trimmedKey)) {
+      let translated = translations.get(trimmedKey)!;
+
+      // Escape special characters for properties format
+      translated = translated
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t')
+        .replace(/=/g, '\\=')
+        .replace(/:/g, '\\:')
+        .replace(/#/g, '\\#')
+        .replace(/!/g, '\\!');
+
+      result.push(`${indent}${trimmedKey}${separator}${translated}`);
+    } else {
+      result.push(fullLine);
+    }
+  }
+
+  return result.join('\n');
 }
 
 // ============================================================

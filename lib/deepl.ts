@@ -4,6 +4,8 @@
 // NEVER import this file from client components
 // ============================================================
 
+import { getRateLimiter } from './rateLimiter';
+import { getTranslationCache } from './translationCache';
 
 const DEEPL_FREE_URL  = 'https://api-free.deepl.com/v2/translate';
 const DEEPL_PRO_URL   = 'https://api.deepl.com/v2/translate';
@@ -113,7 +115,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 // ============================================================
 // BLOCK: Public translation function
-// Handles batching + validates API key presence
+// Handles batching + validates API key presence + rate limiting + caching
 // ============================================================
 export async function translateTexts(texts: string[]): Promise<string[]> {
   console.log('\n[deepl] translateTexts called');
@@ -133,18 +135,62 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     throw new Error('DEEPL_API_KEY не задан в .env файле');
   }
 
-  const batches = chunk(texts, BATCH_SIZE);
+  // Check cache first
+  const cache = getTranslationCache();
+  const cachedTranslations = cache.getMany(texts);
+  const uncachedTexts = texts.filter(t => !cachedTranslations.has(t));
+
+  console.log(`[deepl] Cache stats: ${cachedTranslations.size} hits, ${uncachedTexts.length} misses`);
+
+  // If everything is cached, return immediately
+  if (uncachedTexts.length === 0) {
+    console.log('[deepl] All translations found in cache, skipping API call');
+    return texts.map(t => cachedTranslations.get(t)!);
+  }
+
+  // Calculate total characters for uncached texts only
+  const totalChars = uncachedTexts.join('').length;
+  console.log('[deepl] Characters to translate (uncached):', totalChars);
+
+  // Check rate limit before making API calls
+  const rateLimiter = getRateLimiter();
+  await rateLimiter.checkLimit(totalChars);
+
+  // Translate uncached texts
+  const batches = chunk(uncachedTexts, BATCH_SIZE);
   console.log('[deepl] Split into batches:', batches.length);
 
-  const results: string[] = [];
+  const newTranslations: string[] = [];
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     console.log(`[deepl] Processing batch ${i + 1}/${batches.length}, size: ${batch.length}`);
     const translated = await translateBatch(batch, apiKey);
-    results.push(...translated);
-    console.log(`[deepl] Batch ${i + 1} complete, total results so far: ${results.length}`);
+    newTranslations.push(...translated);
+    console.log(`[deepl] Batch ${i + 1} complete, total results so far: ${newTranslations.length}`);
   }
 
-  console.log('[deepl] All batches complete, total results:', results.length);
+  // Record usage after successful translation
+  rateLimiter.recordUsage(totalChars);
+
+  // Cache new translations
+  const translationPairs = uncachedTexts.map((original, i) => ({
+    original,
+    translated: newTranslations[i]
+  }));
+  cache.setMany(translationPairs);
+
+  // Combine cached and new translations in correct order
+  const results: string[] = [];
+  let uncachedIndex = 0;
+
+  for (const text of texts) {
+    if (cachedTranslations.has(text)) {
+      results.push(cachedTranslations.get(text)!);
+    } else {
+      results.push(newTranslations[uncachedIndex++]);
+    }
+  }
+
+  console.log('[deepl] All translations complete, total results:', results.length);
   return results;
 }

@@ -3,9 +3,9 @@ import { extractLangFiles, translateLangFiles, repackJar } from '@/lib/jarProces
 import { translateModpack } from '@/lib/modpackProcessor';
 import {
   parseJsonLang, parseDotLang, parseSnbt, parseToml, parseCfg,
-  parseNestedJson, parseXml, parsePlainText,
+  parseNestedJson, parseXml, parsePlainText, parseProperties,
   rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml, rebuildCfg,
-  rebuildNestedJson, rebuildXml, rebuildPlainText,
+  rebuildNestedJson, rebuildXml, rebuildPlainText, rebuildProperties,
 } from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
@@ -184,6 +184,9 @@ async function getStandaloneHandler(ext: string, content: string, fileName: stri
     case 'txt':
       console.log('Parsing plain text format...');
       return { entries: parsePlainText(content), rebuild: rebuildPlainText, outName: fileName };
+    case 'properties':
+      console.log('Parsing .properties format...');
+      return { entries: parseProperties(content), rebuild: rebuildProperties, outName: fileName };
     default:
       console.warn('Unknown format, returning empty');
       return { entries: [], rebuild: () => content, outName: fileName };

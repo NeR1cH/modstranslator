@@ -5,8 +5,12 @@ import DropZone from '@/components/DropZone';
 import FileQueue from '@/components/FileQueue';
 import TerminalLog from '@/components/TerminalLog';
 import ProgressBar from '@/components/ProgressBar';
+import { UsageIndicator } from '@/components/UsageIndicator';
+import { CacheIndicator } from '@/components/CacheIndicator';
+import { HistoryPanel } from '@/components/HistoryPanel';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
 import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
+import { getTranslationHistory } from '@/lib/translationHistory';
 
 
 const MAX_LOG_ENTRIES = 500;
@@ -32,7 +36,7 @@ function detectFormat(name: string): FileFormat | null {
   console.log('detectFormat called for:', name);
   const ext = name.split('.').pop()?.toLowerCase();
   console.log('extracted extension:', ext);
-  const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt'];
+  const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt','properties'];
   const result = valid.includes(ext as FileFormat) ? ext as FileFormat : null;
   console.log('detectFormat result:', result);
   return result;
@@ -48,6 +52,7 @@ const FORMAT_LABELS: Record<string, string> = {
   cfg:  'КОНФИГ',
   xml:  'XML',
   txt:  'ТЕКСТ',
+  properties: 'PROPERTIES',
 };
 
 export default function Home() {
@@ -60,6 +65,7 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadPercent, setUploadPercent] = useState(0);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
     setLogs(prev => {
@@ -238,6 +244,10 @@ export default function Home() {
       return;
     }
 
+    // Create AbortController for this translation session
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setIsRunning(true);
     setProgress(0);
     setResults([]);
@@ -246,77 +256,115 @@ export default function Home() {
 
     const newResults: typeof results = [];
 
-    for (let i = 0; i < pending.length; i++) {
-      const file = pending[i];
-      console.log(`\n--- Translating file ${i+1}/${pending.length} ---`);
-      console.log('file:', file);
-
-      const typeLabel = FORMAT_LABELS[file.format] ?? file.format.toUpperCase();
-      setCurrentFile(file.name);
-      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'translating' } : f));
-      addLog(`> [${i+1}/${pending.length}] [${typeLabel}] ${file.name}`, 'info');
-
-      if (file.format === 'zip') {
-        console.log('MODPACK detected');
-        addLog(`> МОДПАК: сканирование всех файлов...`, 'system');
-      }
-
-      try {
-        console.log('Sending translate request...');
-        console.log('base64 length:', file.originalBase64?.length || 0);
-
-        const res = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64: file.originalBase64, fileName: file.name }),
-        });
-
-        console.log('translate response status:', res.status);
-        console.log('translate response ok:', res.ok);
-
-        if (!res.ok) {
-          const err = await res.json() as { error: string };
-          console.error('translate API error:', err);
-          throw new Error(err.error);
+    try {
+      for (let i = 0; i < pending.length; i++) {
+        // Check if aborted
+        if (controller.signal.aborted) {
+          console.log('Translation aborted by user');
+          addLog('> ⚠️ ПЕРЕВОД ОТМЕНЕН ПОЛЬЗОВАТЕЛЕМ', 'warning');
+          break;
         }
 
-        const data = await res.json() as {
-          resultBase64: string; translatedCount: number;
-          langFilesCount: number; outputFileName: string;
-        };
-        console.log('translate result:', {
-          outputFileName: data.outputFileName,
-          translatedCount: data.translatedCount,
-          langFilesCount: data.langFilesCount,
-          resultBase64Length: data.resultBase64?.length || 0
-        });
+        const file = pending[i];
+        console.log(`\n--- Translating file ${i+1}/${pending.length} ---`);
+        console.log('file:', file);
 
-        newResults.push({ outputFileName: data.outputFileName, resultBase64: data.resultBase64 });
-        setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done' } : f));
+        const typeLabel = FORMAT_LABELS[file.format] ?? file.format.toUpperCase();
+        setCurrentFile(file.name);
+        setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'translating' } : f));
+        addLog(`> [${i+1}/${pending.length}] [${typeLabel}] ${file.name}`, 'info');
 
-        const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
-        addLog(`> ГОТОВО: ${file.name} ${countMsg}`, 'success');
-        console.log('SUCCESS:', file.name);
-      } catch (err) {
-        console.error('ERROR translating file:', err);
-        console.error('error stack:', err instanceof Error ? err.stack : 'no stack');
-        setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'error', errorMessage: String(err) } : f));
-        addLog(`> СБОЙ: ${file.name} — ${err}`, 'error');
+        if (file.format === 'zip') {
+          console.log('MODPACK detected');
+          addLog(`> МОДПАК: сканирование всех файлов...`, 'system');
+        }
+
+        try {
+          console.log('Sending translate request...');
+          console.log('base64 length:', file.originalBase64?.length || 0);
+
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64: file.originalBase64, fileName: file.name }),
+            signal: controller.signal, // Pass abort signal to fetch
+          });
+
+          console.log('translate response status:', res.status);
+          console.log('translate response ok:', res.ok);
+
+          if (!res.ok) {
+            const err = await res.json() as { error: string };
+            console.error('translate API error:', err);
+            throw new Error(err.error);
+          }
+
+          const data = await res.json() as {
+            resultBase64: string; translatedCount: number;
+            langFilesCount: number; outputFileName: string;
+          };
+          console.log('translate result:', {
+            outputFileName: data.outputFileName,
+            translatedCount: data.translatedCount,
+            langFilesCount: data.langFilesCount,
+            resultBase64Length: data.resultBase64?.length || 0
+          });
+
+          newResults.push({ outputFileName: data.outputFileName, resultBase64: data.resultBase64 });
+          setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'done' } : f));
+
+          // Save to history
+          const history = getTranslationHistory();
+          await history.save({
+            fileName: file.name,
+            outputFileName: data.outputFileName,
+            stringsCount: data.translatedCount,
+            format: file.format,
+            resultBase64: data.resultBase64,
+            fileSize: file.size
+          });
+
+          const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
+          addLog(`> ГОТОВО: ${file.name} ${countMsg}`, 'success');
+          console.log('SUCCESS:', file.name);
+        } catch (err) {
+          // Check if error is due to abort
+          if (err instanceof Error && err.name === 'AbortError') {
+            console.log('Fetch aborted for file:', file.name);
+            setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'pending' } : f));
+            break;
+          }
+
+          console.error('ERROR translating file:', err);
+          console.error('error stack:', err instanceof Error ? err.stack : 'no stack');
+          setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'error', errorMessage: String(err) } : f));
+          addLog(`> СБОЙ: ${file.name} — ${err}`, 'error');
+        }
+
+        const progressPercent = Math.round(((i + 1) / pending.length) * 100);
+        console.log('progress:', progressPercent);
+        setProgress(progressPercent);
       }
-
-      const progressPercent = Math.round(((i + 1) / pending.length) * 100);
-      console.log('progress:', progressPercent);
-      setProgress(progressPercent);
+    } finally {
+      console.log('=== handleTranslate END ===');
+      console.log('newResults:', newResults);
+      setResults(newResults);
+      if (newResults.length > 0) addLog('> ГОТОВО. Нажмите [СКАЧАТЬ АРХИВ]', 'system');
+      setIsRunning(false);
+      setCurrentFile('');
+      setAbortController(null);
+      addLog('════════════════════════════════════', 'system');
     }
-
-    console.log('=== handleTranslate END ===');
-    console.log('newResults:', newResults);
-    setResults(newResults);
-    if (newResults.length > 0) addLog('> ГОТОВО. Нажмите [СКАЧАТЬ АРХИВ]', 'system');
-    setIsRunning(false);
-    setCurrentFile('');
-    addLog('════════════════════════════════════', 'system');
   }, [files, addLog]);
+
+  // ── Cancel translation ──────────────────────────────────────
+  const handleCancelTranslation = useCallback(() => {
+    if (abortController) {
+      console.log('=== handleCancelTranslation ===');
+      abortController.abort();
+      addLog('> ⚠️ ОТМЕНА ПЕРЕВОДА...', 'warning');
+    }
+  }, [abortController, addLog]);
 
   // ── Export ──────────────────────────────────────────────────
   const handleExport = useCallback(async () => {
@@ -361,6 +409,41 @@ export default function Home() {
     console.log('=== handleExport END ===');
   }, [results, addLog]);
 
+  // ── Download single file ────────────────────────────────────
+  const handleDownloadSingle = useCallback(async (file: { outputFileName: string; resultBase64: string }) => {
+    console.log('=== handleDownloadSingle START ===');
+    console.log('file:', file.outputFileName);
+
+    try {
+      const res = await fetch('/api/download-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(file),
+      });
+
+      console.log('download-single response status:', res.status);
+
+      if (!res.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      const blob = await res.blob();
+      console.log('blob size:', blob.size);
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.outputFileName;
+      a.click();
+
+      URL.revokeObjectURL(url);
+      console.log('=== handleDownloadSingle END ===');
+    } catch (err) {
+      console.error('Error downloading file:', err);
+      addLog(`> ОШИБКА СКАЧИВАНИЯ: ${file.outputFileName}`, 'error');
+    }
+  }, [addLog]);
+
   const pendingCount = files.filter(f => f.status === 'pending').length;
   const doneCount    = files.filter(f => f.status === 'done').length;
   const totalSize    = files.reduce((sum, f) => sum + f.size, 0);
@@ -382,7 +465,7 @@ export default function Home() {
           MINECRAFT FULL LOCALIZATION ENGINE v4.0 // DeepL API // EN→RU
         </p>
         <p className="text-xs text-green-900 tracking-wider mt-0.5">
-          ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt
+          ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt .properties
         </p>
         <div className="flex gap-6 mt-3 text-xs font-bold flex-wrap">
           <span>СТАТУС: <span className={isRunning ? 'text-yellow-400 animate-pulse' : 'text-green-400'}>
@@ -401,6 +484,12 @@ export default function Home() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Left */}
         <div className="space-y-5">
+          {/* Usage Indicator */}
+          <UsageIndicator />
+
+          {/* Cache Indicator */}
+          <CacheIndicator />
+
           <div>
             <div className="section-label">// 01. ЗАГРУЗКА — МОДЫ, МОДПАКИ, КВЕСТЫ, КОНФИГИ</div>
             <DropZone onFilesAdded={handleFilesAdded} disabled={isRunning || isUploading} />
@@ -443,14 +532,47 @@ export default function Home() {
               {isRunning ? `▶ ПЕРЕВОД... [${progress}%]` : `▶ ЗАПУСТИТЬ ПЕРЕВОД [${pendingCount} ОБЪ.]`}
             </button>
 
-            {results.length > 0 && !isRunning && (
+            {/* Cancel button */}
+            {isRunning && (
               <button
-                onClick={handleExport}
-                className="w-full py-3 border-2 border-green-300 text-green-300 font-bold tracking-widest uppercase text-sm
-                           hover:bg-green-300 hover:text-black transition-colors duration-100 active:scale-[0.98] animate-pulse"
+                onClick={handleCancelTranslation}
+                className="w-full py-3 border-2 border-red-500 text-red-400 font-bold tracking-widest uppercase text-sm
+                           hover:bg-red-500 hover:text-black transition-colors duration-100 active:scale-[0.98]"
               >
-                ▼ СКАЧАТЬ АРХИВ [{results.length} ФАЙЛ(ОВ)]
+                ✕ ОТМЕНИТЬ ПЕРЕВОД
               </button>
+            )}
+
+            {results.length > 0 && !isRunning && (
+              <>
+                <button
+                  onClick={handleExport}
+                  className="w-full py-3 border-2 border-green-300 text-green-300 font-bold tracking-widest uppercase text-sm
+                             hover:bg-green-300 hover:text-black transition-colors duration-100 active:scale-[0.98] animate-pulse"
+                >
+                  ▼ СКАЧАТЬ ВСЕ КАК АРХИВ [{results.length} ФАЙЛ(ОВ)]
+                </button>
+
+                {/* Individual file downloads */}
+                <div className="border border-green-900 divide-y divide-green-950">
+                  <div className="px-3 py-2 text-xs text-green-700 font-bold tracking-wider">
+                    ИЛИ СКАЧАТЬ ПО ОТДЕЛЬНОСТИ:
+                  </div>
+                  {results.map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2 hover:bg-green-950/20 transition-colors">
+                      <span className="flex-1 text-xs text-green-300 truncate">
+                        {file.outputFileName}
+                      </span>
+                      <button
+                        onClick={() => handleDownloadSingle(file)}
+                        className="text-xs px-2 py-1 border border-green-700 text-green-400 hover:bg-green-700 hover:text-black transition-colors"
+                      >
+                        ⬇
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
@@ -460,6 +582,12 @@ export default function Home() {
               <ProgressBar value={progress} label="TRANSLATION" />
             </div>
           )}
+
+          {/* History Panel */}
+          <div>
+            <div className="section-label">// 05. ИСТОРИЯ ПЕРЕВОДОВ</div>
+            <HistoryPanel />
+          </div>
         </div>
 
         {/* Right */}
