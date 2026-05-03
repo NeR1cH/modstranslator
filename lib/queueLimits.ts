@@ -11,8 +11,8 @@ export const QUEUE_LIMITS = {
   MAX_TOTAL_SIZE: 5 * 1024 * 1024 * 1024,
 
   // Maximum size per single file (in bytes)
-  // 1 GB per file
-  MAX_FILE_SIZE: 1000 * 1024 * 1024,
+  // 1.5 GB per file
+  MAX_FILE_SIZE: 1500 * 1024 * 1024,
 
   // Maximum concurrent translations
   MAX_CONCURRENT: 3,
