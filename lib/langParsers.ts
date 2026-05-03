@@ -1,4 +1,5 @@
 import { LangEntry } from '@/types';
+import { safeJsonParse } from './security';
 
 // ============================================================
 // BLOCK: Helpers
@@ -26,7 +27,7 @@ export function detectFormat(filename: string): string | null {
 // BLOCK: JSON lang parser (Minecraft 1.13+)
 // ============================================================
 export function parseJsonLang(content: string): LangEntry[] {
-  const obj = JSON.parse(content) as Record<string, unknown>;
+  const obj = safeJsonParse(content) as Record<string, unknown>;
   const entries: LangEntry[] = [];
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string' && hasTranslatableText(value)) {
@@ -37,7 +38,7 @@ export function parseJsonLang(content: string): LangEntry[] {
 }
 
 export function rebuildJsonLang(original: string, translations: Map<string, string>): string {
-  const obj = JSON.parse(original) as Record<string, unknown>;
+  const obj = safeJsonParse(original) as Record<string, unknown>;
   for (const [key] of Object.entries(obj)) {
     if (translations.has(key)) obj[key] = translations.get(key);
   }
@@ -81,7 +82,11 @@ export function parseSnbt(content: string): LangEntry[] {
   const entries: LangEntry[] = [];
   content.split('\n').forEach((line, i) => {
     if (!SNBT_TEXT_KEYS.test(line)) return;
-    const match = line.match(/:\s*"((?:[^"\\]|\\.)*)"/);
+    // Match both simple format: description: "text"
+    // And array format: description: ["text"]
+    const simpleMatch = line.match(/:\s*"((?:[^"\\]|\\.)*)"/);
+    const arrayMatch = line.match(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/);
+    const match = arrayMatch || simpleMatch;
     if (!match) return;
     const value = match[1].replace(/\\"/g, '"');
     if (hasTranslatableText(value)) entries.push({ key: `snbt_line_${i}`, value });
@@ -94,7 +99,12 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
     const key = `snbt_line_${i}`;
     if (!translations.has(key)) return line;
     const translated = translations.get(key)!.replace(/"/g, '\\"');
-    return line.replace(/("(?:[^"\\]|\\.)*")(\s*)$/, `"${translated}"$2`);
+    // Handle both simple format: description: "text"
+    // And array format: description: ["text"]
+    if (/:\s*\[/.test(line)) {
+      return line.replace(/:\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]/, `: ["${translated}"]`);
+    }
+    return line.replace(/:\s*"((?:[^"\\]|\\.)*)"/, `: "${translated}"`);
   }).join('\n');
 }
 
@@ -178,7 +188,7 @@ export function parseNestedJson(content: string): LangEntry[] {
       }
     }
   }
-  traverse(JSON.parse(content), '');
+  traverse(safeJsonParse(content), '');
   return entries;
 }
 
@@ -195,7 +205,7 @@ export function rebuildNestedJson(original: string, translations: Map<string, st
     }
     return obj;
   }
-  return JSON.stringify(replaceInObj(JSON.parse(original), ''), null, 2);
+  return JSON.stringify(replaceInObj(safeJsonParse(original), ''), null, 2);
 }
 
 // ============================================================

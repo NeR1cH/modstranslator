@@ -8,6 +8,7 @@ import {
 } from './langParsers';
 import { translateTexts } from './deepl';
 import { LangEntry } from '@/types';
+import { sanitizePath } from './security';
 
 // ============================================================
 // BLOCK: File category detection
@@ -258,14 +259,22 @@ export async function translateModpack(
         const ruPath = getRuPath(path);
         console.log('[modpackProcessor]   Output path:', ruPath);
 
-        if (ruPath !== path) {
-          // For lang files: add ru_ru version, keep original
-          result.file(ruPath, translated.content);
-          console.log('[modpackProcessor]   Added as new file (lang)');
-        } else {
-          // For quests/configs: overwrite in place
-          result.file(path, translated.content);
-          console.log('[modpackProcessor]   Overwritten in place');
+        // Sanitize paths to prevent path traversal attacks
+        try {
+          const safePath = sanitizePath(ruPath !== path ? ruPath : path);
+
+          if (ruPath !== path) {
+            // For lang files: add ru_ru version, keep original
+            result.file(safePath, translated.content);
+            console.log('[modpackProcessor]   Added as new file (lang)');
+          } else {
+            // For quests/configs: overwrite in place
+            result.file(safePath, translated.content);
+            console.log('[modpackProcessor]   Overwritten in place');
+          }
+        } catch (error) {
+          console.error('[modpackProcessor]   Invalid path detected:', ruPath, error);
+          // Skip this file if path is invalid
         }
       } else {
         console.log('[modpackProcessor]   No translation needed');

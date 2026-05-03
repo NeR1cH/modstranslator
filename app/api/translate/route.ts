@@ -10,6 +10,7 @@ import {
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
 import { TranslationReportBuilder } from '@/lib/translationReport';
+import { validateBase64Size } from '@/lib/security';
 
 // ============================================================
 // BLOCK: Route handler — dispatches by file format
@@ -25,6 +26,18 @@ export async function POST(req: NextRequest) {
     console.log('base64 length:', body.base64?.length || 0);
 
     const { base64, fileName } = body;
+
+    // Validate base64 size to prevent DoS attacks
+    try {
+      validateBase64Size(base64);
+    } catch (error) {
+      console.error('File size validation failed:', error);
+      return NextResponse.json(
+        { error: 'File too large (max 1GB)' },
+        { status: 413 }
+      );
+    }
+
     const buffer = Buffer.from(base64, 'base64');
     console.log('Buffer size:', buffer.length, 'bytes');
 

@@ -10,6 +10,7 @@ import {
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
 import { TranslationReportBuilder } from '@/lib/translationReport';
+import { validateBase64Size } from '@/lib/security';
 
 // ============================================================
 // BLOCK: Streaming translation endpoint with SSE
@@ -37,6 +38,21 @@ export async function POST(req: NextRequest) {
 
       const files = body.files;
       const totalFiles = files.length;
+
+      // Validate all file sizes before processing
+      for (const file of files) {
+        try {
+          validateBase64Size(file.base64);
+        } catch (error) {
+          await sendEvent({
+            type: 'error',
+            message: `Файл ${file.fileName} слишком большой (макс 1GB)`,
+            error: String(error)
+          });
+          await writer.close();
+          return;
+        }
+      }
 
       // Create report builder
       const reportBuilder = new TranslationReportBuilder(

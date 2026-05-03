@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTranslationCache } from '@/lib/translationCache';
+import { getFragmentCache } from '@/lib/fragmentCache';
 
 // ============================================================
 // BLOCK: GET cache statistics
@@ -7,9 +8,14 @@ import { getTranslationCache } from '@/lib/translationCache';
 export async function GET() {
   try {
     const cache = getTranslationCache();
+    const fragmentCache = getFragmentCache();
     const stats = cache.getStats();
+    const fragmentStats = fragmentCache.getStats();
 
-    return NextResponse.json(stats);
+    return NextResponse.json({
+      ...stats,
+      fragments: fragmentStats
+    });
   } catch (error) {
     console.error('[api/cache-stats] Error:', error);
     return NextResponse.json(
@@ -25,7 +31,9 @@ export async function GET() {
 export async function DELETE() {
   try {
     const cache = getTranslationCache();
+    const fragmentCache = getFragmentCache();
     cache.clear();
+    fragmentCache.flush();
 
     return NextResponse.json({
       success: true,

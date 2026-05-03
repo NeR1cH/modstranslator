@@ -6,6 +6,8 @@
 
 import { getRateLimiter } from './rateLimiter';
 import { getTranslationCache } from './translationCache';
+import { getFragmentCache } from './fragmentCache';
+import { fetchWithTimeout } from './security';
 
 const DEEPL_FREE_URL  = 'https://api-free.deepl.com/v2/translate';
 const DEEPL_PRO_URL   = 'https://api.deepl.com/v2/translate';
@@ -47,14 +49,14 @@ async function translateBatch(
   console.log('[deepl] Request params size:', params.toString().length, 'bytes');
 
   console.log('[deepl] Sending request...');
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
       'Authorization': `DeepL-Auth-Key ${apiKey}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: params.toString(),
-  });
+  }, 30000); // 30 second timeout
 
   console.log('[deepl] Response status:', res.status);
 
@@ -137,15 +139,31 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
 
   // Check cache first
   const cache = getTranslationCache();
+  const fragmentCache = getFragmentCache();
   const cachedTranslations = cache.getMany(texts);
-  const uncachedTexts = texts.filter(t => !cachedTranslations.has(t));
 
-  console.log(`[deepl] Cache stats: ${cachedTranslations.size} hits, ${uncachedTexts.length} misses`);
+  // Try fragment cache for uncached texts
+  const uncachedTexts: string[] = [];
+  const fragmentTranslations = new Map<string, string>();
+
+  for (const text of texts) {
+    if (cachedTranslations.has(text)) continue;
+
+    // Try fragment cache
+    const fragmentResult = fragmentCache.tryTranslate(text);
+    if (fragmentResult) {
+      fragmentTranslations.set(text, fragmentResult);
+    } else {
+      uncachedTexts.push(text);
+    }
+  }
+
+  console.log(`[deepl] Cache stats: ${cachedTranslations.size} full cache hits, ${fragmentTranslations.size} fragment hits, ${uncachedTexts.length} misses`);
 
   // If everything is cached, return immediately
   if (uncachedTexts.length === 0) {
-    console.log('[deepl] All translations found in cache, skipping API call');
-    return texts.map(t => cachedTranslations.get(t)!);
+    console.log('[deepl] All translations found in cache/fragments, skipping API call');
+    return texts.map(t => cachedTranslations.get(t) || fragmentTranslations.get(t)!);
   }
 
   // Calculate total characters for uncached texts only
@@ -179,13 +197,20 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
   }));
   cache.setMany(translationPairs);
 
-  // Combine cached and new translations in correct order
+  // Learn fragments from new translations
+  translationPairs.forEach(({ original, translated }) => {
+    fragmentCache.learn(original, translated);
+  });
+
+  // Combine cached, fragment, and new translations in correct order
   const results: string[] = [];
   let uncachedIndex = 0;
 
   for (const text of texts) {
     if (cachedTranslations.has(text)) {
       results.push(cachedTranslations.get(text)!);
+    } else if (fragmentTranslations.has(text)) {
+      results.push(fragmentTranslations.get(text)!);
     } else {
       results.push(newTranslations[uncachedIndex++]);
     }

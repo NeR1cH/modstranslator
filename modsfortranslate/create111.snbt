@@ -1,0 +1,4072 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "create"
+	group: ""
+	icon: "create:wrench"
+	id: "7B220184086501A8"
+	order_index: 0
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["1FF2C1E7D37E30B1"]
+			description: ["Collect raw zinc to begin processing it further."]
+			id: "10F5AA90E443C9DF"
+			rewards: [{
+				id: "4B6625EE31CA6805"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "57EC134F1601563A"
+				item: "create:raw_zinc"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -4.0d
+		}
+		{
+			description: ["Obtain crushed raw iron for industrial purposes."]
+			id: "2490150A6A05D309"
+			rewards: [{
+				id: "5A5B22EC3BFF63A0"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "2BA913C328BA6AB4"
+				item: "create:crushed_raw_iron"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -4.0d
+		}
+		{
+			dependencies: ["2490150A6A05D309"]
+			description: ["Crush raw gold to prepare it for refining."]
+			id: "087493E2BD5BBCCC"
+			rewards: [{
+				id: "328339F7BC2973B2"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "0B5BF8555595523D"
+				item: "create:crushed_raw_gold"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -4.0d
+		}
+		{
+			dependencies: ["087493E2BD5BBCCC"]
+			description: ["Crush raw copper for use in crafting."]
+			id: "156BEEFAB52E6C98"
+			rewards: [{
+				id: "4EEAEFD6382EA41F"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6433205F14FC2360"
+				item: "create:crushed_raw_copper"
+				type: "item"
+			}]
+			x: -3.5d
+			y: -4.0d
+		}
+		{
+			dependencies: ["156BEEFAB52E6C98"]
+			description: ["Process raw zinc into a usable crushed form."]
+			id: "1FF2C1E7D37E30B1"
+			rewards: [{
+				id: "4DC01C880B1F3BD1"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "20998ACD39A25EE7"
+				item: "create:crushed_raw_zinc"
+				type: "item"
+			}]
+			x: -2.5d
+			y: -4.0d
+		}
+		{
+			dependencies: ["3F6105554E02CDC3"]
+			description: ["Crush raw osmium to prepare it for further processing."]
+			id: "53DB5DB726CFF3A4"
+			rewards: [{
+				id: "099234E49D7636F9"
+				type: "xp"
+				xp: 30
+			}]
+			tasks: [{
+				id: "73DFB8E94C7DFFFB"
+				item: "create:crushed_raw_osmium"
+				type: "item"
+			}]
+			x: 5.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["53DB5DB726CFF3A4"]
+			description: ["Produce crushed silver for use in advanced recipes."]
+			id: "78DE10E717D31470"
+			rewards: [{
+				id: "05EB321CF375338C"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "14D5D6DB8CB2A1E6"
+				item: "create:crushed_raw_silver"
+				type: "item"
+			}]
+			x: 6.0d
+			y: -4.0d
+		}
+		{
+			description: ["Obtain crushed raw tin as a crafting component."]
+			id: "2F5511E9BDDAD3A9"
+			rewards: [{
+				id: "17926092C9CA86A0"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "1CD983493988B6AB"
+				item: "create:crushed_raw_tin"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["2F5511E9BDDAD3A9"]
+			description: ["Process tin further by crushing raw lead."]
+			id: "75F0296E9BA063D4"
+			rewards: [{
+				id: "2147832E73B89F77"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "42E8E0DFDEE35C26"
+				item: "create:crushed_raw_lead"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["75F0296E9BA063D4"]
+			description: ["Refine raw aluminum by crushing it into usable form."]
+			id: "78D7025EE90B5FB2"
+			rewards: [{
+				id: "07034D7EEB83DF99"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "23225E13BE129F66"
+				item: "create:crushed_raw_aluminum"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["78D7025EE90B5FB2"]
+			description: ["Crush raw uranium using mechanical processing."]
+			id: "0E11026E798826B3"
+			rewards: [{
+				id: "388A32084959FEB8"
+				type: "xp"
+				xp: 30
+			}]
+			tasks: [{
+				id: "7BE77B151DBE5EB9"
+				item: "create:crushed_raw_uranium"
+				type: "item"
+			}]
+			x: 3.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["0E11026E798826B3"]
+			description: ["Obtain crushed raw nickel for further refining."]
+			id: "3F6105554E02CDC3"
+			rewards: [{
+				id: "63E8387BCB74B4AE"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "2BA70B406AA3A3C8"
+				item: "create:crushed_raw_nickel"
+				type: "item"
+			}]
+			x: 4.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["087493E2BD5BBCCC"]
+			description: ["Craft a golden sheet and receive crushed gold as a reward."]
+			id: "06F82D7AEED80886"
+			rewards: [{
+				count: 5
+				id: "4351E0B48E673068"
+				item: "create:crushed_raw_gold"
+				type: "item"
+			}]
+			tasks: [{
+				id: "52B3C2A9598D32F3"
+				item: "create:golden_sheet"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -5.0d
+		}
+		{
+			dependencies: ["156BEEFAB52E6C98"]
+			description: ["Produce a copper nugget using processing equipment."]
+			id: "6AB95FD1FA8BA36E"
+			rewards: [{
+				id: "0BB8B53C9941D16D"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "717AD1AC99959C6C"
+				item: "create:copper_nugget"
+				type: "item"
+			}]
+			x: -3.5d
+			y: -5.0d
+		}
+		{
+			dependencies: ["6AB95FD1FA8BA36E"]
+			description: ["Flatten copper into a copper sheet using a press."]
+			id: "601B6DFCABA1F23A"
+			rewards: [{
+				id: "6065DABEAA918D0D"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "24DCD60DCB93CFE2"
+				item: "create:copper_sheet"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["1FF2C1E7D37E30B1"]
+			description: ["Create a zinc nugget via material reduction."]
+			id: "5B1A2D9123DBBF8A"
+			rewards: [{
+				id: "4E4A0FAF7EE87C2C"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "413960273D9ECC54"
+				item: "create:zinc_nugget"
+				type: "item"
+			}]
+			x: -2.5d
+			y: -5.0d
+		}
+		{
+			dependencies: ["1FF2C1E7D37E30B1"]
+			description: ["Smelt zinc to produce a usable ingot."]
+			id: "4A3739FD474CB065"
+			rewards: [{
+				count: 3
+				id: "1B8DF7D0883C9125"
+				item: "create:raw_zinc"
+				type: "item"
+			}]
+			tasks: [{
+				id: "02C93AE8DCFC2407"
+				item: "create:zinc_ingot"
+				type: "item"
+			}]
+			x: -2.0d
+			y: -3.0d
+		}
+		{
+			dependencies: ["2490150A6A05D309"]
+			description: ["Craft an iron sheet and earn crushed iron."]
+			id: "30EB1CBCEE3A9EBF"
+			rewards: [{
+				count: 5
+				id: "48EC059BC0D44310"
+				item: "create:crushed_raw_iron"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3D01505CEFDAE685"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -5.0d
+		}
+		{
+			dependencies: ["4A3739FD474CB065"]
+			description: ["Combine zinc and copper to make a brass ingot."]
+			id: "62C34A6DF890A44B"
+			rewards: [{
+				id: "0E5CFBEE4EEFA452"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "5976D332FA8D392F"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			x: -2.0d
+			y: -2.0d
+		}
+		{
+			dependencies: ["62C34A6DF890A44B"]
+			description: ["Break down brass into small brass nuggets."]
+			id: "55AC783EF53C0FC7"
+			rewards: [{
+				id: "12088B2F3368F1FC"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "4F24DAB1076080B8"
+				item: "create:brass_nugget"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["62C34A6DF890A44B"]
+			description: ["Press brass ingots into thin brass sheets."]
+			id: "6522A08513D695F3"
+			rewards: [{
+				id: "4BE15E0BD70227EB"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "2AA570AC619B4B0F"
+				item: "create:brass_sheet"
+				type: "item"
+			}]
+			x: -2.5d
+			y: -1.0d
+		}
+		{
+			description: ["Craft Rose Quartz, a key component in many electronic Create mod items."]
+			id: "5F705F2042BB0D2B"
+			rewards: [{
+				id: "044A3CE0DA2D59E6"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "616FCB4C4041B69A"
+				item: "create:rose_quartz"
+				type: "item"
+			}]
+			x: -0.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["5F705F2042BB0D2B"]
+			description: ["Polish the Rose Quartz for use in crafting advanced components."]
+			id: "01C8F1E2A94E885A"
+			rewards: [{
+				count: 3
+				id: "03C34151D4BEBF1D"
+				item: {
+					Count: 1
+					id: "create:red_sand_paper"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			tasks: [{
+				id: "4C7F4B380466C9E7"
+				item: "create:polished_rose_quartz"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -14.5d
+		}
+		{
+			dependencies: ["5F705F2042BB0D2B"]
+			description: ["Grind Obsidian into Powdered Obsidian, useful in high-durability crafting."]
+			id: "15D981BD5D35836C"
+			rewards: [{
+				id: "18CAFDCDC6288023"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "2BF1C25161E94E40"
+				item: "create:powdered_obsidian"
+				type: "item"
+			}]
+			x: 0.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["15D981BD5D35836C"]
+			description: ["Use Powdered Obsidian to make Sturdy Sheets for robust mechanical parts."]
+			id: "5A8697538A0D20F0"
+			rewards: [{
+				id: "3BCD86D13498CBD4"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "1E4335EC6C417CAF"
+				item: "create:sturdy_sheet"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["5A8697538A0D20F0"]
+			description: ["Craft a Propeller, often used in rotation-based machinery."]
+			id: "3E3AA9E81FC38CF0"
+			rewards: [{
+				count: 4
+				id: "1A9F79A3CBE1D821"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3B6CE5D6886B2435"
+				item: "create:propeller"
+				type: "item"
+			}]
+			x: 2.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["3E3AA9E81FC38CF0"]
+			description: ["Create a Whisk, an essential part of the Mechanical Mixer."]
+			id: "60011E98CBE00724"
+			rewards: [{
+				id: "2C78583A366761E5"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "107AE74245C5E6A5"
+				item: "create:whisk"
+				type: "item"
+			}]
+			x: 3.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["60011E98CBE00724"]
+			description: ["Craft a Brass Hand, used in deployers for automation."]
+			id: "70667EF2A59AA90C"
+			rewards: [{
+				id: "15E949427A0B0BDE"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "01B2776280F5ABF4"
+				item: "create:brass_hand"
+				type: "item"
+			}]
+			x: 4.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["70667EF2A59AA90C"]
+			description: ["Create a Crafter Slot Cover, part of the mechanical crafting system."]
+			id: "0827CE7A4867EF1F"
+			rewards: [{
+				id: "6C0D26FD1F96516D"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "161FDADDCA8B2047"
+				item: "create:crafter_slot_cover"
+				type: "item"
+			}]
+			x: 5.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["0827CE7A4867EF1F"]
+			description: ["Craft Electron Tubes, vital in precision devices like sequencers and deployers."]
+			id: "33F49F160B7D425C"
+			rewards: [{
+				id: "75027BAB85DC4F76"
+				item: "create:rose_quartz"
+				type: "item"
+			}]
+			tasks: [{
+				id: "40557811ABC15052"
+				item: "create:electron_tube"
+				type: "item"
+			}]
+			x: 6.5d
+			y: -16.0d
+		}
+		{
+			id: "3E69DF3EA3F72CFB"
+			rewards: [{
+				id: "7CDB53246F97A883"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "1EEC794B28A31C8F"
+				item: "create:cardboard"
+				type: "item"
+			}]
+			x: -6.5d
+			y: 0.0d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Craft a lightweight cardboard helmet."]
+			id: "1D5ED5E5946EA935"
+			rewards: [{
+				count: 2
+				id: "42DDC94580187B3F"
+				item: "create:cardboard"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3E2291FB4F5AAFDF"
+				item: {
+					Count: 1
+					id: "create:cardboard_helmet"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -8.0d
+			y: 1.0d
+		}
+		{
+			dependencies: ["1D5ED5E5946EA935"]
+			description: ["Assemble a cardboard chestplate for basic protection."]
+			id: "45FD69984B1E577B"
+			rewards: [{
+				id: "7EEF0FB881DB152D"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "13FFE007244BA53F"
+				item: {
+					Count: 1
+					id: "create:cardboard_chestplate"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -8.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["45FD69984B1E577B"]
+			description: ["Make cardboard leggings to complete the armor set."]
+			id: "221B0020A11DD0E4"
+			rewards: [{
+				id: "3ED3E0B9095AEF8A"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "033430895F92B1E1"
+				item: {
+					Count: 1
+					id: "create:cardboard_leggings"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -8.0d
+			y: 3.0d
+		}
+		{
+			dependencies: ["221B0020A11DD0E4"]
+			description: ["Craft cardboard boots for a full set of cardboard armor."]
+			id: "283EA5DE67D2C036"
+			rewards: [{
+				id: "1BE6D8540C5C0FF7"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "01FEAB4694EB8E91"
+				item: {
+					Count: 1
+					id: "create:cardboard_boots"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -8.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Build a cardboard sword — fragile but functional."]
+			id: "467FCEF736B5107D"
+			rewards: [{
+				id: "51AF23ECFBC3BA59"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "18F895BF1D6E9D88"
+				item: "create:cardboard_sword"
+				type: "item"
+			}]
+			x: -5.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Bind cardboard into a compact block."]
+			id: "40A98FA3095407B2"
+			rewards: [{
+				id: "3339F44CF9DF4C00"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "4A269D5541DD738E"
+				item: "create:bound_cardboard_block"
+				type: "item"
+			}]
+			x: -4.5d
+			y: 1.0d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Create a block of plain cardboard for storage or crafting."]
+			id: "7C022C81EF7CEDD8"
+			rewards: [{
+				id: "2630AB052BB59848"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "617D3B56344EDC41"
+				item: "create:cardboard_block"
+				type: "item"
+			}]
+			x: -5.0d
+			y: 2.0d
+		}
+		{
+			description: ["Build a basic copper diving helmet."]
+			id: "1CB1F024A135B051"
+			rewards: [{
+				count: 5
+				id: "2F6AFF6012C9798B"
+				item: "create:copper_nugget"
+				type: "item"
+			}]
+			tasks: [{
+				id: "60361276C73D627E"
+				item: {
+					Count: 1
+					id: "create:copper_diving_helmet"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -7.0d
+			y: -3.0d
+		}
+		{
+			dependencies: ["1CB1F024A135B051"]
+			description: ["Upgrade to a netherite diving helmet for deep-sea exploration."]
+			id: "372DE6E9294FB1A8"
+			rewards: [{
+				id: "3B54A5F0D43DBFCB"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "5CCB49B99D784D03"
+				item: {
+					Count: 1
+					id: "create:netherite_diving_helmet"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -5.5d
+			y: -3.0d
+		}
+		{
+			dependencies: ["1CB1F024A135B051"]
+			description: ["Make copper diving boots to go with your helmet."]
+			id: "0FD476E407149D6C"
+			rewards: [{
+				id: "1464D377231BD93A"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "35AFB4A794E09E01"
+				item: {
+					Count: 1
+					id: "create:copper_diving_boots"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -7.0d
+			y: -2.0d
+		}
+		{
+			dependencies: ["372DE6E9294FB1A8"]
+			description: ["Forge netherite diving boots for ultimate underwater protection."]
+			id: "7347493A2CA3A393"
+			rewards: [{
+				id: "7C8710B3F09B907A"
+				type: "xp"
+				xp: 40
+			}]
+			tasks: [{
+				id: "74D57CBCEE8EA81A"
+				item: {
+					Count: 1
+					id: "create:netherite_diving_boots"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -5.5d
+			y: -2.0d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Craft a large 12x10 cardboard package."]
+			id: "38F4E25E3072D701"
+			rewards: [{
+				id: "123EF09632B79086"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "350CEE275C582717"
+				item: {
+					Count: 1
+					id: "create:cardboard_package_12x10"
+					tag: { }
+				}
+				type: "item"
+			}]
+			x: -7.0d
+			y: 1.5d
+		}
+		{
+			dependencies: ["3E69DF3EA3F72CFB"]
+			description: ["Build a medium 10x8 cardboard package."]
+			id: "745C44DC2A479D11"
+			rewards: [{
+				id: "7CBCE3EF46349C07"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "10A379FC9339E78D"
+				item: {
+					Count: 1
+					id: "create:cardboard_package_10x8"
+					tag: { }
+				}
+				type: "item"
+			}]
+			x: -6.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["745C44DC2A479D11"]
+			description: ["Create a 10x12 cardboard package for larger contents."]
+			id: "238856DC16BD4A48"
+			rewards: [{
+				id: "321A21093B456353"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7428FDDF63FC7B5C"
+				item: {
+					Count: 1
+					id: "create:cardboard_package_10x12"
+					tag: { }
+				}
+				type: "item"
+			}]
+			x: -6.0d
+			y: 3.0d
+		}
+		{
+			dependencies: ["38F4E25E3072D701"]
+			description: ["Construct a 12x12 cardboard package — the biggest one."]
+			id: "070885B24A2C9179"
+			rewards: [{
+				id: "0E44DA12E5429AB5"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6800CA2B93277D24"
+				item: {
+					Count: 1
+					id: "create:cardboard_package_12x12"
+					tag: { }
+				}
+				type: "item"
+			}]
+			x: -7.0d
+			y: 2.5d
+		}
+		{
+			description: ["Craft some sand paper for material processing."]
+			id: "4C56369CB9A15FB3"
+			rewards: [{
+				id: "7445D983B98D68D7"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "18F6E7263909A05C"
+				item: {
+					Count: 1
+					id: "create:sand_paper"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: 1.0d
+			y: -1.0d
+		}
+		{
+			dependencies: ["4C56369CB9A15FB3"]
+			description: ["Make red sand paper — more effective for tougher materials."]
+			id: "022CB39B43ACA7D9"
+			rewards: [{
+				id: "15BDAA1098A66065"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "188453DDBBCF5B3B"
+				item: {
+					Count: 1
+					id: "create:red_sand_paper"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: 1.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Use tree fertilizer to speed up plant growth."]
+			id: "48665D71E4C7EE1D"
+			rewards: [{
+				id: "703A97989BF61FFC"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6542A2E0438487C2"
+				item: "create:tree_fertilizer"
+				type: "item"
+			}]
+			x: -1.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["4C56369CB9A15FB3"]
+			description: ["Craft a filter to sort items automatically."]
+			id: "25973C514125FB5C"
+			rewards: [{
+				id: "54E84653EF8EFF25"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "233FF6108771AABC"
+				item: "create:filter"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -2.0d
+		}
+		{
+			dependencies: ["4C56369CB9A15FB3"]
+			description: ["Build an attribute filter to refine item selection."]
+			id: "56DA698D9BC12DF8"
+			rewards: [{
+				id: "7810259F999272BA"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "71194EE058364104"
+				item: "create:attribute_filter"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -2.0d
+		}
+		{
+			dependencies: ["4C56369CB9A15FB3"]
+			description: ["Create a package filter for shipping items."]
+			id: "53DEE3C2A5A92657"
+			rewards: [{
+				id: "24BDF80AE8B27BC7"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "1D87334B30D068F1"
+				item: "create:package_filter"
+				type: "item"
+			}]
+			x: 2.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["A blank schematic used for planning contraptions."]
+			id: "19317041D664BC5A"
+			rewards: [{
+				id: "0CE574662CA778B8"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "28A826FA4725310E"
+				item: "create:empty_schematic"
+				type: "item"
+			}]
+			x: -0.5d
+			y: 2.5d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["An empty pattern schematic for advanced automation."]
+			id: "0FE404CF1723DF5B"
+			rewards: [{
+				id: "14EAF15AC642135A"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "19EE3D616FD8121A"
+				item: "create_pattern_schematics:empty_pattern_schematic"
+				type: "item"
+			}]
+			x: 2.0d
+			y: 2.5d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Used to design and manage schematics."]
+			id: "6DA9BFCDDB9C4763"
+			rewards: [{
+				id: "66555CCC80CD5FF4"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7CBF751E749F7F56"
+				item: "create:schematic_and_quill"
+				type: "item"
+			}]
+			x: 2.5d
+			y: 0.0d
+		}
+		{
+			dependencies: ["6522A08513D695F3"]
+			description: ["Goggles that allow you to see stress and other data."]
+			id: "4F4428AB1A1B710C"
+			rewards: [{
+				id: "42AE77E16C69C6A9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "46C77D8227E1070D"
+				item: "create:goggles"
+				type: "item"
+			}]
+			x: -2.5d
+			y: 0.0d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Used to define crafting recipes."]
+			id: "32245432A701DF9E"
+			rewards: [{
+				id: "614A1EB6164612F1"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "19C403E78C4B0F5E"
+				item: "create:crafting_blueprint"
+				type: "item"
+			}]
+			x: -1.0d
+			y: 1.0d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Used to glue blocks together for contraptions."]
+			id: "14B668116B2156E0"
+			rewards: [{
+				id: "75CF1ACC49E59F46"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "67085E80CAEA3F3B"
+				item: {
+					Count: 1
+					id: "create:super_glue"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: 0.0d
+			y: 3.5d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Connects minecarts to move together."]
+			id: "478EB3733BCA10BB"
+			rewards: [{
+				id: "69AC4589E909EE15"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7C9891F06F274CD4"
+				item: "create:minecart_coupling"
+				type: "item"
+			}]
+			x: 1.0d
+			y: 3.0d
+		}
+		{
+			dependencies: ["601B6DFCABA1F23A"]
+			description: ["A basic fluid transport pipe used to move liquids around."]
+			id: "0997F3B6C3DDC548"
+			rewards: [{
+				id: "7D3F4647FAC18A95"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6152FEDAA09609DB"
+				item: "create:fluid_pipe"
+				type: "item"
+			}]
+			x: -2.0d
+			y: -6.0d
+		}
+		{
+			dependencies: [
+				"0997F3B6C3DDC548"
+				"5C93ED0E47916C2C"
+			]
+			description: ["A pump that helps move fluids through the pipes with power."]
+			id: "2605762744CE48A7"
+			rewards: [{
+				id: "10ED2EBE1303E508"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7AB419B5DF5621E5"
+				item: "create:mechanical_pump"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["2605762744CE48A7"]
+			description: ["An upgraded pipe that can carry information along with fluids."]
+			id: "1F5911983D24C404"
+			rewards: [{
+				id: "31F9D5B1755093B9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "33B61AF0813F8D08"
+				item: "create:smart_fluid_pipe"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["1F5911983D24C404"]
+			description: ["A valve to control fluid flow in your pipeline."]
+			id: "507F7C744B5E3F92"
+			rewards: [{
+				id: "434529891224AAF2"
+				item: "minecraft:iron_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "61EA8F5AF6C8DCFE"
+				item: "create:fluid_valve"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["507F7C744B5E3F92"]
+			description: ["A handle to manually control fluid valves."]
+			id: "297770D98DF1CDE5"
+			rewards: [{
+				count: 2
+				id: "629340796C888655"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "273197C36C6AADF4"
+				item: "create:copper_valve_handle"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["297770D98DF1CDE5"]
+			description: ["Stores large amounts of fluids in a tank."]
+			id: "6CAE186C3798BFF7"
+			rewards: [{
+				count: 2
+				id: "7C861E9CE7443AF4"
+				item: "create:copper_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "1BB2FEE25988D0A2"
+				item: "create:fluid_tank"
+				type: "item"
+			}]
+			x: 3.0d
+			y: -6.0d
+		}
+		{
+			description: ["Extracts fluids from items and redirects them into fluid systems."]
+			id: "23D4C794E1DC4680"
+			rewards: [{
+				count: 3
+				id: "33700D3B667CB0C0"
+				item: "minecraft:copper_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "02AADB4B99DBBE1B"
+				item: "create:item_drain"
+				type: "item"
+			}]
+			x: 4.5d
+			y: -6.5d
+		}
+		{
+			dependencies: ["23D4C794E1DC4680"]
+			description: ["Sprays fluids onto items moving beneath it."]
+			id: "12D60C816CA777FE"
+			rewards: [{
+				id: "5FDDF605E812B2E5"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "00BDD6D8401F24CC"
+				item: "create:spout"
+				type: "item"
+			}]
+			x: 7.0d
+			y: -6.0d
+		}
+		{
+			dependencies: [
+				"2974510BFFEE8C3F"
+				"12D60C816CA777FE"
+			]
+			description: ["Transfers fluids through pipes, connecting pumps and tanks."]
+			id: "1DB542E1336F66A2"
+			rewards: [{
+				id: "3DF718F9CF700AB4"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "7A01961D145AA6F2"
+				item: "create:portable_fluid_interface"
+				type: "item"
+			}]
+			x: 7.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["1DB542E1336F66A2"]
+			description: ["Generates kinetic energy from steam."]
+			id: "4AD17EDF126D0A58"
+			rewards: [{
+				count: 2
+				id: "262C723A8738B62C"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "71D8E9D311ED62AB"
+				item: "create:steam_engine"
+				type: "item"
+			}]
+			x: 8.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["4AD17EDF126D0A58"]
+			description: ["Emits a loud sound when steam is released."]
+			id: "2EEB759BB63B9582"
+			rewards: [{
+				count: 4
+				id: "78769A211BF759A0"
+				item: "create:golden_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "739679CC2CA23587"
+				item: "create:steam_whistle"
+				type: "item"
+			}]
+			x: 9.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["1D77081063A046BB"]
+			description: ["Basic rotating component used to transmit motion."]
+			id: "5C93ED0E47916C2C"
+			rewards: [{
+				id: "3197DF4A924E4222"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "11B510060ED754D1"
+				item: "create:cogwheel"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -7.0d
+		}
+		{
+			description: ["A simple cogwheel to transfer rotation between shafts."]
+			id: "1D77081063A046BB"
+			rewards: [{
+				id: "62A2BEB418232675"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "02ED2FA8839F3E8C"
+				item: "create:shaft"
+				type: "item"
+			}]
+			x: -2.0d
+			y: -7.0d
+		}
+		{
+			description: ["Allows items to fall vertically between components."]
+			id: "2974510BFFEE8C3F"
+			rewards: [{
+				count: 3
+				id: "120718AF3E779A4D"
+				item: "minecraft:iron_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "517094FBFB69A65B"
+				item: "create:chute"
+				type: "item"
+			}]
+			x: 7.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["601B6DFCABA1F23A"]
+			description: ["Sprays water to accelerate plant growth."]
+			id: "5E72C56EDA1E134F"
+			rewards: [{
+				id: "267A4D088B75BEC9"
+				item: "create:fluid_pipe"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0005B34B740E14E0"
+				item: "sliceanddice:sprinkler"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -7.0d
+		}
+		{
+			description: ["An essential alloy used in most Create machines."]
+			id: "31E491D51F0FA8A1"
+			rewards: [{
+				id: "7303086E32B7F4A7"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "72AB2EB4F656B4D5"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			x: 0.5d
+			y: -9.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["A decorative table cloth for create-style builds."]
+			id: "3458BDF072D0E975"
+			rewards: [{
+				id: "02320FEDC90C340E"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "5C2BBCC224D49E04"
+				item: "create:red_table_cloth"
+				type: "item"
+			}]
+			x: 3.0d
+			y: -9.5d
+		}
+		{
+			dependencies: ["601B6DFCABA1F23A"]
+			description: ["Transmits redstone signals over distances."]
+			id: "09945921C76893CF"
+			rewards: [{
+				count: 2
+				id: "79417CA6A60A8E8C"
+				item: "create:copper_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "2B80FE4C5D78C536"
+				item: "create:transmitter"
+				type: "item"
+			}]
+			x: -4.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["06F82D7AEED80886"]
+			description: ["Used to rotate, configure, or dismantle machines."]
+			id: "6A311A7263293625"
+			rewards: [{
+				count: 2
+				id: "6DA1C74508DFCED4"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3813FE42586620D3"
+				item: "create:wrench"
+				type: "item"
+			}]
+			x: -5.0d
+			y: -6.0d
+		}
+		{
+			dependencies: [
+				"1D77081063A046BB"
+				"31E491D51F0FA8A1"
+			]
+			description: ["A portable tank for storing compressed air."]
+			id: "7570AB9A8D3C3C18"
+			rewards: [{
+				id: "52F7E4C4FABFA6CB"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "1923332B4E3DAC0C"
+				item: {
+					Count: 1
+					id: "create:copper_backtank"
+					tag: {
+						Air: 900
+					}
+				}
+				type: "item"
+			}]
+			x: 0.5d
+			y: -7.0d
+		}
+		{
+			dependencies: ["7570AB9A8D3C3C18"]
+			description: ["An upgraded backtank with increased durability."]
+			id: "6311B7796233DDE0"
+			rewards: [{
+				count: 5
+				id: "24069B8BDFAE68BD"
+				item: "minecraft:copper_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "13D8673235911442"
+				item: {
+					Count: 1
+					id: "create:netherite_backtank"
+					tag: {
+						Air: 900
+					}
+				}
+				type: "item"
+			}]
+			x: 1.5d
+			y: -7.0d
+		}
+		{
+			dependencies: ["09945921C76893CF"]
+			description: ["Links redstone signals between distant components."]
+			id: "2AFB1D04F10F4AB5"
+			rewards: [{
+				id: "397468C282146EF9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "028A58D43E2FF6B5"
+				item: "create:redstone_link"
+				type: "item"
+			}]
+			x: -5.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["2AFB1D04F10F4AB5"]
+			description: ["A wireless controller for redstone links."]
+			id: "2F8C4FE13288F75B"
+			rewards: [{
+				id: "09675863E8D054FA"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "08D34C8625A35894"
+				item: "create:linked_controller"
+				type: "item"
+			}]
+			x: -5.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["6A311A7263293625"]
+			description: ["Shoots schematics into place for automatic building."]
+			id: "406555174C71A5F5"
+			rewards: [{
+				id: "5A4A4DAFA08F9729"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "1A50A83A92DEE260"
+				item: "create:schematicannon"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -6.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["A handy notepad for tracking tasks and items."]
+			id: "6747EA1F96971F6E"
+			rewards: [{
+				id: "080538B88FEC19F8"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "265FE02D02965B00"
+				item: "create:clipboard"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Crafts complex components using mechanical power."]
+			id: "55A8A0354DE7909A"
+			rewards: [{
+				id: "52A345DE2BFC3582"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "0E4EB49B3C23A0EF"
+				item: "create:crushing_wheel"
+				type: "item"
+			}]
+			x: -14.5d
+			y: -8.0d
+		}
+		{
+			dependencies: ["55A8A0354DE7909A"]
+			description: ["Used to process wheat into flour for recipes."]
+			id: "2022356ED1582EBC"
+			rewards: [{
+				id: "42EB2C75857106AB"
+				item: "minecraft:wheat_seeds"
+				type: "item"
+			}]
+			tasks: [{
+				id: "6A52BD46918E3D27"
+				item: "create:wheat_flour"
+				type: "item"
+			}]
+			x: -12.5d
+			y: -6.0d
+		}
+		{
+			dependencies: ["2022356ED1582EBC"]
+			description: ["Flour combined with water to make dough."]
+			id: "236E3005736D0AB5"
+			rewards: [{
+				count: 3
+				id: "00740DFB8BED62FF"
+				item: "create:wheat_flour"
+				type: "item"
+			}]
+			tasks: [{
+				id: "4635AD5CCBD83FF4"
+				item: "create:dough"
+				type: "item"
+			}]
+			x: -11.5d
+			y: -6.5d
+		}
+		{
+			dependencies: ["55A8A0354DE7909A"]
+			description: ["Byproduct of crushing netherrack; useful in recipes."]
+			id: "06422842CA9DB3E0"
+			rewards: [{
+				count: 5
+				id: "40F9A8602D3F6C4A"
+				item: "minecraft:bone_meal"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0647A32FAC1D9299"
+				item: "create:cinder_flour"
+				type: "item"
+			}]
+			x: -10.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["A fiery treat used in blaze burner recipes."]
+			id: "66B1DF7503FA4F1F"
+			rewards: [{
+				id: "143776892DF8CCF3"
+				type: "xp"
+				xp: 20
+			}]
+			tasks: [{
+				id: "29B0C2F7CEC2A4F5"
+				item: "create:blaze_cake"
+				type: "item"
+			}]
+			x: 9.0d
+			y: -5.0d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["Sweet roll snack for enjoyment or trading."]
+			id: "083807F6FF1D2BB5"
+			rewards: [{
+				id: "663205E9490B5EB1"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "37F39974EA6D964F"
+				item: "create:sweet_roll"
+				type: "item"
+			}]
+			x: 9.5d
+			y: -6.0d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["Tasty berries dipped in chocolate."]
+			id: "31B4850A4F3224ED"
+			rewards: [{
+				id: "0874FC032EB262DA"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "4F37B9B087D123D4"
+				item: "create:chocolate_glazed_berries"
+				type: "item"
+			}]
+			x: 8.0d
+			y: -5.0d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["A refreshing drink that boosts productivity."]
+			id: "17CE59C76958E5A2"
+			rewards: [{
+				id: "6CFD76CF7A601DDA"
+				type: "xp"
+				xp: 20
+			}]
+			tasks: [{
+				id: "4930C9194B0DBA30"
+				item: "create:honeyed_apple"
+				type: "item"
+			}]
+			x: 7.0d
+			y: -5.0d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["A calming beverage that provides a minor buff—great for builders."]
+			id: "4543FBE02F1465CF"
+			rewards: [{
+				id: "3E779B8B9697D6F9"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "604AE8260A002EA4"
+				item: "create:builders_tea"
+				type: "item"
+			}]
+			x: 5.5d
+			y: -5.0d
+		}
+		{
+			description: ["Used to automate complex crafting recipes by assembling components in sequence."]
+			id: "0A50E6EEC5C61466"
+			rewards: [{
+				count: 3
+				id: "535117FCEB125DF8"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "6BB8BC43BDDA5D72"
+				item: "create:mechanical_crafter"
+				type: "item"
+			}]
+			x: -11.5d
+			y: -11.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Places items automatically—useful for automation like precision mechanisms."]
+			id: "56B1247BC6207323"
+			rewards: [{
+				id: "01E21FF0844DFEA4"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "5903B166C01535B2"
+				item: "create:deployer"
+				type: "item"
+			}]
+			x: -15.5d
+			y: -12.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Automatically cuts blocks in front of it—ideal for wood farms or tree processing."]
+			id: "090396B1F6C7D193"
+			rewards: [{
+				id: "6E06AC993123EC91"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "06CA588FBE8D6AF4"
+				item: "create:mechanical_saw"
+				type: "item"
+			}]
+			x: -16.5d
+			y: -11.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Mines blocks in front of it when powered—great for tunneling contraptions."]
+			id: "7CB3A22DC00E8CC9"
+			rewards: [{
+				count: 3
+				id: "27177CE9776E2724"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3FB6D771A07CB8D8"
+				item: "create:mechanical_drill"
+				type: "item"
+			}]
+			x: -13.0d
+			y: -8.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Controls for contraptions; allows you to start and stop machines on the go."]
+			id: "1C8BDECC513F396F"
+			rewards: [{
+				id: "2134F4D420C6BFB6"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "738007B52AF21CEE"
+				item: "create:contraption_controls"
+				type: "item"
+			}]
+			x: -14.0d
+			y: -12.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Transfers items between moving contraptions and stationary systems."]
+			id: "71409441D6D92681"
+			rewards: [{
+				id: "7DB84A89741D77CB"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "578F248861AB25A5"
+				item: "create:portable_storage_interface"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Sends a redstone signal when two contacts touch—great for detecting motion."]
+			id: "0231B6AC82CA92BC"
+			rewards: [{
+				count: 5
+				id: "262D072AF4924A68"
+				item: "thermal:iron_plate"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3BEF0F961EF38658"
+				item: "create:redstone_contact"
+				type: "item"
+			}]
+			x: -11.0d
+			y: -9.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Harvests crops automatically—ideal for building automated farms."]
+			id: "35683F10F04D9017"
+			rewards: [{
+				count: 2
+				id: "1BBD508A838666C8"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0B0B51E6A74CBFE0"
+				item: "create:mechanical_harvester"
+				type: "item"
+			}]
+			x: -12.0d
+			y: -8.5d
+		}
+		{
+			dependencies: ["56B1247BC6207323"]
+			description: ["A crucial component in crafting precision mechanisms for advanced machines."]
+			id: "72DA16A67D094510"
+			rewards: [{
+				id: "0DB6F9421935C093"
+				type: "xp"
+				xp: 45
+			}]
+			tasks: [{
+				id: "44845D92D6315278"
+				item: "create:precision_mechanism"
+				type: "item"
+			}]
+			x: -16.5d
+			y: -12.0d
+		}
+		{
+			dependencies: ["55A8A0354DE7909A"]
+			description: ["A larger cogwheel used to transfer rotational force over longer distances."]
+			id: "44C6D4E8F9A6807F"
+			rewards: [{
+				id: "3B7046339AC98CDC"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "5B0A619A428895F7"
+				item: "create:large_cogwheel"
+				type: "item"
+			}]
+			x: -15.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["44C6D4E8F9A6807F"]
+			description: ["Generates rotational power using flowing water—essential for early power setups."]
+			id: "78B3096584628885"
+			rewards: [{
+				id: "1BBB7A77953952BD"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "71C8DBB4861AAFC8"
+				item: "create:water_wheel"
+				type: "item"
+			}]
+			x: -14.5d
+			y: -6.0d
+		}
+		{
+			dependencies: ["78B3096584628885"]
+			description: ["A larger variant that produces more power when water flows through it."]
+			id: "4D7BB6BE352A775D"
+			rewards: [{
+				count: 5
+				id: "6019607259CDFCB6"
+				item: "minecraft:oak_wood"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3FC3CC6696DEA88A"
+				item: "create:large_water_wheel"
+				type: "item"
+			}]
+			x: -13.5d
+			y: -5.5d
+		}
+		{
+			dependencies: ["4D7BB6BE352A775D"]
+			description: ["Stores rotational energy—often used in engines or kinetic setups."]
+			id: "4D116DA3657E9062"
+			rewards: [{
+				id: "6A9A7E6AE827EDAD"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "28E120BE06270C94"
+				item: "create:flywheel"
+				type: "item"
+			}]
+			x: -13.5d
+			y: -6.5d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Used to connect shafts with belts for transporting items or motion."]
+			id: "650AA2D963213475"
+			rewards: [{
+				id: "210187C07D3541B1"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "69C24B2B24E48F0B"
+				item: "create:belt_connector"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -1.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Applies pressing recipes like sheets or plates—powered by rotation."]
+			id: "3FE9E7604E3104D4"
+			rewards: [{
+				count: 3
+				id: "1FBDB24E4A8FA2D1"
+				item: "minecraft:iron_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "4DAD05B3640F8C07"
+				item: "create:mechanical_press"
+				type: "item"
+			}]
+			x: -11.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Used for mixing ingredients—perfect for crafting recipes that require blending."]
+			id: "583977DDD132CBD0"
+			rewards: [{
+				id: "524BA9EA720D378D"
+				item: "create:whisk"
+				type: "item"
+			}]
+			tasks: [{
+				id: "79D1E89ADECBAA51"
+				item: "create:mechanical_mixer"
+				type: "item"
+			}]
+			x: -12.0d
+			y: -15.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["A core component for many machines—builds a foundation for complex automation."]
+			id: "48FAE2538DCA6BBC"
+			rewards: [{
+				id: "36C37CE35EF13AAE"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "6557DD7F05F447E2"
+				item: "create:andesite_casing"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -14.0d
+		}
+		{
+			dependencies: ["3FE9E7604E3104D4"]
+			description: ["Presses items into brass sheets—useful for advanced crafting processes."]
+			id: "34CC9E6AD3E6A0F6"
+			rewards: [{
+				count: 2
+				id: "6529278784F1765B"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "7FE0ACDC37DAFD69"
+				item: "createcasing:brass_press"
+				type: "item"
+			}]
+			x: -11.0d
+			y: -16.5d
+		}
+		{
+			dependencies: ["34CC9E6AD3E6A0F6"]
+			description: ["Presses items into copper sheets—used for crafting more advanced machines."]
+			id: "5A0759240A78C44F"
+			rewards: [{
+				id: "7A3FFC20ED84F362"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "23796A7C67B7704B"
+				item: "createcasing:copper_press"
+				type: "item"
+			}]
+			x: -12.0d
+			y: -18.0d
+		}
+		{
+			dependencies: ["5A0759240A78C44F"]
+			description: ["Used to craft railway components—essential for building rail systems."]
+			id: "36327282B385B86C"
+			rewards: [{
+				count: 5
+				id: "733295452CA32312"
+				item: "minecraft:iron_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "1F6F13C2A401ABBD"
+				item: "createcasing:railway_press"
+				type: "item"
+			}]
+			x: -10.5d
+			y: -17.5d
+		}
+		{
+			dependencies: ["36327282B385B86C"]
+			description: ["Presses items into industrial iron components—used for heavy-duty machinery."]
+			id: "0B669D35EB3022B4"
+			rewards: [{
+				count: 3
+				id: "41B32BA08908DF09"
+				item: "minecraft:iron_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "7AE89EA566A6BBC1"
+				item: "createcasing:industrial_iron_press"
+				type: "item"
+			}]
+			x: -11.0d
+			y: -18.5d
+		}
+		{
+			dependencies: ["3FE9E7604E3104D4"]
+			description: ["A delicious bar of chocolate—enjoy a sweet reward!"]
+			id: "3B63650B3D3BD94F"
+			rewards: [{
+				id: "4479CE1CB370CA36"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "5F1D5398223A03DC"
+				item: "create:bar_of_chocolate"
+				type: "item"
+			}]
+			x: -12.0d
+			y: -16.0d
+		}
+		{
+			dependencies: ["72DA16A67D094510"]
+			description: ["A fun weapon that shoots potatoes—good for messing around."]
+			id: "0E5E58ADB7DBCD02"
+			rewards: [{
+				id: "53623979763F7B7E"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "4AFDE72AAC1A81E7"
+				item: {
+					Count: 1
+					id: "create:potato_cannon"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -18.0d
+			y: -12.5d
+		}
+		{
+			dependencies: ["0E5E58ADB7DBCD02"]
+			description: ["A wand that allows you to create symmetrical structures—great for builders."]
+			id: "3D6FE285F3CAE875"
+			rewards: [{
+				id: "6BF1697941A6C9B6"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "054B391F34E0101B"
+				item: {
+					Count: 1
+					id: "create:wand_of_symmetry"
+					tag: {
+						enable: 0b
+						symmetry: {
+							direction: 0
+							enable: 1b
+							pos: [
+								0.0f
+								0.0f
+								0.0f
+							]
+							type: "empty"
+						}
+					}
+				}
+				type: "item"
+			}]
+			x: -19.0d
+			y: -13.5d
+		}
+		{
+			dependencies: ["72DA16A67D094510"]
+			description: ["An extension tool that increases your reach—ideal for working with machinery."]
+			id: "3E407CD6055B90DF"
+			rewards: [{
+				id: "4A1E7A245AFB1F9E"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "13A2C0D49EE4A016"
+				item: {
+					Count: 1
+					id: "create:extendo_grip"
+					tag: {
+						Damage: 0
+					}
+				}
+				type: "item"
+			}]
+			x: -19.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["A depot for storing and organizing items—perfect for automation setups."]
+			id: "4EDA1365004E821E"
+			rewards: [{
+				id: "6CF1D0E15C9996EC"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "4A1FE86F80F5E4A3"
+				item: "create:depot"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["72DA16A67D094510"]
+			description: ["A jetpack for flying—great for getting around quickly."]
+			id: "60A3EABAEBAD77C0"
+			rewards: [{
+				id: "7E056E063A3878A0"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "296EF2A062EFB7CE"
+				item: {
+					Count: 1
+					id: "create_jetpack:jetpack"
+					tag: {
+						Air: 900
+					}
+				}
+				type: "item"
+			}]
+			x: -17.0d
+			y: -13.0d
+		}
+		{
+			dependencies: ["60A3EABAEBAD77C0"]
+			description: ["A more powerful jetpack made with netherite—perfect for long flights."]
+			id: "0E89014BDA702183"
+			rewards: [{
+				id: "23493D6DF71ED244"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "7352FE7E2AF56A8F"
+				item: {
+					Count: 1
+					id: "create_jetpack:netherite_jetpack"
+					tag: {
+						Air: 900
+					}
+				}
+				type: "item"
+			}]
+			x: -18.0d
+			y: -13.5d
+		}
+		{
+			dependencies: ["12D60C816CA777FE"]
+			description: ["A bucket filled with sweet honey—can be used for crafting."]
+			id: "1BD053E9ED7EF7A2"
+			rewards: [{
+				id: "5F7C8EE64E918C29"
+				type: "xp"
+				xp: 20
+			}]
+			tasks: [{
+				id: "61CCCFABC0AC1DBA"
+				item: "create:honey_bucket"
+				type: "item"
+			}]
+			x: 9.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["1BD053E9ED7EF7A2"]
+			description: ["A bucket filled with chocolate—perfect for creating sweet treats."]
+			id: "538D7B8C0D147F47"
+			rewards: [{
+				id: "3CF2AAAC928CDBB3"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "78807AB4FA3BEB3A"
+				item: "create:chocolate_bucket"
+				type: "item"
+			}]
+			x: 10.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["538D7B8C0D147F47"]
+			description: ["A bucket of fertilizer—useful for speeding up crop growth."]
+			id: "6356E3500089E23D"
+			rewards: [{
+				id: "55C7651AC2E06857"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "571879789FB5ABB4"
+				item: "sliceanddice:fertilizer_bucket"
+				type: "item"
+			}]
+			x: 11.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["62C34A6DF890A44B"]
+			description: ["Brass block for creating intricate mechanisms."]
+			id: "2B45FFACEC6A6CA1"
+			rewards: [{
+				count: 3
+				id: "73F008F36843D540"
+				item: "create:brass_nugget"
+				type: "item"
+			}]
+			tasks: [{
+				id: "77527006D138C3A1"
+				item: "create:brass_block"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -2.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Peculiar bell used for unique signaling."]
+			id: "50A703896DCAE5F9"
+			rewards: [{
+				id: "2A6AD42281385771"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "10D931E9E81F35F5"
+				item: "create:peculiar_bell"
+				type: "item"
+			}]
+			x: -10.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["50A703896DCAE5F9"]
+			description: ["Haunted bell with an eerie sound for mysterious purposes."]
+			id: "73402AE507422392"
+			rewards: [{
+				id: "6B28279D22168ABA"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "144549435323C807"
+				item: "create:haunted_bell"
+				type: "item"
+			}]
+			x: -9.5d
+			y: -8.0d
+		}
+		{
+			dependencies: ["73402AE507422392"]
+			description: ["Desk bell for signaling in a workspace."]
+			id: "721782CB116E918C"
+			rewards: [{
+				id: "3539FE7ADDC13A59"
+				item: "minecraft:gold_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "66C95F2DBFE0DD75"
+				item: "create:desk_bell"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Brown toolbox used for storing mechanical parts."]
+			id: "151BDAE3D91CEADD"
+			rewards: [{
+				count: 2
+				id: "015B2114882AE714"
+				item: "minecraft:gold_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "7776340AEA09A60E"
+				item: "create:brown_toolbox"
+				type: "item"
+			}]
+			x: -10.0d
+			y: -12.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Brass casing used in machinery for durability."]
+			id: "52564E203A09E1BA"
+			rewards: [{
+				id: "2B9FC5E698E76477"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "238B98950AF58206"
+				item: "create:brass_casing"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["52564E203A09E1BA"]
+			description: ["Copper casing for protecting delicate mechanical parts."]
+			id: "37A9C6FE1CF28892"
+			rewards: [{
+				id: "53AE3F1A8456A3DF"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "25CA33070DCDFB10"
+				item: "create:copper_casing"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -16.5d
+		}
+		{
+			dependencies: ["37A9C6FE1CF28892"]
+			description: ["Railway casing used in rail system components."]
+			id: "25AFFBF59C7229C3"
+			rewards: [{
+				id: "3F5C92AFC94153A9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "23436C159ACC89F2"
+				item: "create:railway_casing"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -18.0d
+		}
+		{
+			dependencies: ["25AFFBF59C7229C3"]
+			description: ["Smart Crafter for automatic crafting in the Create mod."]
+			id: "3A7C1F58EEE2468B"
+			rewards: [{
+				count: 2
+				id: "01A96A6F50EEDD60"
+				item: "create:precision_mechanism"
+				type: "item"
+			}]
+			tasks: [{
+				id: "31C7F70211D7907C"
+				item: "smartcrafter:smart_crafter"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -18.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Gearbox for transferring rotational power."]
+			id: "7FC8ECBA7FBC75E4"
+			rewards: [{
+				id: "17D76B68B3AC5B35"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "074EA8DE0732D6C1"
+				item: "create:gearbox"
+				type: "item"
+			}]
+			x: -15.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["7FC8ECBA7FBC75E4"]
+			description: ["Vertical gearbox for adjusting rotational direction."]
+			id: "1A728B121C86B189"
+			rewards: [{
+				id: "107E7CDAD3FD7365"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "1B66FD25D4404AEF"
+				item: "create:vertical_gearbox"
+				type: "item"
+			}]
+			x: -16.0d
+			y: -7.5d
+		}
+		{
+			dependencies: ["1A728B121C86B189"]
+			description: ["Clutch for controlling rotational power flow."]
+			id: "0D8C34EFC04110BC"
+			rewards: [{
+				id: "14CC093C5659E708"
+				item: "minecraft:redstone"
+				type: "item"
+			}]
+			tasks: [{
+				id: "120C01A37684E20A"
+				item: "create:clutch"
+				type: "item"
+			}]
+			x: -17.5d
+			y: -7.0d
+		}
+		{
+			dependencies: ["0D8C34EFC04110BC"]
+			description: ["Gearshift for changing rotational speed or direction."]
+			id: "64CEBD062AEC0E54"
+			rewards: [{
+				id: "3FDCA636F23B4BAD"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "3BF0E07F2B6B024B"
+				item: "create:gearshift"
+				type: "item"
+			}]
+			x: -18.5d
+			y: -7.5d
+		}
+		{
+			dependencies: ["0D8C34EFC04110BC"]
+			description: ["Encased chain drive for secure power transfer."]
+			id: "57958F5B3CFB920E"
+			rewards: [{
+				count: 5
+				id: "2CD9410830CC1610"
+				item: "create:zinc_nugget"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0F9FB91A021BF29C"
+				item: "create:encased_chain_drive"
+				type: "item"
+			}]
+			x: -18.5d
+			y: -6.5d
+		}
+		{
+			dependencies: ["0D8C34EFC04110BC"]
+			description: ["Adjustable chain gearshift for precise speed regulation."]
+			id: "5A5F228DE72DCA9C"
+			rewards: [{
+				id: "588F38F7837609AA"
+				item: "create:rose_quartz"
+				type: "item"
+			}]
+			tasks: [{
+				id: "39E1E41B35DC90D8"
+				item: "create:adjustable_chain_gearshift"
+				type: "item"
+			}]
+			x: -17.5d
+			y: -6.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Brass block for creating intricate mechanisms."]
+			id: "4F8BEEF294E580DA"
+			rewards: [{
+				id: "45A8C0E0FA8D7548"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "433227E915B1745C"
+				item: "create:schematic_table"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -10.0d
+		}
+		{
+			dependencies: ["44C6D4E8F9A6807F"]
+			description: ["A chain conveyor for moving items."]
+			id: "0B9D303C5BF1A1AF"
+			rewards: [{
+				id: "7DB1A4D63E85C252"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "46F4357AD043C1EC"
+				item: "create:chain_conveyor"
+				type: "item"
+			}]
+			x: -16.0d
+			y: -6.5d
+		}
+		{
+			dependencies: ["2C2D1594B3FA033C"]
+			description: ["Brass depot for item storage."]
+			id: "278EB3B6F8F6D5CB"
+			rewards: [{
+				id: "70FEF1CBF78A73B2"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "45992CB0242E4058"
+				item: "createcasing:brass_depot"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -17.0d
+		}
+		{
+			dependencies: ["278EB3B6F8F6D5CB"]
+			description: ["Copper depot for item storage."]
+			id: "2213DF53D6FE6534"
+			rewards: [{
+				id: "3BB9B776DF1DD306"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "051EC18DC6DBA5F0"
+				item: "createcasing:copper_depot"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -17.0d
+		}
+		{
+			dependencies: ["2213DF53D6FE6534"]
+			description: ["Railway depot for storing and managing items."]
+			id: "03F475C58EF8E123"
+			rewards: [{
+				id: "612350E2A8BA1B1F"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "23C53FE39E3A4AA3"
+				item: "createcasing:railway_depot"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -18.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Turntable for rotating items or contraptions."]
+			id: "3792F9BE070C3F05"
+			rewards: [{
+				id: "55A49149A5C881A0"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7F7EA709FD232DBD"
+				item: "create:turntable"
+				type: "item"
+			}]
+			x: -9.5d
+			y: -10.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Hand crank for powering mechanical devices."]
+			id: "055713B81F7257A0"
+			rewards: [{
+				id: "24FD3C63F6FDDA25"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "0526A886CDBCB61E"
+				item: "create:hand_crank"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Cuckoo clock for decorative and functional purposes."]
+			id: "40EE5308C8A4FA8F"
+			tasks: [{
+				id: "3052B615AEBEC634"
+				item: "create:cuckoo_clock"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Millstone for grinding items."]
+			id: "29BFD7799844FC1A"
+			rewards: [{
+				id: "488098500A5116C5"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "28FDDF87710E5143"
+				item: "create:millstone"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -14.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Empty blaze burner for energy production."]
+			id: "3424D5793357B05E"
+			rewards: [{
+				id: "649C6803ED1811C9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "50787DC832015DEF"
+				item: "create:empty_blaze_burner"
+				type: "item"
+			}]
+			x: -10.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["3424D5793357B05E"]
+			description: ["Blaze burner for creating heat."]
+			id: "7102AEBEC2EE32C7"
+			rewards: [{
+				count: 5
+				id: "70B4F08DC3A537D8"
+				item: "thermal:iron_plate"
+				type: "item"
+			}]
+			tasks: [{
+				id: "767858784E210869"
+				item: "create:blaze_burner"
+				type: "item"
+			}]
+			x: -10.0d
+			y: -16.5d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Nozzle for directing fluids or items."]
+			id: "5F636B171F63FB41"
+			rewards: [{
+				id: "4FC215BC9908B512"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "41C1C0881EC5D2DD"
+				item: "create:nozzle"
+				type: "item"
+			}]
+			x: 3.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["2974510BFFEE8C3F"]
+			description: ["Brass block for creating intricate mechanisms."]
+			id: "076F543123F4FE09"
+			rewards: [{
+				id: "553F9307450A36E5"
+				item: "create:brass_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "2B08C3F253EF93EA"
+				item: "create:smart_chute"
+				type: "item"
+			}]
+			x: 6.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["4EDA1365004E821E"]
+			description: ["Smart chute for transporting items with precision."]
+			id: "2C2D1594B3FA033C"
+			rewards: [{
+				id: "41C99E92313409AF"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "7F2B496F85DC9BAA"
+				item: "create:weighted_ejector"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -16.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Wooden bracket used to attach components together."]
+			id: "0B8803172A9785FD"
+			rewards: [{
+				id: "190ACE2A936ED5F1"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "04022A22591C48E3"
+				item: "create:wooden_bracket"
+				type: "item"
+			}]
+			x: -13.0d
+			y: -13.5d
+		}
+		{
+			dependencies: ["0B8803172A9785FD"]
+			description: ["Metal bracket for holding large machinery parts."]
+			id: "1236EDEA8F34F047"
+			rewards: [{
+				id: "7A5BC02AFD824DAB"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "47D2B71269798E4B"
+				item: "create:metal_bracket"
+				type: "item"
+			}]
+			x: -15.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Speedometer for measuring rotational speed."]
+			id: "345721D80DE8A03F"
+			rewards: [{
+				id: "5D754A2A116B3CC2"
+				item: "createdeco:andesite_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "5AD28474A581ED9F"
+				item: "create:speedometer"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -13.0d
+		}
+		{
+			dependencies: ["345721D80DE8A03F"]
+			description: ["Stressometer for monitoring mechanical stress."]
+			id: "12F248D422B774D0"
+			rewards: [{
+				count: 2
+				id: "40B4E2797C7C4E7D"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "454287A0B3DE67C7"
+				item: "create:stressometer"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -12.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Mechanical piston used for linear motion."]
+			id: "34D054168564E2BD"
+			rewards: [{
+				count: 5
+				id: "6BF6E489183825D9"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "46AAAF2550435240"
+				item: "create:mechanical_piston"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -12.5d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Piston extension pole to increase range of motion."]
+			id: "4BBE1601328D57F8"
+			rewards: [{
+				id: "382FBF9A4CF1003C"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "794C40E4C57DEDCB"
+				item: "create:piston_extension_pole"
+				type: "item"
+			}]
+			x: 2.0d
+			y: -11.5d
+		}
+		{
+			dependencies: ["34D054168564E2BD"]
+			description: ["Sticky piston for creating more controlled movements."]
+			id: "40E60F3ABC5C3224"
+			rewards: [{
+				id: "3EF23C4FC16E964B"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "750FB1491243F021"
+				item: "create:sticky_mechanical_piston"
+				type: "item"
+			}]
+			x: -6.5d
+			y: -11.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Gantry carriage for sliding along rails."]
+			id: "6E961B1D9D0B44F6"
+			rewards: [{
+				id: "0F48A6D9EA09AF46"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "4074B9036ED998DE"
+				item: "create:gantry_carriage"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -12.5d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Gantry shaft for rail system movement."]
+			id: "7B20E0960E03D1E9"
+			rewards: [{
+				id: "029497565C40F891"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "235C6992CA3978FF"
+				item: "create:gantry_shaft"
+				type: "item"
+			}]
+			x: -2.5d
+			y: -11.5d
+		}
+		{
+			dependencies: ["1D77081063A046BB"]
+			description: ["Windmill bearing for harnessing wind power."]
+			id: "32BCB95A506A556A"
+			rewards: [{
+				id: "4CD4AFD27740837E"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "402448C8B375C997"
+				item: "create:windmill_bearing"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -8.5d
+		}
+		{
+			dependencies: ["40E60F3ABC5C3224"]
+			description: ["Mechanical bearing for rotating machinery."]
+			id: "0940CAAB82DAD7D8"
+			rewards: [{
+				id: "77500E07F2C83542"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "50A15860AC1D61A6"
+				item: "create:mechanical_bearing"
+				type: "item"
+			}]
+			x: -5.0d
+			y: -12.0d
+		}
+		{
+			dependencies: ["52564E203A09E1BA"]
+			description: ["Clockwork bearing for precise rotational control."]
+			id: "16148FD4B262385F"
+			rewards: [{
+				id: "3AC7160BC977FABF"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "0FF99C7FC8859B3A"
+				item: "create:clockwork_bearing"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -17.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Rope pulley for lifting and carrying objects."]
+			id: "10DFBB9662B1CEE3"
+			rewards: [{
+				id: "6ECF1E5180113D8B"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "7FCF86E3887066AD"
+				item: "create:rope_pulley"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -15.0d
+		}
+		{
+			dependencies: ["10DFBB9662B1CEE3"]
+			description: ["Elevator pulley for moving items vertically."]
+			id: "6DADFABC4476A6AE"
+			rewards: [{
+				count: 3
+				id: "4696758D5FC99AC7"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "03C6F3B5A4A750F8"
+				item: "create:elevator_pulley"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["6DADFABC4476A6AE"]
+			description: ["Hose pulley for lifting hoses or similar items."]
+			id: "57FBDA3EE9EC238C"
+			rewards: [{
+				count: 2
+				id: "699E57069F115F48"
+				item: "minecraft:copper_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3C8DB95CCA753CEF"
+				item: "create:hose_pulley"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -16.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Cart assembler for constructing mobile carts."]
+			id: "32634862ED9E4B9D"
+			rewards: [{
+				id: "63BF27085D1A35C7"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "32460B1020EB602F"
+				item: "create:cart_assembler"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -8.0d
+		}
+		{
+			dependencies: ["33F49F160B7D425C"]
+			description: ["Brass block for creating intricate mechanisms."]
+			id: "7FAB7A8C30573E71"
+			rewards: [{
+				id: "787AB89AF2D40498"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "03A09228F43387AD"
+				item: "create:controller_rail"
+				type: "item"
+			}]
+			x: 7.5d
+			y: -15.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Used in crafting mechanisms for stability."]
+			id: "6178E2585F10EEE4"
+			rewards: [{
+				id: "050D61AF424FB464"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "1DF77660DB1B76B7"
+				item: "create:linear_chassis"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -9.5d
+		}
+		{
+			dependencies: ["6178E2585F10EEE4"]
+			description: ["Supports additional mechanical components."]
+			id: "4B8ADCDE16AB333A"
+			rewards: [{
+				id: "6134ACD7C36E6002"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "4FD199D9DB2EF7BF"
+				item: "create:secondary_linear_chassis"
+				type: "item"
+			}]
+			x: -3.0d
+			y: -8.5d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Provides a rotational base for moving parts."]
+			id: "0C440AF2E670C9DC"
+			tasks: [{
+				id: "4E0FCBD2E6BC5E4D"
+				item: "create:radial_chassis"
+				type: "item"
+			}]
+			x: 2.5d
+			y: -8.5d
+		}
+		{
+			dependencies: ["0C440AF2E670C9DC"]
+			description: ["Used for marking or labeling mechanical parts."]
+			id: "378180884674F3FD"
+			rewards: [{
+				count: 3
+				id: "1B1BC08EC1908045"
+				item: "create:andesite_alloy"
+				type: "item"
+			}]
+			tasks: [{
+				id: "394AA6D15CA10962"
+				item: "create:sticker"
+				type: "item"
+			}]
+			x: 2.5d
+			y: -7.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Controls the operation of contraptions."]
+			id: "6FEABD6DCACB6485"
+			rewards: [{
+				id: "174CD711F26E0537"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7C0DA60D7DA83A10"
+				item: "create:contraption_controls"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -13.0d
+		}
+		{
+			dependencies: ["35683F10F04D9017"]
+			description: ["Brass block for creating intricate mechanisms."]
+			id: "3B2BD1678741D38A"
+			rewards: [{
+				id: "1DC84E868953C4F3"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "1FD0743A046C9129"
+				item: "create:mechanical_plough"
+				type: "item"
+			}]
+			x: -11.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Mechanical roller used in the Create mod."]
+			id: "45E958D06DED4ECE"
+			rewards: [{
+				id: "4ED43114885E22B9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "578B07A71B346512"
+				item: "create:mechanical_roller"
+				type: "item"
+			}]
+			x: -15.0d
+			y: -10.5d
+		}
+		{
+			dependencies: ["583977DDD132CBD0"]
+			description: ["Brass mixer for efficient processing of materials."]
+			id: "643C30D4BC24406D"
+			rewards: [{
+				id: "4BACABC263C797A5"
+				item: "create:cogwheel"
+				type: "item"
+			}]
+			tasks: [{
+				id: "59CA9B238942215D"
+				item: "createcasing:brass_mixer"
+				type: "item"
+			}]
+			x: -13.0d
+			y: -15.5d
+		}
+		{
+			dependencies: ["643C30D4BC24406D"]
+			description: ["Copper mixer for specialized material processing."]
+			id: "5F16145F84889427"
+			rewards: [{
+				id: "54581162B80C2BC8"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "61637C8F820647C0"
+				item: "createcasing:copper_mixer"
+				type: "item"
+			}]
+			x: -14.0d
+			y: -16.0d
+		}
+		{
+			dependencies: ["5F16145F84889427"]
+			description: ["Railway mixer for mixing materials in a rail system."]
+			id: "1F982D45F45AC134"
+			rewards: [{
+				count: 3
+				id: "1AD77FF2700E6533"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0681852DAAC7CA46"
+				item: "createcasing:railway_mixer"
+				type: "item"
+			}]
+			x: -13.5d
+			y: -17.0d
+		}
+		{
+			dependencies: ["1F982D45F45AC134"]
+			description: ["Craft an Industrial Iron Mixer to mix heavy materials efficiently."]
+			id: "74730E553388ECD6"
+			rewards: [{
+				count: 2
+				id: "229403862E6AA1FE"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "0780BA844BF858FA"
+				item: "createcasing:industrial_iron_mixer"
+				type: "item"
+			}]
+			x: -14.5d
+			y: -17.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Build a Sail Frame, the structural base for wind-powered sails."]
+			id: "1C4C3A45F9A769C7"
+			rewards: [{
+				id: "670BD49B19400337"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "140FAD6B7E11F3B4"
+				item: "create:sail_frame"
+				type: "item"
+			}]
+			x: 1.0d
+			y: -11.0d
+		}
+		{
+			dependencies: ["1C4C3A45F9A769C7"]
+			description: ["Create a White Sail to catch wind and generate motion."]
+			id: "4ADBD0FFA604BCC4"
+			rewards: [{
+				id: "4659EE889792C53F"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "498C639566653953"
+				item: "create:white_sail"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -12.5d
+		}
+		{
+			dependencies: ["2AFB1D04F10F4AB5"]
+			description: ["Assemble a Powered Latch to toggle mechanisms with redstone input."]
+			id: "7DCDDEBF0AE4F88E"
+			rewards: [{
+				id: "74D7F50415304D2A"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "31F574C0DEE2C21F"
+				item: "create:powered_latch"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["7DCDDEBF0AE4F88E"]
+			description: ["Craft a Powered Toggle Latch to create memory circuits for automation."]
+			id: "0CC8DB00C8A9F39F"
+			rewards: [{
+				id: "277BE9E5911F7B5C"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "04C37C19F51BD809"
+				item: "create:powered_toggle_latch"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -8.0d
+		}
+		{
+			dependencies: ["583977DDD132CBD0"]
+			description: ["Used to automate gear rotations through a sequence."]
+			id: "17497EF7AF14C672"
+			rewards: [{
+				count: 3
+				id: "60460660B8E53054"
+				item: "create:rose_quartz"
+				type: "item"
+			}]
+			tasks: [{
+				id: "43B0CE5F1EC86719"
+				item: "create:sequenced_gearshift"
+				type: "item"
+			}]
+			x: -13.0d
+			y: -14.5d
+		}
+		{
+			dependencies: ["72DA16A67D094510"]
+			description: ["Control and adjust rotational speed precisely."]
+			id: "6F333D9BBD4E0D1C"
+			rewards: [{
+				id: "0D3AA6B78ACF9FE0"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "1FC85FC15AE7B2B1"
+				item: "create:rotation_speed_controller"
+				type: "item"
+			}]
+			x: -18.0d
+			y: -10.0d
+		}
+		{
+			dependencies: ["72DA16A67D094510"]
+			description: ["Used to transport items between inventories automatically."]
+			id: "23796776C471D303"
+			rewards: [{
+				id: "13C027C8FFF2CCE7"
+				type: "xp"
+				xp: 20
+			}]
+			tasks: [{
+				id: "2CBE2FABCA66EA33"
+				item: "create:mechanical_arm"
+				type: "item"
+			}]
+			x: -18.5d
+			y: -11.5d
+		}
+		{
+			dependencies: ["56B1247BC6207323"]
+			description: ["Rail used for deploying trains and carts in automation."]
+			id: "51F1D86E0898C2BF"
+			rewards: [{
+				count: 5
+				id: "5BF3278889ADD89A"
+				item: "minecraft:stone"
+				type: "item"
+			}]
+			tasks: [{
+				id: "002A676CD327705D"
+				item: "create:track"
+				type: "item"
+			}]
+			x: -15.5d
+			y: -13.0d
+		}
+		{
+			dependencies: ["5A8697538A0D20F0"]
+			description: ["Sets instructions for trains to follow along tracks."]
+			id: "54D5EFDEAD440B3E"
+			rewards: [{
+				id: "73483FCE5C043D61"
+				item: "create:sturdy_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "3A771A35EC225E13"
+				item: "create:schedule"
+				type: "item"
+			}]
+			x: 1.5d
+			y: -15.0d
+		}
+		{
+			dependencies: ["25AFFBF59C7229C3"]
+			description: ["Craft a Track Station to manage and organize minecart routes."]
+			id: "5743F0ECD77FF21E"
+			rewards: [{
+				id: "2217D01104A0D10D"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "5297550A5A9B2C83"
+				item: "create:track_station"
+				type: "item"
+			}]
+			x: -8.5d
+			y: -18.0d
+		}
+		{
+			dependencies: ["25AFFBF59C7229C3"]
+			description: ["Build a Track Signal to control minecart traffic on your tracks."]
+			id: "4C2958D0E94C6AC6"
+			rewards: [{
+				id: "7AA40E2306401273"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "1BC84B5677829683"
+				item: "create:track_signal"
+				type: "item"
+			}]
+			x: -7.5d
+			y: -19.0d
+		}
+		{
+			dependencies: ["25AFFBF59C7229C3"]
+			description: ["Use a Track Observer to detect minecart movement and trigger actions."]
+			id: "14EA8B248F586A52"
+			rewards: [{
+				id: "60B59B184B6614E0"
+				item: "create:sturdy_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "625FF27749689A30"
+				item: "create:track_observer"
+				type: "item"
+			}]
+			x: -6.5d
+			y: -19.5d
+		}
+		{
+			dependencies: ["25AFFBF59C7229C3"]
+			description: ["Craft Controls to manually manage track and station behavior."]
+			id: "044341301C59B258"
+			rewards: [{
+				count: 3
+				id: "4872FCBF259360F2"
+				item: "thermal:gold_plate"
+				type: "item"
+			}]
+			tasks: [{
+				id: "1E26A53065A4D7BB"
+				item: "create:controls"
+				type: "item"
+			}]
+			x: -5.5d
+			y: -19.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Create an Andesite Funnel to transfer items between inventories."]
+			id: "664EC70C71737257"
+			rewards: [{
+				id: "37B5BC8B1671CAF6"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "3851D4FCC9DAAFA9"
+				item: "create:andesite_funnel"
+				type: "item"
+			}]
+			x: 0.5d
+			y: -12.0d
+		}
+		{
+			dependencies: ["664EC70C71737257"]
+			description: ["Upgrade to a Brass Funnel for filtered item transport."]
+			id: "3BAD95CBFFC895CC"
+			rewards: [{
+				id: "77A21F451C1915F3"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "25D16A9267DBFF5F"
+				item: "create:brass_funnel"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -13.0d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Use an Andesite Tunnel to control how items flow through belts."]
+			id: "125D1337BBEB4F3E"
+			rewards: [{
+				id: "14B2CA427CED4161"
+				type: "xp"
+				xp: 25
+			}]
+			tasks: [{
+				id: "3DD09A474C92A5BA"
+				item: "create:andesite_tunnel"
+				type: "item"
+			}]
+			x: -0.5d
+			y: -11.0d
+		}
+		{
+			dependencies: ["125D1337BBEB4F3E"]
+			description: ["Create a Brass Tunnel for filtered and routed item movement."]
+			id: "2B7DEEBAD91137F8"
+			rewards: [{
+				id: "44976782324BBAEE"
+				type: "xp"
+				xp: 30
+			}]
+			tasks: [{
+				id: "5E4BA4995D309CBE"
+				item: "create:brass_tunnel"
+				type: "item"
+			}]
+			x: -1.5d
+			y: -12.0d
+		}
+		{
+			dependencies: ["52564E203A09E1BA"]
+			description: ["Craft a Content Observer to detect items in containers."]
+			id: "367A495583E080E5"
+			rewards: [{
+				id: "03C45B82732AE4A6"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "7F15AB3FE257BAB7"
+				item: "create:content_observer"
+				type: "item"
+			}]
+			x: -9.0d
+			y: -16.5d
+		}
+		{
+			dependencies: ["367A495583E080E5"]
+			description: ["Use a Stockpile Switch to detect when storage is full or empty."]
+			id: "6AEF30CAE44450C3"
+			rewards: [{
+				id: "49966B3CA93FD5C9"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "4952D6F50DB1DB65"
+				item: "create:stockpile_switch"
+				type: "item"
+			}]
+			x: -9.5d
+			y: -17.5d
+		}
+		{
+			dependencies: ["30EB1CBCEE3A9EBF"]
+			description: ["Craft an Item Vault to store large amounts of items in one block."]
+			id: "14F537CF6D41A332"
+			rewards: [{
+				count: 2
+				id: "60B4AB0FD78C3752"
+				item: "create:iron_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "6997BD5E781D6D52"
+				item: "create:item_vault"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -4.5d
+		}
+		{
+			dependencies: ["31E491D51F0FA8A1"]
+			description: ["Create an Item Hatch to control input/output to vaults and machines."]
+			id: "02AB104D39B8FD97"
+			rewards: [{
+				id: "4A562D3E92B5B852"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "77FE14A47218A48A"
+				item: "create:item_hatch"
+				type: "item"
+			}]
+			x: -0.5d
+			y: -8.5d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Craft a Packager to automatically compress and combine items into packages for streamlined logistics."]
+			id: "2471FD4909B66398"
+			rewards: [{
+				id: "425B391326DB141E"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "0073618F15F0E7D8"
+				item: "create:packager"
+				type: "item"
+			}]
+			x: -14.0d
+			y: -13.5d
+		}
+		{
+			dependencies: ["2471FD4909B66398"]
+			description: ["Create a Repackager to unpack item packages back into their original components."]
+			id: "5E0A2AD19D8596D4"
+			rewards: [{
+				id: "519C3BACB3DC6890"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "1C84D51B11343C4B"
+				item: "create:repackager"
+				type: "item"
+			}]
+			x: -15.0d
+			y: -14.0d
+		}
+		{
+			dependencies: ["14F537CF6D41A332"]
+			description: ["Build a Package Frogport to allow frog-assisted item transfers via packages."]
+			id: "74155422FEE3A698"
+			rewards: [{
+				count: 5
+				id: "44BAE057376E4ABF"
+				item: "minecraft:iron_nugget"
+				type: "item"
+			}]
+			tasks: [{
+				id: "17DF770B270092C9"
+				item: "create:package_frogport"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -4.0d
+		}
+		{
+			dependencies: ["0A50E6EEC5C61466"]
+			description: ["Craft all 16 colored Postboxes to sort and route packages based on their dye color."]
+			id: "0A9154216DBA5D94"
+			rewards: [{
+				id: "0A4F1473C4DFCC37"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [
+				{
+					id: "331611729403CA97"
+					item: "create:white_postbox"
+					type: "item"
+				}
+				{
+					id: "1D823204CC0122C5"
+					item: "create:orange_postbox"
+					type: "item"
+				}
+				{
+					id: "739EA8FD6BF7C415"
+					item: "create:purple_postbox"
+					type: "item"
+				}
+				{
+					id: "3691CE2A3DF9910B"
+					item: "create:yellow_postbox"
+					type: "item"
+				}
+				{
+					id: "13B9F09A5428F97F"
+					item: "create:brown_postbox"
+					type: "item"
+				}
+				{
+					id: "1958FF290F668A9B"
+					item: "create:magenta_postbox"
+					type: "item"
+				}
+				{
+					id: "6B2059CE61503299"
+					item: "create:light_gray_postbox"
+					type: "item"
+				}
+				{
+					id: "0005EDF572D41266"
+					item: "create:blue_postbox"
+					type: "item"
+				}
+				{
+					id: "45AC5C391180D0EF"
+					item: "create:lime_postbox"
+					type: "item"
+				}
+				{
+					id: "6B229A42EDB5F959"
+					item: "create:pink_postbox"
+					type: "item"
+				}
+				{
+					id: "2C985ED9D5C8AFFD"
+					item: "create:cyan_postbox"
+					type: "item"
+				}
+				{
+					id: "4E204E83B900F71E"
+					item: "create:green_postbox"
+					type: "item"
+				}
+				{
+					id: "327F7A0D0013DEC4"
+					item: "create:light_blue_postbox"
+					type: "item"
+				}
+				{
+					id: "6BA484658B75DEDA"
+					item: "create:gray_postbox"
+					type: "item"
+				}
+				{
+					id: "657F4D08D0EFFB27"
+					item: "create:red_postbox"
+					type: "item"
+				}
+				{
+					id: "72C7EBA97864B988"
+					item: "create:black_postbox"
+					type: "item"
+				}
+			]
+			x: -11.5d
+			y: -13.0d
+		}
+		{
+			dependencies: ["14F537CF6D41A332"]
+			description: ["Create a Stock Link to connect and manage item stocks in a synchronized manner."]
+			id: "4001795EE0FBA89C"
+			rewards: [{
+				id: "121052BDA5BD58FA"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "02B95B45CC1243C3"
+				item: "create:stock_link"
+				type: "item"
+			}]
+			x: -7.0d
+			y: -5.5d
+		}
+		{
+			dependencies: ["4001795EE0FBA89C"]
+			description: ["Create a Stock Ticker to track and display real-time stock levels for efficient management."]
+			id: "3BB54D377AB4FACC"
+			rewards: [{
+				id: "542FA80A5B4A31FE"
+				item: "minecraft:gold_ingot"
+				type: "item"
+			}]
+			tasks: [{
+				id: "1855DF17D9B618F9"
+				item: "create:stock_ticker"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -5.5d
+		}
+		{
+			dependencies: ["4001795EE0FBA89C"]
+			description: ["Set up a Redstone Requester to automate the request of items from a specific stockpile."]
+			id: "6E55815DB4D65991"
+			rewards: [{
+				count: 3
+				id: "5BAB538876878D5B"
+				item: "minecraft:redstone"
+				type: "item"
+			}]
+			tasks: [{
+				id: "6CFA27EB32228CE4"
+				item: "create:redstone_requester"
+				type: "item"
+			}]
+			x: -8.0d
+			y: -6.5d
+		}
+		{
+			dependencies: ["090396B1F6C7D193"]
+			description: ["Craft an Andesite Table Cloth for decorative purposes or use in various crafting recipes."]
+			id: "11A206C0A64435E4"
+			rewards: [{
+				id: "5A3FD425E8E58D8E"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6B5D362E1867BC27"
+				item: "create:andesite_table_cloth"
+				type: "item"
+			}]
+			x: -16.5d
+			y: -10.0d
+		}
+		{
+			dependencies: ["11A206C0A64435E4"]
+			description: ["Create a Brass Table Cloth to enhance the appearance of tables or for crafting applications."]
+			id: "3437374269DCFE3F"
+			rewards: [{
+				id: "36B72D8C3FEBBE66"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "2A5203B47E3DD2F1"
+				item: "create:brass_table_cloth"
+				type: "item"
+			}]
+			x: -17.5d
+			y: -9.0d
+		}
+		{
+			dependencies: ["3437374269DCFE3F"]
+			description: ["Make a Copper Table Cloth for aesthetic purposes or use in various craftable items."]
+			id: "5FC4E465C0A43CFF"
+			rewards: [{
+				id: "0B5BF032CF993A16"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "6CA8F5E464FE0C7E"
+				item: "create:copper_table_cloth"
+				type: "item"
+			}]
+			x: -16.5d
+			y: -8.5d
+		}
+		{
+			dependencies: ["09945921C76893CF"]
+			description: ["Create a Display Link to synchronize and manage visual information across various displays."]
+			id: "629C8AEF78E3ED35"
+			rewards: [{
+				count: 3
+				id: "1910C99D3D6749CE"
+				item: "create:copper_sheet"
+				type: "item"
+			}]
+			tasks: [{
+				id: "4B12EE54BECDF141"
+				item: "create:display_link"
+				type: "item"
+			}]
+			x: -4.0d
+			y: -7.0d
+		}
+		{
+			dependencies: ["33F49F160B7D425C"]
+			description: ["Create a Display Board to present information from various sources in a unified visual format."]
+			id: "6C83633639B23744"
+			rewards: [{
+				id: "1BB0A6C9FB98D9FD"
+				type: "xp"
+				xp: 15
+			}]
+			tasks: [{
+				id: "136FB5E077BD7D73"
+				item: "create:display_board"
+				type: "item"
+			}]
+			x: 6.5d
+			y: -15.0d
+		}
+		{
+			dependencies: ["33F49F160B7D425C"]
+			description: ["Create a Nixie Tube to display numbers using a classic vacuum tube display style."]
+			id: "71AC052B2F9AE38E"
+			rewards: [{
+				id: "31269795FA3F24E8"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6D4B1149E27F4341"
+				item: "create:nixie_tube"
+				type: "item"
+			}]
+			x: 7.5d
+			y: -16.0d
+		}
+		{
+			dependencies: ["01C8F1E2A94E885A"]
+			description: ["Craft a Rose Quartz Lamp to provide decorative lighting with a touch of elegance."]
+			id: "10F8B509B0C6D7AD"
+			rewards: [{
+				count: 2
+				id: "75075BD667551A52"
+				item: "create:rose_quartz"
+				type: "item"
+			}]
+			tasks: [{
+				id: "04F58EA76F9CD409"
+				item: "create:rose_quartz_lamp"
+				type: "item"
+			}]
+			x: 0.0d
+			y: -14.5d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Create an Analog Lever to control various mechanisms in a mechanical setup."]
+			id: "602D0A9FCA8475C6"
+			rewards: [{
+				id: "228EB790CF951CB1"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "4ABEB4CCA1762268"
+				item: "create:analog_lever"
+				type: "item"
+			}]
+			x: -10.5d
+			y: -13.5d
+		}
+		{
+			dependencies: ["6522A08513D695F3"]
+			description: ["Create a Placard to display informative text or labels for various in-game uses."]
+			id: "7CC2E92A1344FFF4"
+			rewards: [{
+				id: "4C031DE12C8223D8"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7CBCC169F92D5A7C"
+				item: "create:placard"
+				type: "item"
+			}]
+			x: -3.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["6522A08513D695F3"]
+			description: ["Create a Pulse Repeater to repeat redstone signals at regular intervals for extended control."]
+			id: "41B2221CF0239C7E"
+			rewards: [{
+				id: "4CA18DE3D5CB52F1"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "7E1124ACA12BE448"
+				item: "create:pulse_repeater"
+				type: "item"
+			}]
+			x: -4.0d
+			y: -2.0d
+		}
+		{
+			dependencies: ["41B2221CF0239C7E"]
+			description: ["Craft a Pulse Extender to extend the duration of a pulse signal in a redstone circuit."]
+			id: "29C76DB965CA57C6"
+			rewards: [{
+				id: "00D6CEFCBD2CE5C5"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "2E2A62D044A714D8"
+				item: "create:pulse_extender"
+				type: "item"
+			}]
+			x: -4.5d
+			y: -1.0d
+		}
+		{
+			dependencies: ["0CC8DB00C8A9F39F"]
+			description: ["Create a Pulse Timer to measure and control the timing of pulse signals in redstone circuits."]
+			id: "13C00992815D5E70"
+			rewards: [{
+				id: "2E82898ACC5DD9C8"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "6BF832F3CD61AABE"
+				item: "create:pulse_timer"
+				type: "item"
+			}]
+			x: -6.0d
+			y: -9.0d
+		}
+		{
+			dependencies: ["022CB39B43ACA7D9"]
+			description: ["Create Pulp to be used as a resource in crafting and other industrial applications."]
+			id: "4329352B6876068F"
+			rewards: [{
+				id: "71F134533C05843E"
+				type: "xp"
+				xp: 5
+			}]
+			tasks: [{
+				id: "3713964A852A2257"
+				item: "create:pulp"
+				type: "item"
+			}]
+			x: 2.5d
+			y: 1.0d
+		}
+		{
+			dependencies: ["48FAE2538DCA6BBC"]
+			description: ["Create a Slicer to chop items into smaller pieces for various recipes and uses."]
+			id: "5866F03F1ED0E06C"
+			rewards: [{
+				id: "250DAF8F920CE6EA"
+				type: "xp"
+				xp: 10
+			}]
+			tasks: [{
+				id: "035BDA9EA1A4C6E9"
+				item: "sliceanddice:slicer"
+				type: "item"
+			}]
+			x: -11.5d
+			y: -14.0d
+		}
+		{
+			dependencies: ["10F5AA90E443C9DF"]
+			description: ["Craft an Experience Nugget to store and manage collected experience points."]
+			id: "4345D670B7881F96"
+			rewards: [{
+				id: "5F8BE89BAC9A2698"
+				type: "xp"
+				xp: 35
+			}]
+			tasks: [{
+				id: "6A82E6C0FCD49AB4"
+				item: "create:experience_nugget"
+				type: "item"
+			}]
+			x: -1.0d
+			y: -5.0d
+		}
+	]
+	title: "Create"
+}

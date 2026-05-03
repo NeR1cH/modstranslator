@@ -6,6 +6,7 @@ import {
 } from './langParsers';
 import { translateTexts } from './deepl';
 import { ExtractedLangFile, LangEntry } from '@/types';
+import { sanitizePath } from './security';
 
 // ============================================================
 // BLOCK: JAR extraction
@@ -135,8 +136,16 @@ export async function repackJar(
       .replace(/en\.json$/i, 'ru_ru.json')
       .replace(/en\.lang$/i, 'ru_ru.lang');
 
-    console.log('[jarProcessor] Adding:', originalPath, '→', ruPath);
-    zip.file(ruPath, translatedContent);
+    // Sanitize path to prevent path traversal attacks
+    try {
+      const safePath = sanitizePath(ruPath);
+      console.log('[jarProcessor] Adding:', originalPath, '→', safePath);
+      zip.file(safePath, translatedContent);
+    } catch (error) {
+      console.error('[jarProcessor] Invalid path detected:', ruPath, error);
+      // Skip this file if path is invalid
+      continue;
+    }
   }
 
   console.log('[jarProcessor] Generating new JAR...');
