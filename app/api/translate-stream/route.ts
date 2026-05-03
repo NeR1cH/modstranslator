@@ -9,6 +9,7 @@ import {
 } from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
+import { TranslationReportBuilder } from '@/lib/translationReport';
 
 // ============================================================
 // BLOCK: Streaming translation endpoint with SSE
@@ -36,6 +37,11 @@ export async function POST(req: NextRequest) {
 
       const files = body.files;
       const totalFiles = files.length;
+
+      // Create report builder
+      const reportBuilder = new TranslationReportBuilder(
+        totalFiles === 1 ? 'file' : (files[0]?.fileName.endsWith('.zip') ? 'modpack' : 'jar')
+      );
 
       await sendEvent({
         type: 'start',
@@ -111,6 +117,20 @@ export async function POST(req: NextRequest) {
 
             const translations = await translateLangFiles(langFiles);
 
+            // Collect report data for JAR
+            for (const langFile of langFiles) {
+              const values = langFile.entries.map(e => e.value);
+              const translated = await translateTexts(values);
+
+              const entries = langFile.entries.map((entry, i) => ({
+                key: entry.key,
+                original: entry.value,
+                translated: translated[i] ?? entry.value,
+              }));
+
+              reportBuilder.addFile(langFile.path, langFile.format, entries);
+            }
+
             await sendEvent({
               type: 'progress',
               fileId: file.id,
@@ -152,13 +172,27 @@ export async function POST(req: NextRequest) {
             const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
             const result = rebuild(content, transMap);
 
+            // Collect report data for standalone file
+            const reportEntries = entries.map((entry, i) => ({
+              key: entry.key,
+              original: entry.value,
+              translated: translated[i] ?? entry.value,
+            }));
+            reportBuilder.addFile(file.fileName, ext!, reportEntries);
+
             resultBase64 = Buffer.from(result, 'utf-8').toString('base64');
             translatedCount = entries.length;
             langFilesCount = 1;
             outputFileName = outName;
           }
 
-          // Send success event
+          // Generate reports
+          const report = reportBuilder.getReport();
+          const textReport = reportBuilder.generateTextReport();
+          const htmlReport = reportBuilder.generateHtmlReport();
+          const htmlReportBase64 = Buffer.from(htmlReport, 'utf-8').toString('base64');
+
+          // Send success event with report data
           await sendEvent({
             type: 'file_complete',
             fileId: file.id,
@@ -169,6 +203,9 @@ export async function POST(req: NextRequest) {
             langFilesCount,
             current: fileNumber,
             total: totalFiles,
+            report,
+            textReport,
+            htmlReportBase64,
             message: `[${fileNumber}/${totalFiles}] ✓ Завершено: ${file.fileName}`
           });
 

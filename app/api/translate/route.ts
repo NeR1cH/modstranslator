@@ -9,6 +9,7 @@ import {
 } from '@/lib/langParsers';
 import { translateTexts } from '@/lib/deepl';
 import { LangEntry } from '@/types';
+import { TranslationReportBuilder } from '@/lib/translationReport';
 
 // ============================================================
 // BLOCK: Route handler — dispatches by file format
@@ -59,9 +60,26 @@ export async function POST(req: NextRequest) {
         throw new Error('Нет английских lang файлов в JAR');
       }
 
+      // Создаем отчет о переводе
+      const reportBuilder = new TranslationReportBuilder('jar');
+
       console.log('Translating lang files...');
       const translations = await translateLangFiles(langFiles);
       console.log('Translations complete');
+
+      // Собираем данные для отчета
+      for (const langFile of langFiles) {
+        const values = langFile.entries.map(e => e.value);
+        const translated = await translateTexts(values);
+
+        const entries = langFile.entries.map((entry, i) => ({
+          key: entry.key,
+          original: entry.value,
+          translated: translated[i] ?? entry.value,
+        }));
+
+        reportBuilder.addFile(langFile.path, langFile.format, entries);
+      }
 
       console.log('Repacking JAR...');
       const resultBuffer = await repackJar(buffer, translations);
@@ -70,11 +88,21 @@ export async function POST(req: NextRequest) {
       const totalStrings = langFiles.reduce((s, f) => s + f.entries.length, 0);
       console.log('Total strings translated:', totalStrings);
 
+      // Генерируем текстовый отчет
+      const textReport = reportBuilder.generateTextReport();
+      console.log('\n' + textReport);
+
+      // Генерируем HTML отчет
+      const htmlReport = reportBuilder.generateHtmlReport();
+
       const response = {
         resultBase64: resultBuffer.toString('base64'),
         translatedCount: totalStrings,
         langFilesCount: langFiles.length,
         outputFileName: fileName,
+        report: reportBuilder.getReport(),
+        textReport,
+        htmlReportBase64: Buffer.from(htmlReport, 'utf-8').toString('base64'),
       };
       console.log('Response:', response);
       console.log('=== API /api/translate END (JAR) ===\n');
@@ -96,6 +124,9 @@ export async function POST(req: NextRequest) {
       throw new Error('Нет строк для перевода');
     }
 
+    // Создаем отчет о переводе
+    const reportBuilder = new TranslationReportBuilder('file');
+
     console.log('Extracting values for translation...');
     const values = entries.map(e => e.value);
     console.log('Values to translate:', values.length);
@@ -103,6 +134,14 @@ export async function POST(req: NextRequest) {
     console.log('Calling DeepL API...');
     const translated = await translateTexts(values);
     console.log('Translation complete, received:', translated.length, 'translations');
+
+    // Собираем данные для отчета
+    const reportEntries = entries.map((entry, i) => ({
+      key: entry.key,
+      original: entry.value,
+      translated: translated[i] ?? entry.value,
+    }));
+    reportBuilder.addFile(fileName, ext!, reportEntries);
 
     console.log('Building translation map...');
     const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
@@ -112,11 +151,21 @@ export async function POST(req: NextRequest) {
     const result = rebuild(content, transMap);
     console.log('Rebuilt file length:', result.length, 'chars');
 
+    // Генерируем текстовый отчет
+    const textReport = reportBuilder.generateTextReport();
+    console.log('\n' + textReport);
+
+    // Генерируем HTML отчет
+    const htmlReport = reportBuilder.generateHtmlReport();
+
     const response = {
       resultBase64: Buffer.from(result, 'utf-8').toString('base64'),
       translatedCount: entries.length,
       langFilesCount: 1,
       outputFileName: outName,
+      report: reportBuilder.getReport(),
+      textReport,
+      htmlReportBase64: Buffer.from(htmlReport, 'utf-8').toString('base64'),
     };
     console.log('Response:', response);
     console.log('=== API /api/translate END (standalone) ===\n');

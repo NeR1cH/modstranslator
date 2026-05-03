@@ -9,9 +9,11 @@ import { UsageIndicator } from '@/components/UsageIndicator';
 import { CacheIndicator } from '@/components/CacheIndicator';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { TranslationReportViewer } from '@/components/TranslationReportViewer';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
 import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
 import { getTranslationHistory } from '@/lib/translationHistory';
+import { TranslationReport } from '@/lib/translationReport';
 
 
 const MAX_LOG_ENTRIES = 500;
@@ -68,6 +70,9 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadPercent, setUploadPercent] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [translationReport, setTranslationReport] = useState<TranslationReport | null>(null);
+  const [textReport, setTextReport] = useState<string | null>(null);
+  const [htmlReportBase64, setHtmlReportBase64] = useState<string | null>(null);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
     setLogs(prev => {
@@ -355,6 +360,17 @@ export default function Home() {
                 });
               }
 
+              // Save report data if available
+              if (data.report) {
+                setTranslationReport(data.report);
+              }
+              if (data.textReport) {
+                setTextReport(data.textReport);
+              }
+              if (data.htmlReportBase64) {
+                setHtmlReportBase64(data.htmlReportBase64);
+              }
+
               const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
               addLog(`> ГОТОВО: ${data.fileName} ${countMsg}`, 'success');
 
@@ -626,16 +642,28 @@ export default function Home() {
             )}
           </div>
 
+          {/* Translation Report */}
+          {translationReport && (
+            <div>
+              <div className="section-label">// 04. ОТЧЕТ О ПЕРЕВОДЕ</div>
+              <TranslationReportViewer
+                report={translationReport}
+                textReport={textReport}
+                htmlReportBase64={htmlReportBase64}
+              />
+            </div>
+          )}
+
           {(isRunning || progress > 0) && (
             <div>
-              <div className="section-label">// 04. ПРОГРЕСС</div>
+              <div className="section-label">// 05. ПРОГРЕСС</div>
               <ProgressBar value={progress} label="TRANSLATION" />
             </div>
           )}
 
           {/* History Panel */}
           <div>
-            <div className="section-label">// 05. ИСТОРИЯ ПЕРЕВОДОВ</div>
+            <div className="section-label">// 06. ИСТОРИЯ ПЕРЕВОДОВ</div>
             <HistoryPanel />
           </div>
         </div>
