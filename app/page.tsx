@@ -394,43 +394,22 @@ export default function Home() {
             // Get output filename from header
             outputFileName = res.headers.get('X-Output-Filename') || file.name.replace(/\.(zip|jar)$/i, '_translated.$1');
 
-            // Convert blob to base64 for storage with progress
-            addLog(`> 🔄 Чтение результата...`, 'system');
+            // For large files, download directly without storing in memory
+            addLog(`> 🔄 Скачивание результата...`, 'system');
             const blob = await res.blob();
-            const totalSize = blob.size;
 
-            addLog(`> 🔄 Конвертация результата (${(totalSize / 1024 / 1024).toFixed(2)} MB)...`, 'system');
-            setProgress(70);
+            addLog(`> ✅ Готово! Скачивание начато...`, 'success');
+            setProgress(100);
 
-            const arrayBuffer = await blob.arrayBuffer();
-            const bytes = new Uint8Array(arrayBuffer);
+            // Trigger download immediately
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = outputFileName;
+            a.click();
+            URL.revokeObjectURL(url);
 
-            // Convert to base64 in chunks to show progress
-            const chunkSize = 1024 * 1024; // 1MB chunks
-            let binary = '';
-
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
-              for (let j = 0; j < chunk.length; j++) {
-                binary += String.fromCharCode(chunk[j]);
-              }
-
-              // Update progress
-              const progressPercent = 70 + Math.round((i / bytes.length) * 25);
-              setProgress(progressPercent);
-
-              // Allow UI to update
-              await new Promise(resolve => setTimeout(resolve, 0));
-            }
-
-            addLog(`> 🔄 Финализация...`, 'system');
-            setProgress(95);
-            const resultBase64 = btoa(binary);
-
-            newResults.push({
-              outputFileName,
-              resultBase64,
-            });
+            addLog(`> ✅ Файл скачан: ${outputFileName}`, 'success');
 
           } else {
             // Small file - use existing streaming API
