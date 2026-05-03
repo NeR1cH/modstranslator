@@ -23,6 +23,8 @@ export interface TranslationFile {
   langFilesCount?: number;
   stringsCount: number;
   originalBase64: string;
+  tempPath?: string;  // For streaming uploads (files >800MB)
+  tempId?: string;    // Temp file identifier
 }
 
 export interface LogEntry {

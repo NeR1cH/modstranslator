@@ -144,16 +144,6 @@ export default function Home() {
         continue;
       }
 
-      // Validate file size - browser memory limit for base64 conversion
-      // Files larger than 800MB may cause browser to crash
-      if (file.size > 800 * 1024 * 1024) {
-        console.error('ERROR: file too large for browser memory');
-        addLog(`> ОШИБКА: ${file.name} слишком большой для обработки в браузере (максимум 800 MB)`, 'error');
-        addLog(`> Для файлов больше 800 MB используйте серверную версию приложения`, 'warning');
-        setUploadPercent(Math.round((fileNum / totalFiles) * 100));
-        continue;
-      }
-
       // Validate file size
       if (file.size > QUEUE_LIMITS.MAX_FILE_SIZE) {
         console.error('ERROR: file too large');
@@ -181,52 +171,101 @@ export default function Home() {
       const typeLabel = FORMAT_LABELS[format] ?? format.toUpperCase();
 
       try {
-        console.log('STEP 1: Converting to base64...');
-        addLog(`> 🔄 Конвертация...`, 'info');
-        const base64 = await fileToBase64(file);
-        console.log('base64 length:', base64.length);
+        // Check if file is large (>800MB) - use streaming upload
+        const useStreaming = file.size > 800 * 1024 * 1024 && (format === 'zip' || format === 'jar');
 
-        console.log('STEP 2: Sending to server...');
-        addLog(`> 🔄 Анализ файла...`, 'info');
+        if (useStreaming) {
+          console.log('LARGE FILE: Using streaming upload');
+          addLog(`> 🔄 Загрузка большого файла (streaming)...`, 'info');
 
-        const requestBody = { base64, fileName: file.name };
-        console.log('request body keys:', Object.keys(requestBody));
-        console.log('fileName:', requestBody.fileName);
+          // Upload file using FormData (no base64 conversion)
+          const formData = new FormData();
+          formData.append('file', file);
 
-        const res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
+          const uploadRes = await fetch('/api/upload-stream', {
+            method: 'POST',
+            body: formData,
+          });
 
-        console.log('response status:', res.status);
-        console.log('response ok:', res.ok);
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json() as { error: string };
+            throw new Error(errData.error || 'Ошибка загрузки файла');
+          }
 
-        if (!res.ok) {
-          const errData = await res.json() as { error: string };
-          console.error('API error:', errData);
-          throw new Error(errData.error || 'Ошибка анализа файла');
+          const uploadData = await uploadRes.json() as {
+            tempId: string;
+            tempPath: string;
+            fileName: string;
+            fileSize: number;
+          };
+
+          console.log('File uploaded to server:', uploadData);
+          addLog(`> ✅ Файл загружен на сервер`, 'success');
+
+          // Store temp info for translation
+          setFiles(prev => prev.map(f => {
+            if (f.id !== id) return f;
+            return {
+              ...f,
+              status: 'pending' as const,
+              stringsCount: 0, // Will be calculated during translation
+              originalBase64: '', // Not used for streaming
+              tempPath: uploadData.tempPath,
+              tempId: uploadData.tempId,
+            };
+          }));
+
+          addLog(`> ✅ Готов к переводу`, 'success');
+        } else {
+          // Small file - use existing base64 method
+          console.log('STEP 1: Converting to base64...');
+          addLog(`> 🔄 Конвертация...`, 'info');
+          const base64 = await fileToBase64(file);
+          console.log('base64 length:', base64.length);
+
+          console.log('STEP 2: Sending to server...');
+          addLog(`> 🔄 Анализ файла...`, 'info');
+
+          const requestBody = { base64, fileName: file.name };
+          console.log('request body keys:', Object.keys(requestBody));
+          console.log('fileName:', requestBody.fileName);
+
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
+
+          console.log('response status:', res.status);
+          console.log('response ok:', res.ok);
+
+          if (!res.ok) {
+            const errData = await res.json() as { error: string };
+            console.error('API error:', errData);
+            throw new Error(errData.error || 'Ошибка анализа файла');
+          }
+
+          console.log('STEP 3: Processing result...');
+          addLog(`> 🔄 Обработка...`, 'info');
+          const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
+          console.log('stats received:', stats);
+
+          setFiles(prev => prev.map(f => {
+            if (f.id !== id) return f;
+            const updated = {
+              ...f, status: 'pending' as const, stringsCount: stats.stringsCount,
+              langFilesCount: stats.langFilesCount, originalBase64: base64,
+            };
+            console.log('updating file status:', updated);
+            return updated;
+          }));
+
+          const detail = format === 'zip' || format === 'jar'
+            ? `[${stats.langFilesCount} файлов, ${stats.stringsCount} строк]`
+            : `[${stats.stringsCount} строк]`;
+          addLog(`> ✅ ${file.name} ${detail}`, 'success');
         }
 
-        console.log('STEP 3: Processing result...');
-        addLog(`> 🔄 Обработка...`, 'info');
-        const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
-        console.log('stats received:', stats);
-
-        setFiles(prev => prev.map(f => {
-          if (f.id !== id) return f;
-          const updated = {
-            ...f, status: 'pending' as const, stringsCount: stats.stringsCount,
-            langFilesCount: stats.langFilesCount, originalBase64: base64,
-          };
-          console.log('updating file status:', updated);
-          return updated;
-        }));
-
-        const detail = format === 'zip' || format === 'jar'
-          ? `[${stats.langFilesCount} файлов, ${stats.stringsCount} строк]`
-          : `[${stats.stringsCount} строк]`;
-        addLog(`> ✅ ${file.name} ${detail}`, 'success');
         addLog(`════════════════════════════════════`, 'system');
         console.log('SUCCESS:', file.name);
       } catch (err) {
@@ -274,136 +313,148 @@ export default function Home() {
     const newResults: typeof results = [];
 
     try {
-      // Prepare files for streaming API
-      const filesPayload = pending.map(f => ({
-        id: f.id,
-        fileName: f.name,
-        base64: f.originalBase64,
-      }));
+      // Process each file individually
+      for (let i = 0; i < pending.length; i++) {
+        const file = pending[i];
+        const current = i + 1;
+        const total = pending.length;
 
-      console.log('Sending streaming request...');
-      const res = await fetch('/api/translate-stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: filesPayload }),
-        signal: controller.signal,
-      });
+        console.log(`[${current}/${total}] Processing:`, file.name);
+        addLog(`> [${current}/${total}] ${file.name}`, 'info');
 
-      console.log('streaming response status:', res.status);
+        setCurrentFile(file.name);
+        setFiles(prev => prev.map(f =>
+          f.id === file.id ? { ...f, status: 'translating' } : f
+        ));
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+        try {
+          let resultBuffer: Buffer;
+          let outputFileName: string;
 
-      const reader = res.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
+          // Check if file was uploaded via streaming (has tempPath)
+          if (file.tempPath) {
+            console.log('Processing streaming-uploaded file:', file.tempPath);
+            addLog(`> 🔄 Обработка большого файла...`, 'system');
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+            // Call process-upload endpoint
+            const res = await fetch('/api/process-upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                tempPath: file.tempPath,
+                fileName: file.name,
+                format: file.format,
+              }),
+              signal: controller.signal,
+            });
 
-      // Read SSE stream
-      while (true) {
-        const { done, value } = await reader.read();
+            if (!res.ok) {
+              const errData = await res.json() as { error: string };
+              throw new Error(errData.error || 'Ошибка обработки файла');
+            }
 
-        if (done) {
-          console.log('Stream finished');
-          break;
-        }
+            const data = await res.json() as {
+              success: boolean;
+              outputFileName: string;
+              resultBase64: string;
+            };
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+            outputFileName = data.outputFileName;
+            newResults.push({
+              outputFileName: data.outputFileName,
+              resultBase64: data.resultBase64,
+            });
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
+          } else {
+            // Small file - use existing streaming API
+            console.log('Processing base64 file');
+            const filesPayload = [{
+              id: file.id,
+              fileName: file.name,
+              base64: file.originalBase64,
+            }];
 
-          const data = JSON.parse(line.slice(6));
-          console.log('[SSE]', data.type, data);
+            const res = await fetch('/api/translate-stream', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ files: filesPayload }),
+              signal: controller.signal,
+            });
 
-          switch (data.type) {
-            case 'start':
-              addLog(`> Обработка ${data.totalFiles} файл(ов)`, 'system');
-              break;
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}`);
+            }
 
-            case 'file_start':
-              const typeLabel = FORMAT_LABELS[files.find(f => f.id === data.fileId)?.format || ''] || 'FILE';
-              setCurrentFile(data.fileName);
-              setFiles(prev => prev.map(f =>
-                f.id === data.fileId ? { ...f, status: 'translating' } : f
-              ));
-              addLog(`> [${data.current}/${data.total}] [${typeLabel}] ${data.fileName}`, 'info');
-              break;
+            const reader = res.body?.getReader();
+            if (!reader) {
+              throw new Error('No response body');
+            }
 
-            case 'progress':
-              const stageLabels: Record<string, string> = {
-                extracting: 'Извлечение',
-                translating: 'Перевод',
-                packing: 'Упаковка',
-              };
-              const stageLabel = stageLabels[data.stage] || data.stage;
-              addLog(`> ${stageLabel}: ${data.fileName}`, 'system');
-              break;
+            const decoder = new TextDecoder();
+            let buffer = '';
 
-            case 'file_complete':
-              newResults.push({
-                outputFileName: data.outputFileName,
-                resultBase64: data.resultBase64,
-              });
-              setFiles(prev => prev.map(f =>
-                f.id === data.fileId ? { ...f, status: 'done' } : f
-              ));
+            // Read SSE stream
+            while (true) {
+              const { done, value } = await reader.read();
 
-              // Save to history
-              const file = files.find(f => f.id === data.fileId);
-              if (file) {
-                const history = getTranslationHistory();
-                await history.save({
-                  fileName: data.fileName,
-                  outputFileName: data.outputFileName,
-                  stringsCount: data.translatedCount,
-                  format: file.format,
-                  resultBase64: data.resultBase64,
-                  fileSize: file.size,
-                });
+              if (done) {
+                console.log('Stream finished');
+                break;
               }
 
-              // Save report data if available
-              if (data.report) {
-                setTranslationReport(data.report);
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+
+                const data = JSON.parse(line.slice(6));
+                console.log('[SSE]', data.type, data);
+
+                if (data.type === 'file_complete') {
+                  newResults.push({
+                    outputFileName: data.outputFileName,
+                    resultBase64: data.resultBase64,
+                  });
+
+                  // Save report data if available
+                  if (data.report) {
+                    setTranslationReport(data.report);
+                  }
+                  if (data.textReport) {
+                    setTextReport(data.textReport);
+                  }
+                  if (data.htmlReportBase64) {
+                    setHtmlReportBase64(data.htmlReportBase64);
+                  }
+                } else if (data.type === 'error') {
+                  throw new Error(data.error);
+                }
               }
-              if (data.textReport) {
-                setTextReport(data.textReport);
-              }
-              if (data.htmlReportBase64) {
-                setHtmlReportBase64(data.htmlReportBase64);
-              }
-
-              const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
-              addLog(`> ✅ ${data.fileName} ${countMsg}`, 'success');
-
-              const progressPercent = Math.round((data.current / data.total) * 100);
-              setProgress(progressPercent);
-              break;
-
-            case 'file_error':
-              setFiles(prev => prev.map(f =>
-                f.id === data.fileId ? { ...f, status: 'error', errorMessage: data.error } : f
-              ));
-              addLog(`> ❌ ${data.fileName} — ${data.error}`, 'error');
-              break;
-
-            case 'complete':
-              addLog(`> Все файлы обработаны (${data.totalFiles})`, 'success');
-              break;
-
-            case 'error':
-              addLog(`> Ошибка: ${data.error}`, 'error');
-              throw new Error(data.error);
+            }
           }
+
+          // Mark file as done
+          setFiles(prev => prev.map(f =>
+            f.id === file.id ? { ...f, status: 'done' } : f
+          ));
+
+          addLog(`> ✅ ${file.name}`, 'success');
+
+          const progressPercent = Math.round((current / total) * 100);
+          setProgress(progressPercent);
+
+        } catch (fileErr) {
+          console.error('Error processing file:', fileErr);
+          setFiles(prev => prev.map(f =>
+            f.id === file.id ? { ...f, status: 'error', errorMessage: String(fileErr) } : f
+          ));
+          addLog(`> ❌ ${file.name} — ${fileErr}`, 'error');
         }
       }
+
+      addLog(`> Все файлы обработаны (${pending.length})`, 'success');
 
     } catch (err) {
       // Check if error is due to abort

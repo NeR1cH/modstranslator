@@ -290,3 +290,25 @@ export async function translateModpack(
   console.log('[modpackProcessor] Result ZIP size:', resultBuffer.length, 'bytes');
   return resultBuffer;
 }
+
+/**
+ * Translate modpack from buffer and return result with filename
+ * Used by streaming upload endpoint
+ */
+export async function translateModpackFromBuffer(
+  zipBuffer: Buffer,
+  originalFileName: string
+): Promise<{ buffer: Buffer; fileName: string }> {
+  console.log('[modpackProcessor] translateModpackFromBuffer called');
+  console.log('[modpackProcessor] Original file:', originalFileName);
+
+  const resultBuffer = await translateModpack(zipBuffer);
+
+  // Generate output filename
+  const outputFileName = originalFileName.replace(/\.(zip|jar)$/i, '_translated.$1');
+
+  return {
+    buffer: resultBuffer,
+    fileName: outputFileName,
+  };
+}
