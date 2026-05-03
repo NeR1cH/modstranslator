@@ -156,8 +156,8 @@ export default function Home() {
       console.log('generated id:', id);
 
       addLog(`════════════════════════════════════`, 'system');
-      addLog(`> 📁 НОВЫЙ ФАЙЛ: ${file.name}`, 'system');
-      addLog(`> 📊 РАЗМЕР: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
+      addLog(`> 📁 ${file.name}`, 'system');
+      addLog(`> 📊 ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
 
       setFiles(prev => {
         const newFile = {
@@ -172,12 +172,12 @@ export default function Home() {
 
       try {
         console.log('STEP 1: Converting to base64...');
-        addLog(`> 🔄 ШАГ 1/3: Конвертация в base64...`, 'info');
+        addLog(`> 🔄 Конвертация...`, 'info');
         const base64 = await fileToBase64(file);
         console.log('base64 length:', base64.length);
 
         console.log('STEP 2: Sending to server...');
-        addLog(`> 🔄 ШАГ 2/3: Отправка на сервер...`, 'info');
+        addLog(`> 🔄 Анализ файла...`, 'info');
 
         const requestBody = { base64, fileName: file.name };
         console.log('request body keys:', Object.keys(requestBody));
@@ -199,7 +199,7 @@ export default function Home() {
         }
 
         console.log('STEP 3: Processing result...');
-        addLog(`> 🔄 ШАГ 3/3: Обработка результата...`, 'info');
+        addLog(`> 🔄 Обработка...`, 'info');
         const stats = await res.json() as { stringsCount: number; langFilesCount?: number; mode?: string };
         console.log('stats received:', stats);
 
@@ -216,7 +216,7 @@ export default function Home() {
         const detail = format === 'zip' || format === 'jar'
           ? `[${stats.langFilesCount} файлов, ${stats.stringsCount} строк]`
           : `[${stats.stringsCount} строк]`;
-        addLog(`> ✅ УСПЕШНО ЗАГРУЖЕН: ${file.name} ${detail}`, 'success');
+        addLog(`> ✅ ${file.name} ${detail}`, 'success');
         addLog(`════════════════════════════════════`, 'system');
         console.log('SUCCESS:', file.name);
       } catch (err) {
@@ -259,8 +259,7 @@ export default function Home() {
     setProgress(0);
     setResults([]);
     addLog('════════════════════════════════════', 'system');
-    addLog(`> СТАРТ // ${pending.length} объект(ов) в очереди`, 'system');
-    addLog('> РЕЖИМ: STREAMING (real-time прогресс)', 'info');
+    addLog(`> СТАРТ ПЕРЕВОДА // ${pending.length} файл(ов)`, 'system');
 
     const newResults: typeof results = [];
 
@@ -315,7 +314,7 @@ export default function Home() {
 
           switch (data.type) {
             case 'start':
-              addLog(`> НАЧАЛО: ${data.totalFiles} файл(ов)`, 'system');
+              addLog(`> Обработка ${data.totalFiles} файл(ов)`, 'system');
               break;
 
             case 'file_start':
@@ -329,11 +328,11 @@ export default function Home() {
 
             case 'progress':
               const stageLabels: Record<string, string> = {
-                extracting: 'ИЗВЛЕЧЕНИЕ',
-                translating: 'ПЕРЕВОД',
-                packing: 'УПАКОВКА',
+                extracting: 'Извлечение',
+                translating: 'Перевод',
+                packing: 'Упаковка',
               };
-              const stageLabel = stageLabels[data.stage] || data.stage.toUpperCase();
+              const stageLabel = stageLabels[data.stage] || data.stage;
               addLog(`> ${stageLabel}: ${data.fileName}`, 'system');
               break;
 
@@ -372,7 +371,7 @@ export default function Home() {
               }
 
               const countMsg = data.translatedCount > 0 ? `[${data.translatedCount} строк]` : '';
-              addLog(`> ГОТОВО: ${data.fileName} ${countMsg}`, 'success');
+              addLog(`> ✅ ${data.fileName} ${countMsg}`, 'success');
 
               const progressPercent = Math.round((data.current / data.total) * 100);
               setProgress(progressPercent);
@@ -382,15 +381,15 @@ export default function Home() {
               setFiles(prev => prev.map(f =>
                 f.id === data.fileId ? { ...f, status: 'error', errorMessage: data.error } : f
               ));
-              addLog(`> СБОЙ: ${data.fileName} — ${data.error}`, 'error');
+              addLog(`> ❌ ${data.fileName} — ${data.error}`, 'error');
               break;
 
             case 'complete':
-              addLog(`> ВСЕ ФАЙЛЫ ОБРАБОТАНЫ (${data.totalFiles})`, 'success');
+              addLog(`> Все файлы обработаны (${data.totalFiles})`, 'success');
               break;
 
             case 'error':
-              addLog(`> КРИТИЧЕСКАЯ ОШИБКА: ${data.error}`, 'error');
+              addLog(`> Ошибка: ${data.error}`, 'error');
               throw new Error(data.error);
           }
         }
@@ -400,19 +399,19 @@ export default function Home() {
       // Check if error is due to abort
       if (err instanceof Error && err.name === 'AbortError') {
         console.log('Translation aborted by user');
-        addLog('> ⚠️ ПЕРЕВОД ОТМЕНЕН ПОЛЬЗОВАТЕЛЕМ', 'warning');
+        addLog('> ⚠️ Перевод отменен', 'warning');
         setFiles(prev => prev.map(f =>
           f.status === 'translating' ? { ...f, status: 'pending' } : f
         ));
       } else {
         console.error('ERROR in streaming translation:', err);
-        addLog(`> ОШИБКА STREAMING: ${err}`, 'error');
+        addLog(`> Ошибка: ${err}`, 'error');
       }
     } finally {
       console.log('=== handleTranslate END (STREAMING) ===');
       console.log('newResults:', newResults);
       setResults(newResults);
-      if (newResults.length > 0) addLog('> ГОТОВО. Нажмите [СКАЧАТЬ АРХИВ]', 'system');
+      if (newResults.length > 0) addLog('> Готово. Нажмите [СКАЧАТЬ ВСЕ]', 'system');
       setIsRunning(false);
       setCurrentFile('');
       setAbortController(null);
@@ -425,7 +424,7 @@ export default function Home() {
     if (abortController) {
       console.log('=== handleCancelTranslation ===');
       abortController.abort();
-      addLog('> ⚠️ ОТМЕНА ПЕРЕВОДА...', 'warning');
+      addLog('> ⚠️ Отмена перевода...', 'warning');
     }
   }, [abortController, addLog]);
 
@@ -440,7 +439,7 @@ export default function Home() {
       return;
     }
 
-    addLog('> СОЗДАНИЕ АРХИВА...', 'system');
+    addLog('> Создание архива...', 'system');
     console.log('Sending export request...');
 
     const res = await fetch('/api/export', {
@@ -468,7 +467,7 @@ export default function Home() {
     URL.revokeObjectURL(url);
     console.log('blob URL revoked');
 
-    addLog('> АРХИВ СКАЧАН', 'success');
+    addLog('> Архив скачан', 'success');
     console.log('=== handleExport END ===');
   }, [results, addLog]);
 
@@ -503,7 +502,7 @@ export default function Home() {
       console.log('=== handleDownloadSingle END ===');
     } catch (err) {
       console.error('Error downloading file:', err);
-      addLog(`> ОШИБКА СКАЧИВАНИЯ: ${file.outputFileName}`, 'error');
+      addLog(`> Ошибка скачивания: ${file.outputFileName}`, 'error');
     }
   }, [addLog]);
 
@@ -528,14 +527,14 @@ export default function Home() {
           <span className="text-green-900 text-sm select-none">█▓▒░</span>
         </div>
         <p className="text-xs text-green-800 tracking-widest mt-1">
-          MINECRAFT FULL LOCALIZATION ENGINE v4.1 // DeepL API // EN→RU // STREAMING
+          АВТОМАТИЧЕСКИЙ ПЕРЕВОДЧИК МОДОВ MINECRAFT // EN→RU
         </p>
         <p className="text-xs text-green-900 tracking-wider mt-0.5">
-          ПОДДЕРЖКА: .jar .zip(модпак) .snbt(квесты) .toml .cfg .json .lang .xml .txt .properties .yml .yaml
+          ПОДДЕРЖКА: Моды (.jar) • Модпаки (.zip) • Квесты (.snbt) • Конфиги (.toml, .cfg) • Языковые файлы (.json, .lang)
         </p>
         <div className="flex gap-6 mt-3 text-xs font-bold flex-wrap">
           <span>СТАТУС: <span className={isRunning ? 'text-yellow-400 animate-pulse' : 'text-green-400'}>
-            {isRunning ? `► ${currentFile}` : 'ОЖИДАНИЕ'}
+            {isRunning ? `► ${currentFile}` : 'Ожидание'}
           </span></span>
           <span>ФАЙЛОВ: <span className={files.length >= QUEUE_LIMITS.MAX_FILES ? 'text-red-400' : 'text-green-300'}>
             {files.length}/{QUEUE_LIMITS.MAX_FILES}
@@ -557,7 +556,7 @@ export default function Home() {
           <CacheIndicator />
 
           <div>
-            <div className="section-label">// 01. ЗАГРУЗКА — МОДЫ, МОДПАКИ, КВЕСТЫ, КОНФИГИ</div>
+            <div className="section-label">// ЗАГРУЗКА ФАЙЛОВ</div>
             <DropZone onFilesAdded={handleFilesAdded} disabled={isRunning || isUploading} />
 
             {/* Upload progress indicator */}
@@ -568,7 +567,7 @@ export default function Home() {
                     <span className="text-yellow-400 text-xl animate-spin">◐</span>
                     <div className="flex-1">
                       <div className="text-yellow-400 font-bold text-sm tracking-wider">
-                        ⏳ ЗАГРУЗКА И АНАЛИЗ...
+                        ⏳ Загрузка и анализ...
                       </div>
                       <div className="text-yellow-600 text-xs mt-1">
                         {uploadProgress || 'Обработка файла...'}
@@ -582,12 +581,12 @@ export default function Home() {
           </div>
 
           <div>
-            <div className="section-label">// 02. ОЧЕРЕДЬ [{files.length}]</div>
+            <div className="section-label">// ОЧЕРЕДЬ [{files.length}]</div>
             <FileQueue files={files} onRemove={id => setFiles(p => p.filter(f => f.id !== id))} disabled={isRunning} />
           </div>
 
           <div className="space-y-3">
-            <div className="section-label">// 03. УПРАВЛЕНИЕ</div>
+            <div className="section-label">// УПРАВЛЕНИЕ</div>
             <button
               onClick={handleTranslate}
               disabled={isRunning || pendingCount === 0 || isUploading}
@@ -595,7 +594,7 @@ export default function Home() {
                          hover:bg-green-500 hover:text-black transition-colors duration-100
                          disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98]"
             >
-              {isRunning ? `▶ ПЕРЕВОД... [${progress}%]` : `▶ ЗАПУСТИТЬ ПЕРЕВОД [${pendingCount} ОБЪ.]`}
+              {isRunning ? `▶ ПЕРЕВОД В ПРОЦЕССЕ... [${progress}%]` : `▶ ЗАПУСТИТЬ ПЕРЕВОД [${pendingCount}]`}
             </button>
 
             {/* Cancel button */}
@@ -616,13 +615,13 @@ export default function Home() {
                   className="w-full py-3 border-2 border-green-300 text-green-300 font-bold tracking-widest uppercase text-sm
                              hover:bg-green-300 hover:text-black transition-colors duration-100 active:scale-[0.98] animate-pulse"
                 >
-                  ▼ СКАЧАТЬ ВСЕ КАК АРХИВ [{results.length} ФАЙЛ(ОВ)]
+                  ▼ СКАЧАТЬ ВСЕ [{results.length}]
                 </button>
 
                 {/* Individual file downloads */}
                 <div className="border border-green-900 divide-y divide-green-950">
                   <div className="px-3 py-2 text-xs text-green-700 font-bold tracking-wider">
-                    ИЛИ СКАЧАТЬ ПО ОТДЕЛЬНОСТИ:
+                    СКАЧАТЬ ПО ОТДЕЛЬНОСТИ:
                   </div>
                   {results.map((file, idx) => (
                     <div key={idx} className="flex items-center gap-2 px-3 py-2 hover:bg-green-950/20 transition-colors">
@@ -645,7 +644,7 @@ export default function Home() {
           {/* Translation Report */}
           {translationReport && (
             <div>
-              <div className="section-label">// 04. ОТЧЕТ О ПЕРЕВОДЕ</div>
+              <div className="section-label">// ОТЧЕТ О ПЕРЕВОДЕ</div>
               <TranslationReportViewer
                 report={translationReport}
                 textReport={textReport}
@@ -656,28 +655,28 @@ export default function Home() {
 
           {(isRunning || progress > 0) && (
             <div>
-              <div className="section-label">// 05. ПРОГРЕСС</div>
+              <div className="section-label">// ПРОГРЕСС</div>
               <ProgressBar value={progress} label="TRANSLATION" />
             </div>
           )}
 
           {/* History Panel */}
           <div>
-            <div className="section-label">// 06. ИСТОРИЯ ПЕРЕВОДОВ</div>
+            <div className="section-label">// ИСТОРИЯ ПЕРЕВОДОВ</div>
             <HistoryPanel />
           </div>
         </div>
 
         {/* Right */}
         <div>
-          <div className="section-label">// СИСТЕМНЫЙ ЛОГ</div>
+          <div className="section-label">// ЛОГ</div>
           <TerminalLog logs={logs} />
         </div>
       </div>
 
       <footer className="mt-8 border-t border-green-950 pt-3 flex flex-wrap justify-between text-xs text-green-900">
-        <span>МОДЫ • МОДПАКИ • КВЕСТЫ • ДИАЛОГИ • HUD • КАТСЦЕНЫ • КОНФИГИ</span>
-        <span>DEEPL API // EN→RU // MAX 1000MB</span>
+        <span>Автоматический переводчик модов и модпаков Minecraft</span>
+        <span>Версия 3.10.1</span>
       </footer>
     </main>
   );
