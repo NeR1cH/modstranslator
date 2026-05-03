@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, unlink } from 'fs/promises';
+import { readFile, unlink, writeFile } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
 import JSZip from 'jszip';
 import { translateModpackFromBuffer } from '@/lib/modpackProcessor';
 
@@ -9,7 +12,7 @@ export const maxDuration = 300; // 5 minutes
 
 /**
  * Process uploaded file from disk
- * Translates the file and returns the result
+ * Translates the file and saves result to disk, returns download ID
  */
 export async function POST(request: NextRequest) {
   console.log('[process-upload] Request received');
@@ -57,17 +60,22 @@ export async function POST(request: NextRequest) {
     await unlink(tempPath);
     console.log('[process-upload] Temp file deleted');
 
-    // Return result as binary response
-    // Convert Buffer to Uint8Array for NextResponse
-    const uint8Array = new Uint8Array(resultBuffer);
+    // Save result to disk with unique ID
+    const resultId = randomBytes(16).toString('hex');
+    const resultPath = join(tmpdir(), `modtranslator-result-${resultId}.zip`);
+    const metaPath = join(tmpdir(), `modtranslator-result-${resultId}.json`);
 
-    return new NextResponse(uint8Array, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${outputFileName}"`,
-        'X-Output-Filename': outputFileName,
-      },
+    await writeFile(resultPath, resultBuffer);
+    await writeFile(metaPath, JSON.stringify({ outputFileName, createdAt: Date.now() }));
+
+    console.log('[process-upload] Result saved to disk:', resultPath);
+
+    // Return download ID
+    return NextResponse.json({
+      success: true,
+      resultId,
+      outputFileName,
+      fileSize: resultBuffer.length,
     });
 
   } catch (error) {

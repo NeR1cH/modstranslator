@@ -388,28 +388,26 @@ export default function Home() {
               }
             }
 
-            addLog(`> 🔄 Перевод завершён, получение результата...`, 'system');
-            setProgress(50);
+            const data = await res.json() as {
+              success: boolean;
+              resultId: string;
+              outputFileName: string;
+              fileSize: number;
+            };
 
-            // Get output filename from header
-            outputFileName = res.headers.get('X-Output-Filename') || file.name.replace(/\.(zip|jar)$/i, '_translated.$1');
-
-            // For large files, download directly without storing in memory
+            addLog(`> ✅ Перевод завершён!`, 'success');
             addLog(`> 🔄 Скачивание результата...`, 'system');
-            const blob = await res.blob();
+            setProgress(90);
 
-            addLog(`> ✅ Готово! Скачивание начато...`, 'success');
-            setProgress(100);
-
-            // Trigger download immediately
-            const url = URL.createObjectURL(blob);
+            // Download file from server
+            const downloadUrl = `/api/download-result?id=${data.resultId}`;
             const a = document.createElement('a');
-            a.href = url;
-            a.download = outputFileName;
+            a.href = downloadUrl;
+            a.download = data.outputFileName;
             a.click();
-            URL.revokeObjectURL(url);
 
-            addLog(`> ✅ Файл скачан: ${outputFileName}`, 'success');
+            addLog(`> ✅ Файл скачан: ${data.outputFileName}`, 'success');
+            setProgress(100);
 
           } else {
             // Small file - use existing streaming API
