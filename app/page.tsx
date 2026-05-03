@@ -39,7 +39,7 @@ function detectFormat(name: string): FileFormat | null {
   console.log('detectFormat called for:', name);
   const ext = name.split('.').pop()?.toLowerCase();
   console.log('extracted extension:', ext);
-  const valid: FileFormat[] = ['jar','zip','json','lang','snbt','toml','cfg','xml','txt','properties','yaml'];
+  const valid: FileFormat[] = ['jar','zip','json','lang','snbt'];
   const result = valid.includes(ext as FileFormat) ? ext as FileFormat : null;
   console.log('detectFormat result:', result);
   return result;

@@ -32,17 +32,13 @@ function getStrategy(path: string): string | null {
 
   const lower = path.toLowerCase();
 
-  // JAR lang files (en_us)
+  // JAR lang files (en_us) - IMPORTANT: mod item/block names
   if (isTargetLangFile(path)) return 'lang_json_or_lang';
 
-  // FTB Quests / Better Questing
+  // FTB Quests / Better Questing - IMPORTANT: quest descriptions
   if (lower.endsWith('.snbt')) return 'snbt';
 
-  // Forge configs with text
-  if (lower.endsWith('.toml')) return 'toml';
-  if (lower.endsWith('.cfg'))  return 'cfg';
-
-  // Patchouli books, custom quests, dialogues — nested JSON
+  // Patchouli books, custom quests, dialogues — nested JSON - IMPORTANT: in-game guides
   if (lower.endsWith('.json') && (
     lower.includes('patchouli') ||
     lower.includes('quest') ||
@@ -56,20 +52,16 @@ function getStrategy(path: string): string | null {
     lower.includes('story')
   )) return 'nested_json';
 
-  // Plain lang JSON (flat key:value)
+  // Plain lang JSON (flat key:value) - IMPORTANT: language files
   if (lower.endsWith('.json') && lower.includes('/lang/')) return 'lang_json';
 
-  // XML dialogues/subtitles
-  if (lower.endsWith('.xml') && (
-    lower.includes('dialogue') || lower.includes('subtitle') ||
-    lower.includes('cutscene') || lower.includes('lang')
-  )) return 'xml';
+  // DISABLED: Config files are technical and not visible to players
+  // if (lower.endsWith('.toml')) return 'toml';
+  // if (lower.endsWith('.cfg'))  return 'cfg';
 
-  // Plain text subtitle/script files
-  if (lower.endsWith('.txt') && (
-    lower.includes('subtitle') || lower.includes('script') ||
-    lower.includes('dialogue') || lower.includes('cutscene')
-  )) return 'txt';
+  // DISABLED: XML/TXT files are usually technical logs
+  // if (lower.endsWith('.xml') && ...) return 'xml';
+  // if (lower.endsWith('.txt') && ...) return 'txt';
 
   return null;
 }
