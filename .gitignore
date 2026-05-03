@@ -34,6 +34,8 @@ __pycache__/
 dist/
 build/
 target/
+.next/
+out/
 
 # Compression files
 *.zip
