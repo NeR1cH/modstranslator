@@ -32,6 +32,9 @@ function getStrategy(path: string): string | null {
 
   const lower = path.toLowerCase();
 
+  // FTB Quests lang files - IMPORTANT: quest text (check BEFORE isTargetLangFile)
+  if (lower.endsWith('.snbt') && lower.includes('/lang/')) return 'snbt';
+
   // JAR lang files (en_us) - IMPORTANT: mod item/block names
   if (isTargetLangFile(path)) return 'lang_json_or_lang';
 
