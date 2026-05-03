@@ -3,8 +3,9 @@
  * Provides functions to prevent common security vulnerabilities
  */
 
-// Maximum base64 size: 1.5GB file * 1.33 (base64 overhead) = 2GB
-export const MAX_BASE64_SIZE = 2 * 1024 * 1024 * 1024;
+// Maximum base64 size: 800MB file * 1.33 (base64 overhead) = ~1.1GB
+// Browser memory limit - files larger than 800MB will crash the browser
+export const MAX_BASE64_SIZE = 1.1 * 1024 * 1024 * 1024;
 
 /**
  * Sanitize file paths to prevent path traversal attacks
@@ -83,7 +84,7 @@ export function validateFileType(buffer: Buffer, expectedType: 'zip' | 'json'): 
  */
 export function validateBase64Size(base64: string): void {
   if (base64.length > MAX_BASE64_SIZE) {
-    throw new Error('File too large (max 1.5GB)');
+    throw new Error('File too large (max 800MB)');
   }
 }
 

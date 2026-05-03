@@ -88,7 +88,7 @@ export default function DropZone({ onFilesAdded, disabled }: DropZoneProps) {
         ПОДДЕРЖКА: .jar .zip .json .lang .snbt .toml .cfg .xml .txt .properties .yml .yaml
       </p>
       <p className="text-green-900 text-xs tracking-wider pointer-events-none text-center px-4">
-        МАКСИМУМ: 1500 MB
+        МАКСИМУМ: 800 MB
       </p>
 
       {['top-1 left-1','top-1 right-1','bottom-1 left-1','bottom-1 right-1'].map((pos, i) => (

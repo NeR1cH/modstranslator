@@ -144,6 +144,16 @@ export default function Home() {
         continue;
       }
 
+      // Validate file size - browser memory limit for base64 conversion
+      // Files larger than 800MB may cause browser to crash
+      if (file.size > 800 * 1024 * 1024) {
+        console.error('ERROR: file too large for browser memory');
+        addLog(`> ОШИБКА: ${file.name} слишком большой для обработки в браузере (максимум 800 MB)`, 'error');
+        addLog(`> Для файлов больше 800 MB используйте серверную версию приложения`, 'warning');
+        setUploadPercent(Math.round((fileNum / totalFiles) * 100));
+        continue;
+      }
+
       // Validate file size
       if (file.size > QUEUE_LIMITS.MAX_FILE_SIZE) {
         console.error('ERROR: file too large');
