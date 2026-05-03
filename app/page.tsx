@@ -379,20 +379,31 @@ export default function Home() {
             });
 
             if (!res.ok) {
-              const errData = await res.json() as { error: string };
-              throw new Error(errData.error || 'Ошибка обработки файла');
+              const errText = await res.text();
+              try {
+                const errData = JSON.parse(errText);
+                throw new Error(errData.error || 'Ошибка обработки файла');
+              } catch {
+                throw new Error(`HTTP ${res.status}: ${errText}`);
+              }
             }
 
-            const data = await res.json() as {
-              success: boolean;
-              outputFileName: string;
-              resultBase64: string;
-            };
+            // Get output filename from header
+            outputFileName = res.headers.get('X-Output-Filename') || file.name.replace(/\.(zip|jar)$/i, '_translated.$1');
 
-            outputFileName = data.outputFileName;
+            // Convert blob to base64 for storage
+            const blob = await res.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            const resultBase64 = btoa(binary);
+
             newResults.push({
-              outputFileName: data.outputFileName,
-              resultBase64: data.resultBase64,
+              outputFileName,
+              resultBase64,
             });
 
           } else {

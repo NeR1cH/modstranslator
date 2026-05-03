@@ -57,13 +57,17 @@ export async function POST(request: NextRequest) {
     await unlink(tempPath);
     console.log('[process-upload] Temp file deleted');
 
-    // Return result as base64
-    const resultBase64 = resultBuffer.toString('base64');
+    // Return result as binary response
+    // Convert Buffer to Uint8Array for NextResponse
+    const uint8Array = new Uint8Array(resultBuffer);
 
-    return NextResponse.json({
-      success: true,
-      outputFileName,
-      resultBase64,
+    return new NextResponse(uint8Array, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${outputFileName}"`,
+        'X-Output-Filename': outputFileName,
+      },
     });
 
   } catch (error) {
