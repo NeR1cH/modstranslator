@@ -8,7 +8,6 @@ import ProgressBar from '@/components/ProgressBar';
 import { UsageIndicator } from '@/components/UsageIndicator';
 import { CacheIndicator } from '@/components/CacheIndicator';
 import { HistoryPanel } from '@/components/HistoryPanel';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { TranslationReportViewer } from '@/components/TranslationReportViewer';
 import { TranslationFile, LogEntry, FileFormat } from '@/types';
 import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
@@ -642,9 +641,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black text-green-400 p-4 md:p-6 lg:p-8">
       <div className="fixed inset-0 pointer-events-none z-50 crt-overlay" />
-
-      {/* Theme Toggle */}
-      <ThemeToggle />
 
       {/* Header */}
       <header className="mb-6 border-b-2 border-green-900 pb-4">
