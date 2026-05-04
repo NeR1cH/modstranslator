@@ -34,7 +34,8 @@ exports/
 # Test files
 modsfortranslate/
 test.json
-dev.bat
+test_result.zip
+temp_test/
 
 # Python
 __pycache__/
