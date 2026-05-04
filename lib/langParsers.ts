@@ -82,7 +82,8 @@ export function parseSnbt(content: string): LangEntry[] {
   const entries: LangEntry[] = [];
 
   // Check if this is FTB Quests lang file format (key: "value" or key: ["value"])
-  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-F0-9]+\./m.test(content);
+  // Match quest.ID.field or chapter.ID.field where ID can be any alphanumeric
+  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-Za-z0-9]+\./m.test(content);
 
   if (isFTBQuestsLang) {
     // FTB Quests lang format: quest.ID.quest_desc: ["text"] or quest.ID.title: "text"
@@ -138,11 +139,12 @@ export function parseSnbt(content: string): LangEntry[] {
 
 export function rebuildSnbt(original: string, translations: Map<string, string>): string {
   // Check if this is FTB Quests lang file format
-  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-F0-9]+\./m.test(original);
+  const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-Za-z0-9]+\./m.test(original);
 
   if (isFTBQuestsLang) {
     // FTB Quests lang format
-    return original.split('\n').map(line => {
+    let replacedCount = 0;
+    const result = original.split('\n').map(line => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) return line;
 
@@ -184,6 +186,7 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
       }
 
       if (hasTranslation) {
+        replacedCount++;
         // Preserve original indentation
         const indent = line.match(/^\s*/)?.[0] || '';
         return `${indent}${key}: ${newValueStr}`;
@@ -191,6 +194,8 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
 
       return line;
     }).join('\n');
+
+    return result;
   } else {
     // Original SNBT format for quest files
     return original.split('\n').map((line, i) => {

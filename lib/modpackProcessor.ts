@@ -32,8 +32,15 @@ function getStrategy(path: string): string | null {
 
   const lower = path.toLowerCase();
 
+  // Skip Russian lang files completely
+  if (lower.includes('ru_ru') || lower.includes('/ru/')) {
+    return null;
+  }
+
   // FTB Quests lang files - IMPORTANT: quest text (check BEFORE isTargetLangFile)
-  if (lower.endsWith('.snbt') && lower.includes('/lang/')) return 'snbt';
+  if (lower.endsWith('.snbt') && lower.includes('/lang/')) {
+    return 'snbt';
+  }
 
   // JAR lang files (en_us) - IMPORTANT: mod item/block names
   if (isTargetLangFile(path)) return 'lang_json_or_lang';
