@@ -87,13 +87,25 @@ export function parseSnbt(content: string): LangEntry[] {
 
   if (isFTBQuestsLang) {
     // FTB Quests lang format: quest.ID.quest_desc: ["text"] or quest.ID.title: "text"
-    content.split('\n').forEach((line, i) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) return;
+    // Supports both single-line and multiline arrays
+    const lines = content.split('\n');
+    let i = 0;
 
-      // Match: key: "value" or key: ["value", "more"]
+    while (i < lines.length) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) {
+        i++;
+        continue;
+      }
+
+      // Match: key: "value" or key: ["value", "more"] or key: [
       const match = trimmed.match(/^([^:]+):\s*(.+)$/);
-      if (!match) return;
+      if (!match) {
+        i++;
+        continue;
+      }
 
       const key = match[1].trim();
       const valueStr = match[2].trim();
@@ -101,8 +113,29 @@ export function parseSnbt(content: string): LangEntry[] {
       // Extract text from "value" or ["value1", "value2"]
       let values: string[] = [];
 
-      if (valueStr.startsWith('[')) {
-        // Array format: ["text1", "text2"]
+      if (valueStr.startsWith('[') && !valueStr.includes(']')) {
+        // Multiline array format:
+        // quest.ID.quest_desc: [
+        //   "Line 1"
+        //   ""
+        //   "Line 2"
+        // ]
+        i++;
+        while (i < lines.length) {
+          const arrayLine = lines[i];
+          if (arrayLine.includes(']')) break;
+
+          const textMatch = arrayLine.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/);
+          if (textMatch) {
+            const text = textMatch[1].replace(/\\"/g, '"');
+            if (hasTranslatableText(text)) {
+              values.push(text);
+            }
+          }
+          i++;
+        }
+      } else if (valueStr.startsWith('[')) {
+        // Single-line array format: ["text1", "text2"]
         const arrayMatch = valueStr.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
         if (arrayMatch) {
           values = arrayMatch.map(s => s.slice(1, -1).replace(/\\"/g, '"'));
@@ -120,7 +153,9 @@ export function parseSnbt(content: string): LangEntry[] {
           entries.push({ key: `${key}[${idx}]`, value });
         }
       });
-    });
+
+      i++;
+    }
   } else {
     // Original SNBT format for quest files (description: "text")
     content.split('\n').forEach((line, i) => {
@@ -142,60 +177,108 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
   const isFTBQuestsLang = /^\s*(quest|chapter|task|reward)\.[A-Za-z0-9]+\./m.test(original);
 
   if (isFTBQuestsLang) {
-    // FTB Quests lang format
-    let replacedCount = 0;
-    const result = original.split('\n').map(line => {
+    // FTB Quests lang format - supports both single-line and multiline arrays
+    const lines = original.split('\n');
+    const result: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
       const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) return line;
+
+      if (!trimmed || trimmed.startsWith('{') || trimmed.startsWith('}')) {
+        result.push(line);
+        i++;
+        continue;
+      }
 
       const match = trimmed.match(/^([^:]+):\s*(.+)$/);
-      if (!match) return line;
+      if (!match) {
+        result.push(line);
+        i++;
+        continue;
+      }
 
       const key = match[1].trim();
       const valueStr = match[2].trim();
 
-      // Check if we have translations for this key
-      let hasTranslation = false;
-      let newValueStr = valueStr;
+      if (valueStr.startsWith('[') && !valueStr.includes(']')) {
+        // Multiline array format:
+        // quest.ID.quest_desc: [
+        //   "Line 1"
+        //   ""
+        //   "Line 2"
+        // ]
+        result.push(line); // Add the key line
+        i++;
 
-      if (valueStr.startsWith('[')) {
-        // Array format: ["text1", "text2"]
+        let translationIdx = 0;
+        while (i < lines.length) {
+          const arrayLine = lines[i];
+
+          if (arrayLine.includes(']')) {
+            result.push(arrayLine); // Add closing bracket line
+            break;
+          }
+
+          const textMatch = arrayLine.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/);
+          if (textMatch) {
+            const originalText = textMatch[1].replace(/\\"/g, '"');
+            const translationKey = `${key}[${translationIdx}]`;
+
+            if (translations.has(translationKey)) {
+              // Replace with translation, preserving indentation
+              const indent = arrayLine.match(/^\s*/)?.[0] || '';
+              const translated = translations.get(translationKey)!.replace(/"/g, '\\"');
+              result.push(`${indent}"${translated}"`);
+            } else {
+              result.push(arrayLine);
+            }
+
+            if (hasTranslatableText(originalText)) {
+              translationIdx++;
+            }
+          } else {
+            result.push(arrayLine);
+          }
+
+          i++;
+        }
+      } else if (valueStr.startsWith('[')) {
+        // Single-line array format: ["text1", "text2"]
         const arrayMatch = valueStr.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
         if (arrayMatch) {
           const newValues = arrayMatch.map((s, idx) => {
             const translationKey = `${key}[${idx}]`;
             if (translations.has(translationKey)) {
-              hasTranslation = true;
               const translated = translations.get(translationKey)!.replace(/"/g, '\\"');
               return `"${translated}"`;
             }
             return s;
           });
-          if (hasTranslation) {
-            newValueStr = '[' + newValues.join(', ') + ']';
-          }
+          const indent = line.match(/^\s*/)?.[0] || '';
+          result.push(`${indent}${key}: [` + newValues.join(', ') + ']');
+        } else {
+          result.push(line);
         }
       } else if (valueStr.startsWith('"')) {
         // Simple format: "text"
         const translationKey = `${key}[0]`;
         if (translations.has(translationKey)) {
           const translated = translations.get(translationKey)!.replace(/"/g, '\\"');
-          newValueStr = `"${translated}"`;
-          hasTranslation = true;
+          const indent = line.match(/^\s*/)?.[0] || '';
+          result.push(`${indent}${key}: "${translated}"`);
+        } else {
+          result.push(line);
         }
+      } else {
+        result.push(line);
       }
 
-      if (hasTranslation) {
-        replacedCount++;
-        // Preserve original indentation
-        const indent = line.match(/^\s*/)?.[0] || '';
-        return `${indent}${key}: ${newValueStr}`;
-      }
+      i++;
+    }
 
-      return line;
-    }).join('\n');
-
-    return result;
+    return result.join('\n');
   } else {
     // Original SNBT format for quest files
     return original.split('\n').map((line, i) => {

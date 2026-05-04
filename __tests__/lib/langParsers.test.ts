@@ -397,6 +397,86 @@ y: 0`;
         const result = rebuildSnbt(original, translations);
         expect(result).toContain('Текст квеста');
       });
+
+      it('should parse multiline array in FTB Quests format', () => {
+        const content = `{
+	quest.TEST1.quest_desc: [
+		"Line 1"
+		""
+		"Line 2"
+	]
+}`;
+        const result = parseSnbt(content);
+        expect(result).toHaveLength(2); // "Line 1" and "Line 2", skip ""
+        expect(result[0].key).toBe('quest.TEST1.quest_desc[0]');
+        expect(result[0].value).toBe('Line 1');
+        expect(result[1].key).toBe('quest.TEST1.quest_desc[1]');
+        expect(result[1].value).toBe('Line 2');
+      });
+
+      it('should rebuild multiline array in FTB Quests format', () => {
+        const original = `{
+	quest.TEST1.quest_desc: [
+		"Line 1"
+		"Line 2"
+	]
+}`;
+        const translations = new Map([
+          ['quest.TEST1.quest_desc[0]', 'Строка 1'],
+          ['quest.TEST1.quest_desc[1]', 'Строка 2'],
+        ]);
+        const result = rebuildSnbt(original, translations);
+        expect(result).toContain('Строка 1');
+        expect(result).toContain('Строка 2');
+        expect(result).toContain('[');
+        expect(result).toContain(']');
+      });
+
+      it('should handle multiline array with empty strings', () => {
+        const content = `{
+	quest.TEST1.quest_desc: [
+		"Welcome to the quest!"
+		""
+		"Complete all tasks."
+	]
+}`;
+        const result = parseSnbt(content);
+        expect(result).toHaveLength(2);
+        expect(result[0].value).toBe('Welcome to the quest!');
+        expect(result[1].value).toBe('Complete all tasks.');
+      });
+
+      it('should preserve indentation in multiline array rebuild', () => {
+        const original = `{
+	quest.TEST1.quest_desc: [
+		"Text 1"
+		"Text 2"
+	]
+}`;
+        const translations = new Map([
+          ['quest.TEST1.quest_desc[0]', 'Текст 1'],
+        ]);
+        const result = rebuildSnbt(original, translations);
+        expect(result).toContain('\t\t"Текст 1"');
+        expect(result).toContain('\t\t"Text 2"'); // Untranslated preserves original
+      });
+
+      it('should handle mixed single-line and multiline arrays', () => {
+        const content = `{
+	chapter.TEST1.title: "Chapter Title"
+	quest.TEST2.quest_desc: [
+		"Multiline text 1"
+		"Multiline text 2"
+	]
+	quest.TEST3.quest_subtitle: "Single line"
+}`;
+        const result = parseSnbt(content);
+        expect(result.length).toBeGreaterThanOrEqual(4);
+        expect(result.some(r => r.value === 'Chapter Title')).toBe(true);
+        expect(result.some(r => r.value === 'Multiline text 1')).toBe(true);
+        expect(result.some(r => r.value === 'Multiline text 2')).toBe(true);
+        expect(result.some(r => r.value === 'Single line')).toBe(true);
+      });
     });
   });
 
