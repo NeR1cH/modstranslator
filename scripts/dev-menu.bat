@@ -169,7 +169,7 @@ if %TEST_RESULT% EQU 0 (
     echo.
 
     echo Error details:
-    type test-output.log | findstr /C:"FAIL" /C:"Error" /C:"●"
+    type test-output.log | findstr /C:"FAIL" /C:"Error" /C:"?"
     echo.
 
     if %ATTEMPT% LSS %MAX_ATTEMPTS% (
