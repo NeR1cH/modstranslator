@@ -37,6 +37,9 @@ test.json
 test_result.zip
 temp_test/
 
+# Release notes (temporary files for GitHub releases)
+RELEASE_NOTES_*.md
+
 # Python
 __pycache__/
 *.pyc
