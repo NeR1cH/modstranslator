@@ -20,6 +20,10 @@ node_modules/
 # Translation cache
 .translation-cache/
 
+# Temporary and export folders
+tmp/
+exports/
+
 # Editors
 .vscode/
 .idea/
