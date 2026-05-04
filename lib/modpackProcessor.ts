@@ -7,6 +7,7 @@ import {
   isTargetLangFile, detectFormat, hasTranslatableText,
 } from './langParsers';
 import { translateTexts } from './deepl';
+import { extractLangFiles, translateLangFiles, repackJar } from './jarProcessor';
 import { LangEntry } from '@/types';
 import { sanitizePath } from './security';
 
@@ -18,7 +19,7 @@ import { sanitizePath } from './security';
 /** Files/paths to always skip */
 const SKIP_PATTERNS = [
   /node_modules/, /\.git/, /\.(png|jpg|jpeg|gif|webp|ico|svg)$/i,
-  /\.(mp3|ogg|wav|mp4|avi)$/i, /\.(class|jar|zip|tar|gz)$/i,
+  /\.(mp3|ogg|wav|mp4|avi)$/i, /\.(class|zip|tar|gz)$/i,
   /\.(exe|dll|so|dylib)$/i, /META-INF/i,
 ];
 
@@ -35,6 +36,11 @@ function getStrategy(path: string): string | null {
   // Skip Russian lang files completely
   if (lower.includes('ru_ru') || lower.includes('/ru/')) {
     return null;
+  }
+
+  // JAR files inside modpack - IMPORTANT: process nested mods
+  if (lower.endsWith('.jar')) {
+    return 'jar';
   }
 
   // FTB Quests lang files - IMPORTANT: quest text (check BEFORE isTargetLangFile)
@@ -205,13 +211,27 @@ export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
     console.log('[modpackProcessor] Analyzing:', path, '| strategy:', strategy);
 
     try {
-      const content = await file.async('string');
-      const entries = extractEntries(path, content, strategy);
+      // Special handling for JAR files
+      if (strategy === 'jar') {
+        const jarBuffer = await file.async('nodebuffer');
+        const langFiles = await extractLangFiles(jarBuffer);
 
-      if (entries.length > 0) {
-        translatableFiles++;
-        totalStrings += entries.length;
-        console.log('[modpackProcessor]   → Found', entries.length, 'translatable strings');
+        if (langFiles.length > 0) {
+          translatableFiles++;
+          const jarStrings = langFiles.reduce((sum, lf) => sum + lf.entries.length, 0);
+          totalStrings += jarStrings;
+          console.log('[modpackProcessor]   → Found', langFiles.length, 'lang files,', jarStrings, 'strings');
+        }
+      } else {
+        // Regular file processing
+        const content = await file.async('string');
+        const entries = extractEntries(path, content, strategy);
+
+        if (entries.length > 0) {
+          translatableFiles++;
+          totalStrings += entries.length;
+          console.log('[modpackProcessor]   → Found', entries.length, 'translatable strings');
+        }
       }
     } catch (err) {
       console.error('[modpackProcessor]   → Error analyzing:', err);
@@ -253,35 +273,63 @@ export async function translateModpack(
     onProgress?.(done, entries.length, path);
 
     try {
-      const content = await file.async('string');
-      console.log('[modpackProcessor]   Content length:', content.length, 'chars');
+      // Special handling for JAR files
+      if (strategy === 'jar') {
+        console.log('[modpackProcessor]   Processing nested JAR file...');
+        const jarBuffer = await file.async('nodebuffer');
+        console.log('[modpackProcessor]   JAR buffer size:', jarBuffer.length, 'bytes');
 
-      const translated = await translateSingleFile(path, content, strategy);
+        // Extract lang files from JAR
+        const langFiles = await extractLangFiles(jarBuffer);
+        console.log('[modpackProcessor]   Lang files found:', langFiles.length);
 
-      if (translated) {
-        console.log('[modpackProcessor]   Translated:', translated.stringsCount, 'strings');
-        const ruPath = getRuPath(path);
-        console.log('[modpackProcessor]   Output path:', ruPath);
+        if (langFiles.length > 0) {
+          // Translate all lang files
+          const translations = await translateLangFiles(langFiles);
+          console.log('[modpackProcessor]   Translations:', translations.size);
 
-        // Sanitize paths to prevent path traversal attacks
-        try {
-          const safePath = sanitizePath(ruPath !== path ? ruPath : path);
+          // Repack JAR with translated files
+          const repackedJar = await repackJar(jarBuffer, translations);
+          console.log('[modpackProcessor]   Repacked JAR size:', repackedJar.length, 'bytes');
 
-          if (ruPath !== path) {
-            // For lang files: add ru_ru version, keep original
-            result.file(safePath, translated.content);
-            console.log('[modpackProcessor]   Added as new file (lang)');
-          } else {
-            // For quests/configs: overwrite in place
-            result.file(safePath, translated.content);
-            console.log('[modpackProcessor]   Overwritten in place');
-          }
-        } catch (error) {
-          console.error('[modpackProcessor]   Invalid path detected:', ruPath, error);
-          // Skip this file if path is invalid
+          // Replace JAR in result ZIP
+          result.file(path, repackedJar);
+          console.log('[modpackProcessor]   JAR updated in modpack');
+        } else {
+          console.log('[modpackProcessor]   No lang files in JAR, skipping');
         }
       } else {
-        console.log('[modpackProcessor]   No translation needed');
+        // Regular file processing (non-JAR)
+        const content = await file.async('string');
+        console.log('[modpackProcessor]   Content length:', content.length, 'chars');
+
+        const translated = await translateSingleFile(path, content, strategy);
+
+        if (translated) {
+          console.log('[modpackProcessor]   Translated:', translated.stringsCount, 'strings');
+          const ruPath = getRuPath(path);
+          console.log('[modpackProcessor]   Output path:', ruPath);
+
+          // Sanitize paths to prevent path traversal attacks
+          try {
+            const safePath = sanitizePath(ruPath !== path ? ruPath : path);
+
+            if (ruPath !== path) {
+              // For lang files: add ru_ru version, keep original
+              result.file(safePath, translated.content);
+              console.log('[modpackProcessor]   Added as new file (lang)');
+            } else {
+              // For quests/configs: overwrite in place
+              result.file(safePath, translated.content);
+              console.log('[modpackProcessor]   Overwritten in place');
+            }
+          } catch (error) {
+            console.error('[modpackProcessor]   Invalid path detected:', ruPath, error);
+            // Skip this file if path is invalid
+          }
+        } else {
+          console.log('[modpackProcessor]   No translation needed');
+        }
       }
     } catch (err) {
       console.error('[modpackProcessor]   Error:', err);
