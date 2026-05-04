@@ -477,8 +477,10 @@ git push origin main
 ## 📞 Контакты
 
 - **Автор:** NeR1cH
-- **Дата последнего обновления:** 04.05.2026 14:41
+- **GitHub:** https://github.com/NeR1cH/modstranslator
+- **Дата последнего обновления:** 04.05.2026 17:01
 - **Версия:** 3.11.0
+- **Релиз:** https://github.com/NeR1cH/modstranslator/releases/tag/v3.11.0
 
 ---
 
