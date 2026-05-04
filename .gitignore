@@ -37,6 +37,10 @@ test.json
 test_result.zip
 temp_test/
 
+# Test coverage
+coverage/
+*.lcov
+
 # Release notes (temporary files for GitHub releases)
 RELEASE_NOTES_*.md
 

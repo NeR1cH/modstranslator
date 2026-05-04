@@ -5,21 +5,35 @@
   "scripts": {
     "dev": "next dev",
     "dev:clean": "powershell -Command \"Get-NetTCPConnection -LocalPort 3000,3001,3002,3003 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\" && next dev",
+    "dev:safe": "npm test && next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "predev:safe": "echo Running tests before starting server..."
   },
   "dependencies": {
-    "next": "14.2.0",
-    "react": "^18",
-    "react-dom": "^18",
     "jszip": "^3.10.1",
-    "node-fetch": "^3.3.2"
+    "next": "14.2.0",
+    "node-fetch": "^3.3.2",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
