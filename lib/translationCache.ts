@@ -24,7 +24,7 @@ interface CacheData {
 }
 
 class TranslationCache extends BaseCache<CacheData> {
-  private memoryCache = new Map<string, string>();
+  private memoryCache = new Map<string, { original: string; translated: string }>();
   protected logger = createLogger('cache');
 
   constructor() {
@@ -58,7 +58,7 @@ class TranslationCache extends BaseCache<CacheData> {
 
     if (cached) {
       this.logger.debug('HIT:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
-      return cached;
+      return cached.translated;
     }
 
     return null;
@@ -69,7 +69,7 @@ class TranslationCache extends BaseCache<CacheData> {
    */
   set(original: string, translated: string): void {
     const hash = this.getHash(original);
-    this.memoryCache.set(hash, translated);
+    this.memoryCache.set(hash, { original, translated });
     this.isDirty = true;
 
     // Debounced save to disk (don't save on every set)
@@ -103,7 +103,7 @@ class TranslationCache extends BaseCache<CacheData> {
   setMany(pairs: Array<{ original: string; translated: string }>): void {
     for (const { original, translated } of pairs) {
       const hash = this.getHash(original);
-      this.memoryCache.set(hash, translated);
+      this.memoryCache.set(hash, { original, translated });
     }
 
     this.isDirty = true;
@@ -131,7 +131,10 @@ class TranslationCache extends BaseCache<CacheData> {
 
     // Load entries into memory
     for (const entry of cacheData.entries) {
-      this.memoryCache.set(entry.hash, entry.translated);
+      this.memoryCache.set(entry.hash, {
+        original: entry.original,
+        translated: entry.translated
+      });
     }
 
     this.logger.info(`Loaded ${cacheData.entries.length} entries from disk`);
@@ -148,10 +151,10 @@ class TranslationCache extends BaseCache<CacheData> {
     const entries: CacheEntry[] = [];
 
     // Convert memory cache to array
-    for (const [hash, translated] of this.memoryCache.entries()) {
+    for (const [hash, { original, translated }] of this.memoryCache.entries()) {
       entries.push({
         hash,
-        original: '', // Don't store original to save space
+        original,
         translated,
         timestamp: Date.now()
       });
