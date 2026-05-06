@@ -28,13 +28,14 @@ export abstract class BaseCache<T> {
     this.cacheFile = path.join(config.cacheDir, config.fileName);
     this.version = config.version;
     this.autoSaveDelay = config.autoSaveDelay ?? 5000;
-    this.init();
+    // Don't call init() here - let subclass call it after its fields are initialized
   }
 
   /**
    * Initialize cache directory and load from disk
+   * Must be called by subclass after all fields are initialized
    */
-  private init(): void {
+  protected init(): void {
     try {
       if (!fs.existsSync(this.cacheDir)) {
         fs.mkdirSync(this.cacheDir, { recursive: true });

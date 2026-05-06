@@ -34,6 +34,9 @@ class TranslationCache extends BaseCache<CacheData> {
       version: CACHE_VERSION,
       autoSaveDelay: 5000,
     });
+
+    // Initialize after all fields are set
+    this.init();
   }
 
   /**
