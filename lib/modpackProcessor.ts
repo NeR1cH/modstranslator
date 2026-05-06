@@ -1,167 +1,13 @@
 import JSZip from 'jszip';
-import {
-  parseJsonLang, parseDotLang, parseSnbt, parseToml,
-  parseCfg, parseNestedJson, parseXml, parsePlainText,
-  rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml,
-  rebuildCfg, rebuildNestedJson, rebuildXml, rebuildPlainText,
-  isTargetLangFile, detectFormat, hasTranslatableText,
-} from './langParsers';
-import { translateTexts } from './deepl';
 import { extractLangFiles, translateLangFiles, repackJar } from './jarProcessor';
 import { LangEntry } from '@/types';
 import { sanitizePath } from './security';
+import { FileStrategy } from './types';
+import { getStrategyResolver } from './FileStrategyResolver';
+import { extractEntries, translateFile } from './FileTranslator';
+import { createLogger } from './logger';
 
-// ============================================================
-// BLOCK: File category detection
-// Decides how to parse each file in the modpack
-// ============================================================
-
-/** Files/paths to always skip */
-const SKIP_PATTERNS = [
-  /node_modules/, /\.git/, /\.(png|jpg|jpeg|gif|webp|ico|svg)$/i,
-  /\.(mp3|ogg|wav|mp4|avi)$/i, /\.(class|zip|tar|gz)$/i,
-  /\.(exe|dll|so|dylib)$/i, /META-INF/i,
-];
-
-function shouldSkip(path: string): boolean {
-  return SKIP_PATTERNS.some(p => p.test(path));
-}
-
-/** Determine parse strategy for a file path */
-function getStrategy(path: string): string | null {
-  if (shouldSkip(path)) return null;
-
-  const lower = path.toLowerCase();
-
-  // Skip Russian lang files completely
-  if (lower.includes('ru_ru') || lower.includes('/ru/')) {
-    return null;
-  }
-
-  // JAR files inside modpack - IMPORTANT: process nested mods
-  if (lower.endsWith('.jar')) {
-    return 'jar';
-  }
-
-  // FTB Quests lang files - IMPORTANT: quest text (check BEFORE isTargetLangFile)
-  if (lower.endsWith('.snbt') && lower.includes('/lang/')) {
-    return 'snbt';
-  }
-
-  // JAR lang files (en_us) - IMPORTANT: mod item/block names
-  if (isTargetLangFile(path)) return 'lang_json_or_lang';
-
-  // FTB Quests / Better Questing - IMPORTANT: quest descriptions
-  if (lower.endsWith('.snbt')) return 'snbt';
-
-  // Patchouli books, custom quests, dialogues — nested JSON - IMPORTANT: in-game guides
-  if (lower.endsWith('.json') && (
-    lower.includes('patchouli') ||
-    lower.includes('quest') ||
-    lower.includes('dialogue') ||
-    lower.includes('dialog') ||
-    lower.includes('cutscene') ||
-    lower.includes('cinematic') ||
-    lower.includes('book') ||
-    lower.includes('guide') ||
-    lower.includes('advancement') ||
-    lower.includes('story')
-  )) return 'nested_json';
-
-  // Plain lang JSON (flat key:value) - IMPORTANT: language files
-  if (lower.endsWith('.json') && lower.includes('/lang/')) return 'lang_json';
-
-  // DISABLED: Config files are technical and not visible to players
-  // if (lower.endsWith('.toml')) return 'toml';
-  // if (lower.endsWith('.cfg'))  return 'cfg';
-
-  // DISABLED: XML/TXT files are usually technical logs
-  // if (lower.endsWith('.xml') && ...) return 'xml';
-  // if (lower.endsWith('.txt') && ...) return 'txt';
-
-  return null;
-}
-
-// ============================================================
-// BLOCK: Shared entry extraction (single source of truth)
-// ============================================================
-
-/** Parse file content into LangEntry[] based on strategy. Returns [] on error. */
-function extractEntries(path: string, content: string, strategy: string): LangEntry[] {
-  try {
-    switch (strategy) {
-      case 'lang_json_or_lang':
-        return path.endsWith('.json') ? parseJsonLang(content) : parseDotLang(content);
-      case 'lang_json':    return parseJsonLang(content);
-      case 'snbt':         return parseSnbt(content);
-      case 'toml':         return parseToml(content);
-      case 'cfg':          return parseCfg(content);
-      case 'nested_json':  return parseNestedJson(content);
-      case 'xml':          return parseXml(content);
-      case 'txt':          return parsePlainText(content);
-      default:             return [];
-    }
-  } catch {
-    return [];
-  }
-}
-
-// ============================================================
-// BLOCK: Single file translation
-// ============================================================
-export interface TranslatedFile {
-  path: string;
-  content: string;
-  stringsCount: number;
-}
-
-async function translateSingleFile(
-  path: string,
-  content: string,
-  strategy: string
-): Promise<TranslatedFile | null> {
-  console.log('[modpackProcessor] translateSingleFile:', path);
-  console.log('[modpackProcessor]   Strategy:', strategy);
-
-  const entries = extractEntries(path, content, strategy);
-  console.log('[modpackProcessor]   Entries extracted:', entries.length);
-
-  if (entries.length === 0) {
-    console.log('[modpackProcessor]   No entries, returning null');
-    return null;
-  }
-
-  const values = entries.map(e => e.value);
-  console.log('[modpackProcessor]   Calling translateTexts for', values.length, 'values');
-
-  const translated = await translateTexts(values);
-  console.log('[modpackProcessor]   Translation complete, received:', translated.length);
-
-  const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
-  console.log('[modpackProcessor]   Translation map size:', transMap.size);
-
-  let newContent = content;
-  console.log('[modpackProcessor]   Rebuilding content...');
-
-  switch (strategy) {
-    case 'lang_json_or_lang':
-    case 'lang_json':
-      newContent = path.endsWith('.json')
-        ? rebuildJsonLang(content, transMap)
-        : rebuildDotLang(content, transMap);
-      break;
-    case 'snbt':        newContent = rebuildSnbt(content, transMap);       break;
-    case 'toml':        newContent = rebuildToml(content, transMap);       break;
-    case 'cfg':         newContent = rebuildCfg(content, transMap);        break;
-    case 'nested_json': newContent = rebuildNestedJson(content, transMap); break;
-    case 'xml':         newContent = rebuildXml(content, transMap);        break;
-    case 'txt':         newContent = rebuildPlainText(content, transMap);  break;
-  }
-
-  console.log('[modpackProcessor]   New content length:', newContent.length, 'chars');
-
-  return { path, content: newContent, stringsCount: entries.length };
-}
+const logger = createLogger('modpackProcessor');
 
 // ============================================================
 // BLOCK: Russian path generator
@@ -188,31 +34,32 @@ export interface ModpackStats {
 }
 
 export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
-  console.log('\n[modpackProcessor] analyzeModpack called');
-  console.log('[modpackProcessor] ZIP buffer size:', zipBuffer.length, 'bytes');
+  logger.info('analyzeModpack called, ZIP buffer size:', zipBuffer.length, 'bytes');
 
   const zip = await JSZip.loadAsync(zipBuffer);
-  console.log('[modpackProcessor] ZIP loaded');
+  logger.debug('ZIP loaded');
 
   let translatableFiles = 0;
   let totalStrings = 0;
   let totalFiles = 0;
 
   const allFiles = Object.entries(zip.files);
-  console.log('[modpackProcessor] Total entries in ZIP:', allFiles.length);
+  logger.debug('Total entries in ZIP:', allFiles.length);
+
+  const resolver = getStrategyResolver();
 
   for (const [path, file] of allFiles) {
     if (file.dir) continue;
     totalFiles++;
 
-    const strategy = getStrategy(path);
-    if (!strategy) continue;
+    const result = resolver.resolve(path);
+    if (!result.strategy) continue;
 
-    console.log('[modpackProcessor] Analyzing:', path, '| strategy:', strategy);
+    logger.debug('Analyzing:', path, '| strategy:', result.strategy);
 
     try {
       // Special handling for JAR files
-      if (strategy === 'jar') {
+      if (result.strategy === FileStrategy.JAR) {
         const jarBuffer = await file.async('nodebuffer');
         const langFiles = await extractLangFiles(jarBuffer);
 
@@ -220,95 +67,95 @@ export async function analyzeModpack(zipBuffer: Buffer): Promise<ModpackStats> {
           translatableFiles++;
           const jarStrings = langFiles.reduce((sum, lf) => sum + lf.entries.length, 0);
           totalStrings += jarStrings;
-          console.log('[modpackProcessor]   → Found', langFiles.length, 'lang files,', jarStrings, 'strings');
+          logger.debug('→ Found', langFiles.length, 'lang files,', jarStrings, 'strings');
         }
       } else {
         // Regular file processing
         const content = await file.async('string');
-        const entries = extractEntries(path, content, strategy);
+        const entries = extractEntries(path, content, result.strategy);
 
         if (entries.length > 0) {
           translatableFiles++;
           totalStrings += entries.length;
-          console.log('[modpackProcessor]   → Found', entries.length, 'translatable strings');
+          logger.debug('→ Found', entries.length, 'translatable strings');
         }
       }
     } catch (err) {
-      console.error('[modpackProcessor]   → Error analyzing:', err);
+      logger.error('→ Error analyzing:', err);
       /* skip malformed files */
     }
   }
 
-  const result = { totalFiles, translatableFiles, totalStrings };
-  console.log('[modpackProcessor] Analysis complete:', result);
-  return result;
+  const stats = { totalFiles, translatableFiles, totalStrings };
+  logger.info('Analysis complete:', stats);
+  return stats;
 }
 
 export async function translateModpack(
   zipBuffer: Buffer,
   onProgress?: (done: number, total: number, currentFile: string) => void
 ): Promise<Buffer> {
-  console.log('\n[modpackProcessor] translateModpack called');
-  console.log('[modpackProcessor] ZIP buffer size:', zipBuffer.length, 'bytes');
+  logger.info('translateModpack called, ZIP buffer size:', zipBuffer.length, 'bytes');
 
-  const zip    = await JSZip.loadAsync(zipBuffer);
+  const zip = await JSZip.loadAsync(zipBuffer);
   const result = await JSZip.loadAsync(zipBuffer); // start with copy of original
-  console.log('[modpackProcessor] ZIP loaded, creating result copy');
+  logger.debug('ZIP loaded, creating result copy');
 
   const entries = Object.entries(zip.files).filter(([, f]) => !f.dir);
-  console.log('[modpackProcessor] Total files to process:', entries.length);
+  logger.info('Total files to process:', entries.length);
 
+  const resolver = getStrategyResolver();
   let done = 0;
 
   for (const [path, file] of entries) {
-    const strategy = getStrategy(path);
-    if (!strategy) {
+    const strategyResult = resolver.resolve(path);
+    if (!strategyResult.strategy) {
       done++;
       continue;
     }
 
-    console.log(`[modpackProcessor] [${done + 1}/${entries.length}] Processing:`, path);
-    console.log('[modpackProcessor]   Strategy:', strategy);
+    logger.info(`[${done + 1}/${entries.length}] Processing:`, path);
+    logger.debug('Strategy:', strategyResult.strategy);
 
     onProgress?.(done, entries.length, path);
 
     try {
       // Special handling for JAR files
-      if (strategy === 'jar') {
-        console.log('[modpackProcessor]   Processing nested JAR file...');
+      if (strategyResult.strategy === FileStrategy.JAR) {
+        logger.debug('Processing nested JAR file...');
         const jarBuffer = await file.async('nodebuffer');
-        console.log('[modpackProcessor]   JAR buffer size:', jarBuffer.length, 'bytes');
+        logger.debug('JAR buffer size:', jarBuffer.length, 'bytes');
 
         // Extract lang files from JAR
         const langFiles = await extractLangFiles(jarBuffer);
-        console.log('[modpackProcessor]   Lang files found:', langFiles.length);
+        logger.debug('Lang files found:', langFiles.length);
 
         if (langFiles.length > 0) {
           // Translate all lang files
           const translations = await translateLangFiles(langFiles);
-          console.log('[modpackProcessor]   Translations:', translations.size);
+          logger.debug('Translations:', translations.size);
 
           // Repack JAR with translated files
           const repackedJar = await repackJar(jarBuffer, translations);
-          console.log('[modpackProcessor]   Repacked JAR size:', repackedJar.length, 'bytes');
+          logger.debug('Repacked JAR size:', repackedJar.length, 'bytes');
 
           // Replace JAR in result ZIP
           result.file(path, repackedJar);
-          console.log('[modpackProcessor]   JAR updated in modpack');
+          logger.debug('JAR updated in modpack');
         } else {
-          console.log('[modpackProcessor]   No lang files in JAR, skipping');
+          logger.debug('No lang files in JAR, skipping');
         }
       } else {
         // Regular file processing (non-JAR)
         const content = await file.async('string');
-        console.log('[modpackProcessor]   Content length:', content.length, 'chars');
+        logger.debug('Content length:', content.length, 'chars');
 
-        const translated = await translateSingleFile(path, content, strategy);
+        const translationResult = await translateFile(path, content, strategyResult.strategy);
 
-        if (translated) {
-          console.log('[modpackProcessor]   Translated:', translated.stringsCount, 'strings');
+        if (translationResult.success && translationResult.translatedContent) {
+          logger.debug('Translated:', translationResult.stringsCount, 'strings');
           const ruPath = getRuPath(path);
-          console.log('[modpackProcessor]   Output path:', ruPath);
+          logger.debug('Output path:', ruPath);
 
           // Sanitize paths to prevent path traversal attacks
           try {
@@ -316,23 +163,23 @@ export async function translateModpack(
 
             if (ruPath !== path) {
               // For lang files: add ru_ru version, keep original
-              result.file(safePath, translated.content);
-              console.log('[modpackProcessor]   Added as new file (lang)');
+              result.file(safePath, translationResult.translatedContent);
+              logger.debug('Added as new file (lang)');
             } else {
               // For quests/configs: overwrite in place
-              result.file(safePath, translated.content);
-              console.log('[modpackProcessor]   Overwritten in place');
+              result.file(safePath, translationResult.translatedContent);
+              logger.debug('Overwritten in place');
             }
           } catch (error) {
-            console.error('[modpackProcessor]   Invalid path detected:', ruPath, error);
+            logger.error('Invalid path detected:', ruPath, error);
             // Skip this file if path is invalid
           }
         } else {
-          console.log('[modpackProcessor]   No translation needed');
+          logger.debug('No translation needed');
         }
       }
     } catch (err) {
-      console.error('[modpackProcessor]   Error:', err);
+      logger.error('Error:', err);
       /* skip on error */
     }
 
@@ -340,27 +187,23 @@ export async function translateModpack(
     onProgress?.(done, entries.length, path);
   }
 
-  console.log('[modpackProcessor] Generating result ZIP...');
+  logger.info('Generating result ZIP...');
   const resultBuffer = await result.generateAsync({
     type: 'nodebuffer',
     compression: 'DEFLATE',
     compressionOptions: { level: 6 },
   });
 
-  console.log('[modpackProcessor] Result ZIP size:', resultBuffer.length, 'bytes');
+  logger.info('Result ZIP size:', resultBuffer.length, 'bytes');
   return resultBuffer;
 }
 
-/**
- * Translate modpack from buffer and return result with filename
- * Used by streaming upload endpoint
- */
 export async function translateModpackFromBuffer(
   zipBuffer: Buffer,
   originalFileName: string
 ): Promise<{ buffer: Buffer; fileName: string }> {
-  console.log('[modpackProcessor] translateModpackFromBuffer called');
-  console.log('[modpackProcessor] Original file:', originalFileName);
+  logger.info('translateModpackFromBuffer called');
+  logger.debug('Original file:', originalFileName);
 
   const resultBuffer = await translateModpack(zipBuffer);
 

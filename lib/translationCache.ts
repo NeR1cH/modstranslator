@@ -3,13 +3,13 @@
 // Caches translations to save API quota and speed up repeated translations
 // ============================================================
 
-import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { BaseCache } from './BaseCache';
+import { createLogger } from './logger';
 
 const CACHE_DIR = path.join(process.cwd(), '.translation-cache');
 const CACHE_VERSION = 'v1';
-const CACHE_FILE = path.join(CACHE_DIR, `cache-${CACHE_VERSION}.json`);
 
 interface CacheEntry {
   hash: string;
@@ -23,31 +23,17 @@ interface CacheData {
   entries: CacheEntry[];
 }
 
-class TranslationCache {
+class TranslationCache extends BaseCache<CacheData> {
   private memoryCache = new Map<string, string>();
-  private isDirty = false;
-  private saveTimeout: NodeJS.Timeout | null = null;
+  protected logger = createLogger('cache');
 
   constructor() {
-    this.init();
-  }
-
-  /**
-   * Initialize cache directory and load from disk
-   */
-  private init(): void {
-    try {
-      // Create cache directory if it doesn't exist
-      if (!fs.existsSync(CACHE_DIR)) {
-        fs.mkdirSync(CACHE_DIR, { recursive: true });
-        console.log('[cache] Created cache directory:', CACHE_DIR);
-      }
-
-      // Load existing cache
-      this.loadFromDisk();
-    } catch (error) {
-      console.error('[cache] Init error:', error);
-    }
+    super({
+      cacheDir: CACHE_DIR,
+      fileName: `cache-${CACHE_VERSION}.json`,
+      version: CACHE_VERSION,
+      autoSaveDelay: 5000,
+    });
   }
 
   /**
@@ -68,7 +54,7 @@ class TranslationCache {
     const cached = this.memoryCache.get(hash);
 
     if (cached) {
-      console.log('[cache] HIT:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+      this.logger.debug('HIT:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
       return cached;
     }
 
@@ -102,7 +88,7 @@ class TranslationCache {
     }
 
     if (results.size > 0) {
-      console.log(`[cache] Batch lookup: ${results.size}/${texts.length} hits (${Math.round(results.size / texts.length * 100)}%)`);
+      this.logger.info(`Batch lookup: ${results.size}/${texts.length} hits (${Math.round(results.size / texts.length * 100)}%)`);
     }
 
     return results;
@@ -120,97 +106,63 @@ class TranslationCache {
     this.isDirty = true;
     this.scheduleSave();
 
-    console.log(`[cache] Cached ${pairs.length} new translations`);
+    this.logger.info(`Cached ${pairs.length} new translations`);
   }
 
   /**
    * Load cache from disk
    */
-  private loadFromDisk(): void {
-    try {
-      if (!fs.existsSync(CACHE_FILE)) {
-        console.log('[cache] No cache file found, starting fresh');
-        return;
-      }
+  protected loadFromDisk(): void {
+    const cacheData = this.readJsonFile<CacheData>(this.cacheFile);
 
-      const data = fs.readFileSync(CACHE_FILE, 'utf8');
-      const cacheData: CacheData = JSON.parse(data);
-
-      // Check version compatibility
-      if (cacheData.version !== CACHE_VERSION) {
-        console.log('[cache] Cache version mismatch, clearing old cache');
-        return;
-      }
-
-      // Load entries into memory
-      for (const entry of cacheData.entries) {
-        this.memoryCache.set(entry.hash, entry.translated);
-      }
-
-      console.log(`[cache] Loaded ${cacheData.entries.length} entries from disk`);
-    } catch (error) {
-      console.error('[cache] Failed to load from disk:', error);
-    }
-  }
-
-  /**
-   * Schedule a debounced save to disk
-   */
-  private scheduleSave(): void {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
+    if (!cacheData) {
+      this.logger.info('No cache file found, starting fresh');
+      return;
     }
 
-    // Save after 5 seconds of inactivity
-    this.saveTimeout = setTimeout(() => {
-      this.saveToDisk();
-    }, 5000);
+    // Check version compatibility
+    if (cacheData.version !== this.version) {
+      this.logger.info('Cache version mismatch, clearing old cache');
+      return;
+    }
+
+    // Load entries into memory
+    for (const entry of cacheData.entries) {
+      this.memoryCache.set(entry.hash, entry.translated);
+    }
+
+    this.logger.info(`Loaded ${cacheData.entries.length} entries from disk`);
   }
 
   /**
    * Save cache to disk immediately
    */
-  private saveToDisk(): void {
+  protected saveToDisk(): void {
     if (!this.isDirty) {
       return;
     }
 
-    try {
-      const entries: CacheEntry[] = [];
+    const entries: CacheEntry[] = [];
 
-      // Convert memory cache to array
-      for (const [hash, translated] of this.memoryCache.entries()) {
-        entries.push({
-          hash,
-          original: '', // Don't store original to save space
-          translated,
-          timestamp: Date.now()
-        });
-      }
-
-      const cacheData: CacheData = {
-        version: CACHE_VERSION,
-        entries
-      };
-
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2), 'utf8');
-      this.isDirty = false;
-
-      console.log(`[cache] Saved ${entries.length} entries to disk`);
-    } catch (error) {
-      console.error('[cache] Failed to save to disk:', error);
+    // Convert memory cache to array
+    for (const [hash, translated] of this.memoryCache.entries()) {
+      entries.push({
+        hash,
+        original: '', // Don't store original to save space
+        translated,
+        timestamp: Date.now()
+      });
     }
-  }
 
-  /**
-   * Force save to disk (call before process exit)
-   */
-  flush(): void {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
-      this.saveTimeout = null;
-    }
-    this.saveToDisk();
+    const cacheData: CacheData = {
+      version: this.version,
+      entries
+    };
+
+    this.writeJsonFile(this.cacheFile, cacheData);
+    this.isDirty = false;
+
+    this.logger.info(`Saved ${entries.length} entries to disk`);
   }
 
   /**
@@ -219,8 +171,8 @@ class TranslationCache {
   getStats() {
     return {
       size: this.memoryCache.size,
-      cacheFile: CACHE_FILE,
-      cacheDir: CACHE_DIR
+      cacheFile: this.cacheFile,
+      cacheDir: this.cacheDir
     };
   }
 
@@ -231,7 +183,7 @@ class TranslationCache {
     this.memoryCache.clear();
     this.isDirty = true;
     this.saveToDisk();
-    console.log('[cache] Cache cleared');
+    this.logger.info('Cache cleared');
   }
 }
 

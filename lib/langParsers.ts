@@ -1,13 +1,15 @@
 import { LangEntry } from '@/types';
 import { safeJsonParse } from './security';
+import {
+  hasTranslatableText as hasTranslatableTextHelper,
+  parseLineByLine,
+  rebuildLineByLine,
+  isComment,
+  parseKeyValue
+} from './parserHelpers';
 
-// ============================================================
-// BLOCK: Helpers
-// ============================================================
-
-export function hasTranslatableText(s: string): boolean {
-  return /[a-zA-Z]/.test(s) && s.trim().length > 1;
-}
+// Re-export for backward compatibility
+export { hasTranslatableText } from './parserHelpers';
 
 export function detectFormat(filename: string): string | null {
   const lower = filename.toLowerCase();
@@ -30,7 +32,7 @@ export function parseJsonLang(content: string): LangEntry[] {
   const obj = safeJsonParse(content) as Record<string, unknown>;
   const entries: LangEntry[] = [];
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'string' && hasTranslatableText(value)) {
+    if (typeof value === 'string' && hasTranslatableTextHelper(value)) {
       entries.push({ key, value });
     }
   }
@@ -49,28 +51,27 @@ export function rebuildJsonLang(original: string, translations: Map<string, stri
 // BLOCK: .lang parser (Minecraft pre-1.13)
 // ============================================================
 export function parseDotLang(content: string): LangEntry[] {
-  const entries: LangEntry[] = [];
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx === -1) continue;
-    const key   = trimmed.substring(0, eqIdx).trim();
-    const value = trimmed.substring(eqIdx + 1);
-    if (hasTranslatableText(value)) entries.push({ key, value });
-  }
-  return entries;
+  return parseLineByLine(content, (line) => {
+    if (isComment(line, '#')) return null;
+
+    const parsed = parseKeyValue(line, '=');
+    if (!parsed) return null;
+
+    const { key, value } = parsed;
+    return hasTranslatableTextHelper(value) ? { key, value } : null;
+  });
 }
 
 export function rebuildDotLang(original: string, translations: Map<string, string>): string {
-  return original.split('\n').map(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return line;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx === -1) return line;
-    const key = trimmed.substring(0, eqIdx).trim();
-    return translations.has(key) ? `${key}=${translations.get(key)}` : line;
-  }).join('\n');
+  return rebuildLineByLine(original, translations, (line, _, trans) => {
+    if (isComment(line, '#')) return line;
+
+    const parsed = parseKeyValue(line, '=');
+    if (!parsed) return line;
+
+    const { key } = parsed;
+    return trans.has(key) ? `${key}=${trans.get(key)}` : line;
+  });
 }
 
 // ============================================================
@@ -128,7 +129,7 @@ export function parseSnbt(content: string): LangEntry[] {
           const textMatch = arrayLine.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/);
           if (textMatch) {
             const text = textMatch[1].replace(/\\"/g, '"');
-            if (hasTranslatableText(text)) {
+            if (hasTranslatableTextHelper(text)) {
               values.push(text);
             }
           }
@@ -149,7 +150,7 @@ export function parseSnbt(content: string): LangEntry[] {
       }
 
       values.forEach((value, idx) => {
-        if (hasTranslatableText(value)) {
+        if (hasTranslatableTextHelper(value)) {
           entries.push({ key: `${key}[${idx}]`, value });
         }
       });
@@ -165,7 +166,7 @@ export function parseSnbt(content: string): LangEntry[] {
       const match = arrayMatch || simpleMatch;
       if (!match) return;
       const value = match[1].replace(/\\"/g, '"');
-      if (hasTranslatableText(value)) entries.push({ key: `snbt_line_${i}`, value });
+      if (hasTranslatableTextHelper(value)) entries.push({ key: `snbt_line_${i}`, value });
     });
   }
 
@@ -235,7 +236,7 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
               result.push(arrayLine);
             }
 
-            if (hasTranslatableText(originalText)) {
+            if (hasTranslatableTextHelper(originalText)) {
               translationIdx++;
             }
           } else {
@@ -299,55 +300,54 @@ export function rebuildSnbt(original: string, translations: Map<string, string>)
 const TOML_SKIP_KEYS = /^(class|id|type|version|mod|namespace|registry|path|file|url|key|category)$/i;
 
 export function parseToml(content: string): LangEntry[] {
-  const entries: LangEntry[] = [];
-  content.split('\n').forEach((line, i) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('[')) return;
-    const match = trimmed.match(/^([^=]+?)\s*=\s*["'](.+?)["']\s*(?:#.*)?$/);
-    if (!match) return;
+  return parseLineByLine(content, (line, i) => {
+    if (isComment(line, ['#', '['])) return null;
+
+    const match = line.trim().match(/^([^=]+?)\s*=\s*["'](.+?)["']\s*(?:#.*)?$/);
+    if (!match) return null;
+
     const keyName = match[1].trim().split('.').pop() ?? '';
-    const value   = match[2];
-    if (TOML_SKIP_KEYS.test(keyName)) return;
-    if (!hasTranslatableText(value)) return;
-    entries.push({ key: `toml_line_${i}`, value });
+    const value = match[2];
+
+    if (TOML_SKIP_KEYS.test(keyName) || !hasTranslatableTextHelper(value)) return null;
+
+    return { key: `toml_line_${i}`, value };
   });
-  return entries;
 }
 
 export function rebuildToml(original: string, translations: Map<string, string>): string {
-  return original.split('\n').map((line, i) => {
+  return rebuildLineByLine(original, translations, (line, i, trans) => {
     const key = `toml_line_${i}`;
-    if (!translations.has(key)) return line;
-    const translated = translations.get(key)!;
+    if (!trans.has(key)) return line;
+    const translated = trans.get(key)!;
     return line.replace(/=\s*["'](.+?)["']/, `= "${translated}"`);
-  }).join('\n');
+  });
 }
 
 // ============================================================
 // BLOCK: CFG parser (old Forge configs)
 // ============================================================
 export function parseCfg(content: string): LangEntry[] {
-  const entries: LangEntry[] = [];
-  content.split('\n').forEach((line, i) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-    const match = trimmed.match(/^S:[^=]+=(.+)$/) ?? trimmed.match(/^[^=]+=(.+)$/);
-    if (!match) return;
+  return parseLineByLine(content, (line, i) => {
+    if (isComment(line, '#')) return null;
+
+    const match = line.trim().match(/^S:[^=]+=(.+)$/) ?? line.trim().match(/^[^=]+=(.+)$/);
+    if (!match) return null;
+
     const value = match[1].trim();
-    if (hasTranslatableText(value) && value.includes(' ')) {
-      entries.push({ key: `cfg_line_${i}`, value });
-    }
+    if (!hasTranslatableTextHelper(value) || !value.includes(' ')) return null;
+
+    return { key: `cfg_line_${i}`, value };
   });
-  return entries;
 }
 
 export function rebuildCfg(original: string, translations: Map<string, string>): string {
-  return original.split('\n').map((line, i) => {
+  return rebuildLineByLine(original, translations, (line, i, trans) => {
     const key = `cfg_line_${i}`;
-    if (!translations.has(key)) return line;
+    if (!trans.has(key)) return line;
     const eqIdx = line.indexOf('=');
-    return eqIdx === -1 ? line : line.substring(0, eqIdx + 1) + translations.get(key);
-  }).join('\n');
+    return eqIdx === -1 ? line : line.substring(0, eqIdx + 1) + trans.get(key);
+  });
 }
 
 // ============================================================
@@ -364,7 +364,7 @@ export function parseNestedJson(content: string): LangEntry[] {
   const entries: LangEntry[] = [];
   function traverse(obj: unknown, path: string) {
     if (typeof obj === 'string') {
-      if (hasTranslatableText(obj)) entries.push({ key: path, value: obj });
+      if (hasTranslatableTextHelper(obj)) entries.push({ key: path, value: obj });
     } else if (Array.isArray(obj)) {
       obj.forEach((item, i) => traverse(item, `${path}[${i}]`));
     } else if (obj && typeof obj === 'object') {
@@ -410,7 +410,7 @@ export function parseXml(content: string): LangEntry[] {
   while ((match = regex.exec(cleaned)) !== null) {
     const value = match[1].trim();
     // Skip empty strings and XML declarations
-    if (value && !value.startsWith('<?') && !value.startsWith('<!') && hasTranslatableText(value)) {
+    if (value && !value.startsWith('<?') && !value.startsWith('<!') && hasTranslatableTextHelper(value)) {
       entries.push({ key: `xml_${i++}`, value });
     }
   }
@@ -440,15 +440,15 @@ export function rebuildXml(original: string, translations: Map<string, string>):
 // BLOCK: Plain text parser (subtitles, cutscene scripts)
 // ============================================================
 export function parsePlainText(content: string): LangEntry[] {
-  return content.split('\n')
-    .map((line, i) => ({ key: `txt_${i}`, value: line }))
-    .filter(e => hasTranslatableText(e.value));
+  return parseLineByLine(content, (line, i) => {
+    return hasTranslatableTextHelper(line) ? { key: `txt_${i}`, value: line } : null;
+  });
 }
 
 export function rebuildPlainText(original: string, translations: Map<string, string>): string {
-  return original.split('\n')
-    .map((line, i) => translations.get(`txt_${i}`) ?? line)
-    .join('\n');
+  return rebuildLineByLine(original, translations, (line, i, trans) => {
+    return trans.get(`txt_${i}`) ?? line;
+  });
 }
 
 // ============================================================
@@ -489,7 +489,7 @@ export function parseProperties(content: string): LangEntry[] {
       .replace(/\\#/g, '#')
       .replace(/\\!/g, '!');
 
-    if (hasTranslatableText(value)) {
+    if (hasTranslatableTextHelper(value)) {
       entries.push({ key, value });
     }
   }
@@ -590,7 +590,7 @@ export function parseYaml(content: string): LangEntry[] {
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
 
-    if (hasTranslatableText(value)) {
+    if (hasTranslatableTextHelper(value)) {
       entries.push({ key, value });
     }
   }
