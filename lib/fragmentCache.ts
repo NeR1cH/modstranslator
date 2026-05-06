@@ -29,6 +29,65 @@ class FragmentCache {
   private isDirty = false;
   private saveTimer: NodeJS.Timeout | null = null;
 
+  // Gender dictionary for Russian nouns (item types)
+  private readonly ITEM_GENDERS: Record<string, 'masculine' | 'feminine' | 'neuter'> = {
+    // Masculine (мужской род)
+    'sword': 'masculine',      // меч
+    'pickaxe': 'masculine',    // кирка -> actually feminine!
+    'axe': 'masculine',        // топор
+    'shovel': 'masculine',     // лопата -> actually feminine!
+    'hoe': 'masculine',        // мотыга -> actually feminine!
+    'helmet': 'masculine',     // шлем
+    'bow': 'masculine',        // лук
+    'shield': 'masculine',     // щит
+    'dagger': 'masculine',     // кинжал
+    'spear': 'masculine',      // копьё -> actually neuter!
+    'pike': 'masculine',       // пика -> actually feminine!
+    'lance': 'masculine',      // копьё -> actually neuter!
+    'mace': 'masculine',       // булава -> actually feminine!
+    'hammer': 'masculine',     // молот
+    'scythe': 'feminine',      // коса
+    'katana': 'feminine',      // катана
+    'rapier': 'feminine',      // рапира
+    'stiletto': 'masculine',   // стилет
+    'saber': 'feminine',       // сабля
+    'cutlass': 'masculine',    // кортик
+    'claymore': 'masculine',   // клеймор
+    'greatsword': 'masculine', // двуручный меч
+    'ingot': 'masculine',      // слиток
+    'block': 'masculine',      // блок
+    'rod': 'masculine',        // стержень
+    'nugget': 'masculine',     // самородок
+    'chunk': 'masculine',      // кусок
+    'clump': 'masculine',      // комок
+    'shard': 'masculine',      // осколок
+    'crystal': 'masculine',    // кристалл
+    'coil': 'feminine',        // катушка
+    'casing': 'masculine',     // корпус
+    'frame': 'masculine',      // каркас
+
+    // Feminine (женский род)
+    'chestplate': 'feminine',  // кираса
+    'leggings': 'feminine',    // поножи (plural, but feminine)
+    'boots': 'masculine',      // ботинки (plural, but masculine)
+    'arrow': 'feminine',       // стрела
+    'ore': 'feminine',         // руда
+    'dust': 'feminine',        // пыль
+    'plate': 'feminine',       // пластина
+    'gear': 'feminine',        // шестерня
+    'sheet': 'masculine',      // лист
+    'wire': 'feminine',        // проволока
+    'pickaxe': 'feminine',     // кирка (corrected)
+    'shovel': 'feminine',      // лопата (corrected)
+    'hoe': 'feminine',         // мотыга (corrected)
+    'pike': 'feminine',        // пика (corrected)
+    'mace': 'feminine',        // булава (corrected)
+
+    // Neuter (средний род)
+    'spear': 'neuter',         // копьё (corrected)
+    'lance': 'neuter',         // копьё (corrected)
+  };
+
   // Common Minecraft material patterns
   private readonly MATERIALS = [
     'diamond', 'iron', 'gold', 'golden', 'stone', 'wooden', 'wood',
@@ -103,11 +162,60 @@ class FragmentCache {
   }
 
   /**
+   * Apply gender agreement to adjective based on noun gender
+   * Russian adjectives must agree with nouns in gender
+   */
+  private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter'): string {
+    // Remove common adjective endings
+    let stem = adjective;
+
+    // Remove endings: -ый, -ой, -ая, -яя, -ое, -ее
+    if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ая') || stem.endsWith('яя') || stem.endsWith('ое') || stem.endsWith('ее')) {
+      stem = stem.slice(0, -2);
+    }
+    // Remove -ий, -ья, -ье (soft endings)
+    else if (stem.endsWith('ий') || stem.endsWith('ья') || stem.endsWith('ье')) {
+      stem = stem.slice(0, -2);
+    }
+
+    // Apply correct ending based on gender
+    const endings: Record<'masculine' | 'feminine' | 'neuter', string[]> = {
+      masculine: ['ый', 'ой', 'ий'],  // железный, золотой, синий
+      feminine: ['ая', 'яя'],          // железная, синяя
+      neuter: ['ое', 'ее']             // железное, синее
+    };
+
+    // Determine which ending to use based on stem
+    let ending: string;
+
+    if (gender === 'masculine') {
+      // Use -ий for soft stems (ending in н, т, д, etc. after vowel)
+      if (stem.endsWith('н') || stem.endsWith('т') || stem.endsWith('д')) {
+        ending = 'ый';
+      } else {
+        ending = 'ый';  // Default masculine
+      }
+    } else if (gender === 'feminine') {
+      // Use -яя for soft stems
+      if (stem.endsWith('н') || stem.endsWith('т') || stem.endsWith('д')) {
+        ending = 'ая';
+      } else {
+        ending = 'ая';  // Default feminine
+      }
+    } else {
+      // Neuter
+      ending = 'ое';
+    }
+
+    return stem + ending;
+  }
+
+  /**
    * Learn fragments from a successful translation
    */
   learn(original: string, translated: string): void {
     const patterns = this.extractPatterns(original, translated);
-    patterns.forEach(({ fragment, translation, context, confidence }) => {
+    patterns.forEach(({ fragment, translation, context, confidence, gender }) => {
       const key = fragment.toLowerCase();
       const existing = this.fragments.get(key);
 
@@ -119,6 +227,10 @@ class FragmentCache {
           // Conflict detected - lower confidence
           existing.confidence = Math.max(50, existing.confidence - 10);
         }
+        // Update gender if provided and not set
+        if (gender && !existing.gender) {
+          existing.gender = gender;
+        }
       } else {
         // New fragment
         this.fragments.set(key, {
@@ -126,7 +238,8 @@ class FragmentCache {
           translation,
           context,
           count: 1,
-          confidence
+          confidence,
+          gender
         });
       }
     });
@@ -144,7 +257,7 @@ class FragmentCache {
     if (patterns.length === 0) return null;
 
     let totalConfidence = 0;
-    let translatedParts: string[] = [];
+    let fragments: Fragment[] = [];
     let allFound = true;
 
     for (const pattern of patterns) {
@@ -153,7 +266,7 @@ class FragmentCache {
         allFound = false;
         break;
       }
-      translatedParts.push(fragment.translation);
+      fragments.push(fragment);
       totalConfidence += fragment.confidence;
     }
 
@@ -162,8 +275,40 @@ class FragmentCache {
     const avgConfidence = totalConfidence / patterns.length;
     if (avgConfidence < 75) return null;
 
-    // Combine parts with proper spacing
-    const result = translatedParts.join(' ');
+    // Apply gender agreement for 2-word patterns (Material + Item)
+    let result: string;
+    if (fragments.length === 2 && fragments[0].context === 'prefix' && fragments[1].context === 'suffix') {
+      const material = fragments[0];
+      const item = fragments[1];
+
+      // Get item gender from dictionary or fragment
+      const itemGender = item.gender || this.ITEM_GENDERS[item.text.toLowerCase()] || 'masculine';
+
+      // Apply gender agreement to material (adjective)
+      const agreedMaterial = this.applyGenderAgreement(material.translation, itemGender);
+
+      result = `${agreedMaterial} ${item.translation}`;
+    }
+    // Apply gender agreement for 3-word patterns (Prefix + Material + Item)
+    else if (fragments.length === 3) {
+      const prefix = fragments[0];
+      const material = fragments[1];
+      const item = fragments[2];
+
+      // Get item gender
+      const itemGender = item.gender || this.ITEM_GENDERS[item.text.toLowerCase()] || 'masculine';
+
+      // Apply gender agreement to both prefix and material
+      const agreedPrefix = this.applyGenderAgreement(prefix.translation, itemGender);
+      const agreedMaterial = this.applyGenderAgreement(material.translation, itemGender);
+
+      result = `${agreedPrefix} ${agreedMaterial} ${item.translation}`;
+    }
+    // Fallback: simple concatenation
+    else {
+      result = fragments.map(f => f.translation).join(' ');
+    }
+
     console.log(`[fragment-cache] Translated "${text}" → "${result}" (confidence: ${avgConfidence.toFixed(0)}%)`);
     return result;
   }
@@ -176,12 +321,14 @@ class FragmentCache {
     translation: string;
     context: 'prefix' | 'suffix' | 'standalone';
     confidence: number;
+    gender?: 'masculine' | 'feminine' | 'neuter';
   }> {
     const results: Array<{
       fragment: string;
       translation: string;
       context: 'prefix' | 'suffix' | 'standalone';
       confidence: number;
+      gender?: 'masculine' | 'feminine' | 'neuter';
     }> = [];
 
     // Pattern 1: "Material + Item" (e.g., "Diamond Sword")
@@ -196,19 +343,24 @@ class FragmentCache {
         const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
 
         if (isMaterial || isItem) {
+          // Get item gender from dictionary
+          const itemGender = this.ITEM_GENDERS[item.toLowerCase()];
+
           // For 2-word translations, extract both parts
           if (translatedParts.length === 2) {
             results.push({
               fragment: material,
               translation: translatedParts[0],
               context: 'prefix',
-              confidence: isMaterial ? 90 : 70
+              confidence: isMaterial ? 90 : 70,
+              gender: itemGender  // Store gender for agreement
             });
             results.push({
               fragment: item,
               translation: translatedParts[1],
               context: 'suffix',
-              confidence: isItem ? 90 : 70
+              confidence: isItem ? 90 : 70,
+              gender: itemGender  // Store gender of the noun
             });
           }
           // For 1-word translations, extract as single fragment
@@ -217,7 +369,8 @@ class FragmentCache {
               fragment: original,
               translation: translated,
               context: 'standalone',
-              confidence: (isMaterial && isItem) ? 85 : 75
+              confidence: (isMaterial && isItem) ? 85 : 75,
+              gender: itemGender
             });
           }
           // For 3-word translations, try to map intelligently
@@ -228,7 +381,8 @@ class FragmentCache {
                 fragment: material,
                 translation: translatedParts[0],
                 context: 'prefix',
-                confidence: 85
+                confidence: 85,
+                gender: itemGender
               });
             }
             if (isItem) {
@@ -236,7 +390,8 @@ class FragmentCache {
                 fragment: item,
                 translation: translatedParts[2],
                 context: 'suffix',
-                confidence: 85
+                confidence: 85,
+                gender: itemGender
               });
             }
           }
@@ -251,11 +406,13 @@ class FragmentCache {
       const isItem = this.ITEM_TYPES.includes(singleWord.toLowerCase());
 
       if (isMaterial || isItem) {
+        const itemGender = isItem ? this.ITEM_GENDERS[singleWord.toLowerCase()] : undefined;
         results.push({
           fragment: singleWord,
           translation: translated.trim(),
           context: 'standalone',
-          confidence: 85
+          confidence: 85,
+          gender: itemGender
         });
       }
     }
@@ -270,6 +427,9 @@ class FragmentCache {
       const isMaterial = this.MATERIALS.includes(material.toLowerCase());
       const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
 
+      // Get item gender from dictionary
+      const itemGender = this.ITEM_GENDERS[item.toLowerCase()];
+
       // Extract fragments if we recognize at least 2 out of 3 parts
       if ((isPrefix && isMaterial) || (isMaterial && isItem) || (isPrefix && isItem)) {
         // Extract prefix if recognized
@@ -278,7 +438,8 @@ class FragmentCache {
             fragment: prefix,
             translation: translatedParts[0],
             context: 'prefix',
-            confidence: 80
+            confidence: 80,
+            gender: itemGender
           });
         }
 
@@ -289,7 +450,8 @@ class FragmentCache {
             fragment: material,
             translation: translatedParts[materialIndex],
             context: 'prefix',
-            confidence: 85
+            confidence: 85,
+            gender: itemGender
           });
         }
 
@@ -299,7 +461,8 @@ class FragmentCache {
             fragment: item,
             translation: translatedParts[translatedParts.length - 1],
             context: 'suffix',
-            confidence: 85
+            confidence: 85,
+            gender: itemGender
           });
         }
       }
