@@ -1,6 +1,7 @@
 ```
 # TypeScript build info
 tsconfig.tsbuildinfo
+CLAUDE.md
 
 # Dependencies
 node_modules/
