@@ -34,7 +34,11 @@ class FragmentCache {
     'diamond', 'iron', 'gold', 'golden', 'stone', 'wooden', 'wood',
     'netherite', 'leather', 'chainmail', 'steel', 'bronze', 'silver',
     'copper', 'tin', 'brass', 'aluminum', 'titanium', 'obsidian',
-    'emerald', 'ruby', 'sapphire', 'amethyst', 'quartz'
+    'emerald', 'ruby', 'sapphire', 'amethyst', 'quartz',
+    // Added materials from modpacks
+    'zinc', 'lead', 'uranium', 'nickel', 'osmium', 'platinum',
+    'iridium', 'tungsten', 'chromium', 'cobalt', 'invar', 'electrum',
+    'constantan', 'signalum', 'lumium', 'enderium'
   ];
 
   // Common Minecraft item types
@@ -42,7 +46,17 @@ class FragmentCache {
     'sword', 'pickaxe', 'axe', 'shovel', 'hoe', 'helmet', 'chestplate',
     'leggings', 'boots', 'bow', 'arrow', 'shield', 'dagger', 'spear',
     'pike', 'lance', 'mace', 'hammer', 'scythe', 'katana', 'rapier',
-    'stiletto', 'saber', 'cutlass', 'claymore', 'greatsword'
+    'stiletto', 'saber', 'cutlass', 'claymore', 'greatsword',
+    // Added item types from modpacks
+    'ore', 'dust', 'plate', 'gear', 'rod', 'sheet', 'nugget',
+    'ingot', 'block', 'chunk', 'clump', 'shard', 'crystal',
+    'wire', 'coil', 'casing', 'frame'
+  ];
+
+  // Common prefixes for materials
+  private readonly PREFIXES = [
+    'raw', 'crushed', 'molten', 'refined', 'processed', 'purified',
+    'enriched', 'compressed', 'dense', 'dirty'
   ];
 
   constructor() {
@@ -176,23 +190,56 @@ class FragmentCache {
       const [, material, item] = materialMatch;
       const translatedParts = translated.split(/\s+/);
 
-      if (translatedParts.length === 2) {
+      // Allow 1-3 words in translation (was: exactly 2)
+      if (translatedParts.length >= 1 && translatedParts.length <= 3) {
         const isMaterial = this.MATERIALS.includes(material.toLowerCase());
         const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
 
         if (isMaterial || isItem) {
-          results.push({
-            fragment: material,
-            translation: translatedParts[0],
-            context: 'prefix',
-            confidence: isMaterial ? 90 : 70
-          });
-          results.push({
-            fragment: item,
-            translation: translatedParts[1],
-            context: 'suffix',
-            confidence: isItem ? 90 : 70
-          });
+          // For 2-word translations, extract both parts
+          if (translatedParts.length === 2) {
+            results.push({
+              fragment: material,
+              translation: translatedParts[0],
+              context: 'prefix',
+              confidence: isMaterial ? 90 : 70
+            });
+            results.push({
+              fragment: item,
+              translation: translatedParts[1],
+              context: 'suffix',
+              confidence: isItem ? 90 : 70
+            });
+          }
+          // For 1-word translations, extract as single fragment
+          else if (translatedParts.length === 1) {
+            results.push({
+              fragment: original,
+              translation: translated,
+              context: 'standalone',
+              confidence: (isMaterial && isItem) ? 85 : 75
+            });
+          }
+          // For 3-word translations, try to map intelligently
+          else if (translatedParts.length === 3) {
+            // Assume first word is material, last word is item type
+            if (isMaterial) {
+              results.push({
+                fragment: material,
+                translation: translatedParts[0],
+                context: 'prefix',
+                confidence: 85
+              });
+            }
+            if (isItem) {
+              results.push({
+                fragment: item,
+                translation: translatedParts[2],
+                context: 'suffix',
+                confidence: 85
+              });
+            }
+          }
         }
       }
     }
@@ -213,6 +260,51 @@ class FragmentCache {
       }
     }
 
+    // Pattern 3: "Prefix + Material + Item" (e.g., "Raw Iron Ore", "Crushed Gold Dust")
+    const prefixMatch = original.match(/^(\w+)\s+(\w+)\s+(\w+)$/i);
+    if (prefixMatch) {
+      const [, prefix, material, item] = prefixMatch;
+      const translatedParts = translated.split(/\s+/);
+
+      const isPrefix = this.PREFIXES.includes(prefix.toLowerCase());
+      const isMaterial = this.MATERIALS.includes(material.toLowerCase());
+      const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
+
+      // Extract fragments if we recognize at least 2 out of 3 parts
+      if ((isPrefix && isMaterial) || (isMaterial && isItem) || (isPrefix && isItem)) {
+        // Extract prefix if recognized
+        if (isPrefix && translatedParts.length >= 1) {
+          results.push({
+            fragment: prefix,
+            translation: translatedParts[0],
+            context: 'prefix',
+            confidence: 80
+          });
+        }
+
+        // Extract material if recognized
+        if (isMaterial && translatedParts.length >= 2) {
+          const materialIndex = isPrefix ? 1 : 0;
+          results.push({
+            fragment: material,
+            translation: translatedParts[materialIndex],
+            context: 'prefix',
+            confidence: 85
+          });
+        }
+
+        // Extract item type if recognized
+        if (isItem && translatedParts.length >= 2) {
+          results.push({
+            fragment: item,
+            translation: translatedParts[translatedParts.length - 1],
+            context: 'suffix',
+            confidence: 85
+          });
+        }
+      }
+    }
+
     return results;
   }
 
@@ -222,7 +314,24 @@ class FragmentCache {
   private detectPatterns(text: string): string[] {
     const patterns: string[] = [];
 
-    // Pattern: "Material + Item"
+    // Pattern 1: "Prefix + Material + Item" (3 words)
+    const prefixMatch = text.match(/^(\w+)\s+(\w+)\s+(\w+)$/i);
+    if (prefixMatch) {
+      const [, prefix, material, item] = prefixMatch;
+      const isPrefix = this.PREFIXES.includes(prefix.toLowerCase());
+      const isMaterial = this.MATERIALS.includes(material.toLowerCase());
+      const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
+
+      // If we recognize at least 2 out of 3 parts, try to use fragments
+      if ((isPrefix && isMaterial) || (isMaterial && isItem) || (isPrefix && isItem)) {
+        if (isPrefix) patterns.push(prefix);
+        if (isMaterial) patterns.push(material);
+        if (isItem) patterns.push(item);
+        return patterns;
+      }
+    }
+
+    // Pattern 2: "Material + Item" (2 words)
     const materialMatch = text.match(/^(\w+)\s+(\w+)$/i);
     if (materialMatch) {
       const [, material, item] = materialMatch;
