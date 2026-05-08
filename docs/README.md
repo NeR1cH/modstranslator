@@ -1,6 +1,6 @@
 # 📚 Документация MOD_TRANSLATOR
 
-**Версия:** 3.16.0  
+**Версия:** 3.17.1  
 **Дата:** 08.05.2026  
 **Статус:** ✅ Production Ready
 
@@ -24,10 +24,18 @@
 | [PROJECT_STRUCTURE.md](./architecture/PROJECT_STRUCTURE.md) | Структура проекта |
 | [Cache System](./architecture/cache-system/) | Система кэширования |
 
+### 📖 Руководства
+
+| Документ | Описание |
+|----------|----------|
+| [OPENROUTER_GUIDE.md](./guides/OPENROUTER_GUIDE.md) | Руководство по интеграции OpenRouter |
+
 ### 🚀 Релизы
 
 | Версия | Дата | Описание |
 |--------|------|----------|
+| [v3.17.1](./releases/v3.17.1.md) | 08.05.2026 | Cache Fixes ⭐ |
+| [v3.17.0](./releases/v3.17.0.md) | 08.05.2026 | OpenRouter + Morphological System |
 | [v3.16.0](./releases/v3.16.0.md) | 08.05.2026 | Word-Based Translation System |
 | [v3.15.1](./releases/v3.15.1.md) | 06.05.2026 | Translation Cache Fix |
 
@@ -39,6 +47,7 @@
 |--------|----------|
 | [Сессии](./archive/sessions/) | Отчёты о рабочих сессиях |
 | [Отчёты](./archive/reports/) | Технические отчёты и исследования |
+| [План завершён](./archive/PLAN_COMPLETION_SUMMARY.md) | Сводка завершения плана улучшенной системы |
 
 ---
 
@@ -54,6 +63,7 @@
 2. **Настройка:**
    - Создай `.env` файл
    - Добавь `DEEPL_API_KEY=твой_ключ`
+   - (Опционально) Добавь `OPENROUTER_API_KEY=твой_ключ`
 
 3. **Запуск:**
    ```bash
@@ -88,23 +98,26 @@
 
 | Метрика | Значение |
 |---------|----------|
-| Версия | 3.16.0 |
-| Тестов | 452 (все проходят) |
+| Версия | 3.17.1 |
+| Тестов | 479 (все проходят) |
 | Покрытие | 75%+ |
-| Модулей | 13 |
+| Модулей | 17 |
 | Кэшей | 4 (Translation, Fragment, Template, Word) |
+| OpenRouter | openai/gpt-oss-120b:free |
 
 ---
 
 ## 🎯 Основные возможности
 
 - 🤖 Автоматический перевод модов и модпаков Minecraft
+- 🔄 Гибридная система: OpenRouter (primary) → DeepL (fallback)
 - 💾 4-уровневая система кэширования
 - 🧠 Word-Based Translation System с морфологией
 - 📝 Грамматическое согласование (род, число, падеж)
-- 🔁 Автоматическое обучение из DeepL переводов
+- 🔁 Автоматическое обучение из переводов
 - 📦 Поддержка 11 форматов файлов
 - 🔐 Безопасность (CSRF, rate limiting, валидация)
+- 🛑 Graceful shutdown при недоступности провайдеров
 
 ---
 
@@ -129,37 +142,50 @@
 
 - **[Project Structure](./architecture/PROJECT_STRUCTURE.md)** - Структура проекта
 
+### Руководства
+
+- **[OpenRouter Guide](./guides/OPENROUTER_GUIDE.md)** - Интеграция OpenRouter API
+  - Настройка и конфигурация
+  - Выбор моделей
+  - Гибридный режим
+  - Troubleshooting
+
 ### История версий
+
+- **[v3.17.1](./releases/v3.17.1.md)** (08.05.2026) - Cache Fixes
+  - Исправлен вывод статистики
+  - Добавлен flush() для кэшей
+  - Детальное логирование
+
+- **[v3.17.0](./releases/v3.17.0.md)** (08.05.2026) - OpenRouter + Morphological System
+  - OpenRouter integration
+  - Morphological translation system
+  - 65 новых тестов
 
 - **[v3.16.0](./releases/v3.16.0.md)** (08.05.2026) - Word-Based Translation System
   - 7 новых компонентов
   - 158 новых тестов
   - Морфологическое согласование
-  - Автоматическое обучение
-
-- **[v3.15.1](./releases/v3.15.1.md)** (06.05.2026) - Translation Cache Fix
-  - Исправлен кэш переводов
-  - Добавлено хранение оригинального текста
 
 ### Архив
 
-- **[Сессии 2026-05-08](./archive/sessions/2026-05-08/)** - Реализация Word-Based System
-- **[Сессии 2026-05-06](./archive/sessions/2026-05-06/)** - Translation Cache Fix
+- **[План завершён](./archive/PLAN_COMPLETION_SUMMARY.md)** - Сводка реализации улучшенной системы
+- **[Сессии](./archive/sessions/)** - Отчёты о рабочих сессиях
 - **[Отчёты](./archive/reports/)** - Технические отчёты и исследования
 
 ---
 
 ## 🔗 Полезные ссылки
 
-- [GitHub Repository](https://github.com/your-repo/modstranslator)
+- [GitHub Repository](https://github.com/NeR1cH/modstranslator)
+- [Releases](https://github.com/NeR1cH/modstranslator/releases)
 - [DeepL API](https://www.deepl.com/pro-api)
+- [OpenRouter API](https://openrouter.ai/)
 - [Next.js Documentation](https://nextjs.org/docs)
 
 ---
 
-## 📝 Соглашения
-
-### Структура документации
+## 📝 Структура документации
 
 ```
 docs/
@@ -173,37 +199,20 @@ docs/
 │   ├── PROJECT_STRUCTURE.md
 │   └── cache-system/
 │
+├── guides/                      # Руководства
+│   └── OPENROUTER_GUIDE.md
+│
 ├── releases/                    # Релизы по версиям
 │   ├── README.md
-│   ├── v3.16.0.md
-│   └── v3.15.1.md
+│   ├── v3.17.1.md
+│   ├── v3.17.0.md
+│   └── ...
 │
 └── archive/                     # Архив
+    ├── PLAN_COMPLETION_SUMMARY.md
     ├── sessions/                # Отчёты о сессиях
     └── reports/                 # Технические отчёты
 ```
-
-### Правила именования
-
-- **Релизы:** `vX.Y.Z.md` (например, `v3.16.0.md`)
-- **Сессии:** `SESSION_SUMMARY_YYYY-MM-DD.md`
-- **Отчёты:** `НАЗВАНИЕ_ОТЧЁТА.md` (UPPERCASE)
-
-### Обновление документации
-
-1. **При новом релизе:**
-   - Создай `docs/releases/vX.Y.Z.md`
-   - Обнови `docs/CHANGELOG.md`
-   - Обнови `docs/releases/README.md`
-   - Обнови этот файл (таблицу релизов)
-
-2. **После рабочей сессии:**
-   - Создай `docs/archive/sessions/YYYY-MM-DD/SESSION_SUMMARY.md`
-   - Обнови `docs/SESSION_STATE.md`
-
-3. **При добавлении новой системы:**
-   - Создай `docs/architecture/НАЗВАНИЕ_СИСТЕМЫ.md`
-   - Обнови этот файл (таблицу архитектуры)
 
 ---
 
@@ -213,9 +222,9 @@ docs/
 
 1. Проверь [CHANGELOG.md](./CHANGELOG.md) - возможно, это было недавно изменено
 2. Посмотри [SESSION_STATE.md](./SESSION_STATE.md) - текущее состояние проекта
-3. Загляни в [архив сессий](./archive/sessions/) - подробные отчёты о работе
+3. Загляни в [архив](./archive/) - подробные отчёты о работе
 
 ---
 
-**Последнее обновление:** 08.05.2026  
-**Версия документации:** 1.0
+**Последнее обновление:** 08.05.2026 22:41  
+**Версия документации:** 2.0
