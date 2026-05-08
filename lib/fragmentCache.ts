@@ -33,18 +33,11 @@ class FragmentCache {
   private readonly ITEM_GENDERS: Record<string, 'masculine' | 'feminine' | 'neuter'> = {
     // Masculine (мужской род)
     'sword': 'masculine',      // меч
-    'pickaxe': 'masculine',    // кирка -> actually feminine!
     'axe': 'masculine',        // топор
-    'shovel': 'masculine',     // лопата -> actually feminine!
-    'hoe': 'masculine',        // мотыга -> actually feminine!
     'helmet': 'masculine',     // шлем
     'bow': 'masculine',        // лук
     'shield': 'masculine',     // щит
     'dagger': 'masculine',     // кинжал
-    'spear': 'masculine',      // копьё -> actually neuter!
-    'pike': 'masculine',       // пика -> actually feminine!
-    'lance': 'masculine',      // копьё -> actually neuter!
-    'mace': 'masculine',       // булава -> actually feminine!
     'hammer': 'masculine',     // молот
     'scythe': 'feminine',      // коса
     'katana': 'feminine',      // катана
