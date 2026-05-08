@@ -4,7 +4,7 @@ import {
   rebuildJsonLang, rebuildDotLang,
   detectLangFormat, isTargetLangFile,
 } from './langParsers';
-import { translateTexts } from './deepl';
+import { translateBatchThroughPipeline } from './translationPipeline';
 import { ExtractedLangFile, LangEntry } from '@/types';
 import { sanitizePath } from './security';
 
@@ -85,8 +85,9 @@ export async function translateLangFiles(
 
     // Extract only values for translation
     const values = langFile.entries.map(e => e.value);
-    console.log('[jarProcessor] Calling translateTexts...');
-    const translated = await translateTexts(values);
+    console.log('[jarProcessor] Calling translateBatchThroughPipeline...');
+    const results = await translateBatchThroughPipeline(values, 'RU');
+    const translated = results.map(r => r.text);
     console.log('[jarProcessor] Translation complete');
 
     // Build translation map: key → translated value

@@ -191,6 +191,15 @@ class TranslationCache extends BaseCache<CacheData> {
     this.saveToDisk();
     this.logger.info('Cache cleared');
   }
+
+  /**
+   * Force save to disk
+   */
+  flush(): void {
+    if (this.isDirty) {
+      this.saveToDisk();
+    }
+  }
 }
 
 // Singleton instance

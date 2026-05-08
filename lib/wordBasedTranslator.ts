@@ -8,14 +8,14 @@
  * 1. Split sentence into tokens (SentenceSplitter)
  * 2. For each token:
  *    - Check WordCache
- *    - If not found, translate via DeepL
+ *    - If not found, translate via DeepL/OpenRouter
  *    - Store in WordCache
  * 3. Reassemble with grammar rules (GrammarAssembler)
  */
 
 import { SentenceSplitter } from './sentenceSplitter';
 import { getWordCache } from './wordCache';
-import { translateTexts } from './deepl';
+import { translator } from './translator';
 import { translateSentenceWordByWord, TranslatedToken, assembleSentence } from './grammarAssembler';
 import { resolveNumber } from './numberResolver';
 
@@ -89,7 +89,7 @@ export async function translateWordBased(
     } else {
       // Need to translate
       try {
-        const translation = (await translateTexts([word]))[0];
+        const translation = await translator.translate(word, { targetLang: 'RU' });
         wordsTranslated++;
 
         // Store in cache
@@ -145,12 +145,12 @@ export async function translateWithWordBasedFallback(
       return result;
     }
   } catch (error) {
-    console.error('[word-based] Word-based translation failed, falling back to DeepL:', error);
+    console.error('[word-based] Word-based translation failed, falling back to full translation:', error);
   }
 
-  // Fallback: translate entire sentence via DeepL
+  // Fallback: translate entire sentence via DeepL/OpenRouter
   try {
-    const translation = (await translateTexts([sentence]))[0];
+    const translation = await translator.translate(sentence, { targetLang: 'RU' });
 
     // Learn from this translation
     const wordCache = getWordCache();

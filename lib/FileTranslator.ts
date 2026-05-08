@@ -10,7 +10,7 @@ import {
   rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml,
   rebuildCfg, rebuildNestedJson, rebuildXml, rebuildPlainText,
 } from './langParsers';
-import { translateTexts } from './deepl';
+import { translateBatchThroughPipeline } from './translationPipeline';
 import { createLogger } from './logger';
 import { ParseError } from './errors';
 
@@ -110,7 +110,8 @@ export async function translateFile(
 
     // Translate
     const values = entries.map(e => e.value);
-    const translated = await translateTexts(values);
+    const results = await translateBatchThroughPipeline(values, 'RU');
+    const translated = results.map(r => r.text);
     logger.debug('Translation complete, received:', translated.length);
 
     // Build translation map

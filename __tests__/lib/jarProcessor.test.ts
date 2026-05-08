@@ -5,11 +5,11 @@ import {
   repackJar,
   countJarStrings,
 } from '@/lib/jarProcessor';
-import * as deepl from '@/lib/deepl';
+import * as translationPipeline from '@/lib/translationPipeline';
 import * as langParsers from '@/lib/langParsers';
 
 // Mock dependencies
-jest.mock('@/lib/deepl');
+jest.mock('@/lib/translationPipeline');
 jest.mock('@/lib/langParsers');
 
 describe('jarProcessor', () => {
@@ -155,9 +155,9 @@ describe('jarProcessor', () => {
         },
       ];
 
-      (deepl.translateTexts as jest.Mock).mockResolvedValue([
-        'Алмазный меч',
-        'Железный топор',
+      (translationPipeline.translateBatchThroughPipeline as jest.Mock).mockResolvedValue([
+        { text: 'Алмазный меч', source: 'deepl' },
+        { text: 'Железный топор', source: 'deepl' },
       ]);
       (langParsers.rebuildJsonLang as jest.Mock).mockReturnValue(
         '{"item.sword": "Алмазный меч", "item.axe": "Железный топор"}'
@@ -167,7 +167,10 @@ describe('jarProcessor', () => {
 
       expect(result.size).toBe(1);
       expect(result.get('assets/modid/lang/en_us.json')).toContain('Алмазный меч');
-      expect(deepl.translateTexts).toHaveBeenCalledWith(['Diamond Sword', 'Iron Axe']);
+      expect(translationPipeline.translateBatchThroughPipeline).toHaveBeenCalledWith(
+        ['Diamond Sword', 'Iron Axe'],
+        'RU'
+      );
     });
 
     it('should handle .lang format', async () => {
@@ -182,7 +185,9 @@ describe('jarProcessor', () => {
         },
       ];
 
-      (deepl.translateTexts as jest.Mock).mockResolvedValue(['Алмазный меч']);
+      (translationPipeline.translateBatchThroughPipeline as jest.Mock).mockResolvedValue([
+        { text: 'Алмазный меч', source: 'deepl' }
+      ]);
       (langParsers.rebuildDotLang as jest.Mock).mockReturnValue('item.sword=Алмазный меч');
 
       const result = await translateLangFiles(langFiles);
@@ -204,7 +209,7 @@ describe('jarProcessor', () => {
       const result = await translateLangFiles(langFiles);
 
       expect(result.size).toBe(0);
-      expect(deepl.translateTexts).not.toHaveBeenCalled();
+      expect(translationPipeline.translateBatchThroughPipeline).not.toHaveBeenCalled();
     });
 
     it('should handle multiple files', async () => {
@@ -223,9 +228,9 @@ describe('jarProcessor', () => {
         },
       ];
 
-      (deepl.translateTexts as jest.Mock)
-        .mockResolvedValueOnce(['Тест'])
-        .mockResolvedValueOnce(['Тестовый блок']);
+      (translationPipeline.translateBatchThroughPipeline as jest.Mock)
+        .mockResolvedValueOnce([{ text: 'Тест', source: 'deepl' }])
+        .mockResolvedValueOnce([{ text: 'Тестовый блок', source: 'deepl' }]);
       (langParsers.rebuildJsonLang as jest.Mock)
         .mockReturnValueOnce('{"item.test": "Тест"}')
         .mockReturnValueOnce('{"block.test": "Тестовый блок"}');
@@ -233,7 +238,7 @@ describe('jarProcessor', () => {
       const result = await translateLangFiles(langFiles);
 
       expect(result.size).toBe(2);
-      expect(deepl.translateTexts).toHaveBeenCalledTimes(2);
+      expect(translationPipeline.translateBatchThroughPipeline).toHaveBeenCalledTimes(2);
     });
 
     it('should use original value if translation is missing', async () => {
@@ -250,7 +255,9 @@ describe('jarProcessor', () => {
       ];
 
       // Return only one translation
-      (deepl.translateTexts as jest.Mock).mockResolvedValue(['Алмазный меч']);
+      (translationPipeline.translateBatchThroughPipeline as jest.Mock).mockResolvedValue([
+        { text: 'Алмазный меч', source: 'deepl' }
+      ]);
       (langParsers.rebuildJsonLang as jest.Mock).mockImplementation((raw, map) => {
         // Verify that missing translation falls back to original
         expect(map.get('item.axe')).toBe('Iron Axe');

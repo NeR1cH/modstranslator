@@ -1,13 +1,13 @@
 /**
  * Translation Pipeline - Integrates all translation components
- * Order: TranslationCache → FragmentCache → TemplateCache → WordBased → MorphologicalTranslate → DeepL
+ * Order: TranslationCache → FragmentCache → TemplateCache → WordBased → MorphologicalTranslate → DeepL/OpenRouter
  */
 
 import { getTranslationCache } from './translationCache';
 import { getFragmentCache } from './fragmentCache';
 import { getTemplateCache } from './templateCache';
 import { translateWordBased } from './wordBasedTranslator';
-import { translateTexts } from './deepl';
+import { translator } from './translator';
 
 export interface TranslationResult {
   text: string;
@@ -58,11 +58,11 @@ export async function translateThroughPipeline(
   // Step 5: TODO - MorphologicalTranslate (not implemented yet)
   // This would handle simple phrases like "iron ingot" → "железный слиток"
 
-  // Step 6: Fallback to DeepL
-  const translated = (await translateTexts([text]))[0];
+  // Step 6: Fallback to DeepL/OpenRouter
+  const translated = await translator.translate(text, { targetLang: 'RU' });
   translationCache.set(text, translated);
 
-  // Learn from DeepL result for future use
+  // Learn from result for future use
   fragmentCache.learn(text, translated);
   templateCache.learn(text, translated);
 

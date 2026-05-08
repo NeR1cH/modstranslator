@@ -207,7 +207,11 @@ class FragmentCache {
    * Learn fragments from a successful translation
    */
   learn(original: string, translated: string): void {
+    console.log(`[fragment-cache] Learning from: "${original}" → "${translated}"`);
+
     const patterns = this.extractPatterns(original, translated);
+    console.log(`[fragment-cache] Extracted ${patterns.length} patterns`);
+
     patterns.forEach(({ fragment, translation, context, confidence, gender }) => {
       const key = fragment.toLowerCase();
       const existing = this.fragments.get(key);
@@ -224,6 +228,7 @@ class FragmentCache {
         if (gender && !existing.gender) {
           existing.gender = gender;
         }
+        console.log(`[fragment-cache] Updated fragment: "${fragment}" → "${translation}" (confidence: ${existing.confidence})`);
       } else {
         // New fragment
         this.fragments.set(key, {
@@ -234,11 +239,14 @@ class FragmentCache {
           confidence,
           gender
         });
+        console.log(`[fragment-cache] New fragment: "${fragment}" → "${translation}" (confidence: ${confidence})`);
       }
     });
 
-    this.isDirty = true;
-    this.scheduleSave();
+    if (patterns.length > 0) {
+      this.isDirty = true;
+      this.scheduleSave();
+    }
   }
 
   /**
