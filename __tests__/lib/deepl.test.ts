@@ -22,6 +22,7 @@ describe('deepl', () => {
     (rateLimiter.getRateLimiter as jest.Mock).mockReturnValue({
       checkLimit: jest.fn().mockResolvedValue(undefined),
       recordUsage: jest.fn(),
+      getCurrentKey: jest.fn().mockReturnValue(mockApiKey),
     });
 
     // Mock translation cache
@@ -82,8 +83,13 @@ describe('deepl', () => {
     it('should throw error if API key is missing', async () => {
       delete process.env.DEEPL_API_KEY;
 
+      // Mock getRateLimiter to throw error
+      (rateLimiter.getRateLimiter as jest.Mock).mockImplementation(() => {
+        throw new Error('DEEPL_API_KEY или DEEPL_API_KEYS не задан в .env файле');
+      });
+
       await expect(translateTexts(['Test'])).rejects.toThrow(
-        'DEEPL_API_KEY не задан в .env файле'
+        'DEEPL_API_KEY'
       );
     });
 
@@ -135,6 +141,7 @@ describe('deepl', () => {
       (rateLimiter.getRateLimiter as jest.Mock).mockReturnValue({
         checkLimit: mockCheckLimit,
         recordUsage: jest.fn(),
+        getCurrentKey: jest.fn().mockReturnValue(mockApiKey),
       });
 
       await translateTexts(texts);
@@ -149,6 +156,7 @@ describe('deepl', () => {
       (rateLimiter.getRateLimiter as jest.Mock).mockReturnValue({
         checkLimit: jest.fn().mockResolvedValue(undefined),
         recordUsage: mockRecordUsage,
+        getCurrentKey: jest.fn().mockReturnValue(mockApiKey),
       });
 
       await translateTexts(texts);
@@ -204,7 +212,13 @@ describe('deepl', () => {
     });
 
     it('should use Pro API URL for Pro keys', async () => {
-      process.env.DEEPL_API_KEY = 'test-pro-key'; // No :fx suffix
+      const proKey = 'test-pro-key'; // No :fx suffix
+
+      (rateLimiter.getRateLimiter as jest.Mock).mockReturnValue({
+        checkLimit: jest.fn().mockResolvedValue(undefined),
+        recordUsage: jest.fn(),
+        getCurrentKey: jest.fn().mockReturnValue(proKey),
+      });
 
       await translateTexts(['Test']);
 

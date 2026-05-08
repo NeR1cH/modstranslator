@@ -131,11 +131,13 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     return [];
   }
 
-  const apiKey = process.env.DEEPL_API_KEY;
-  logger.debug('API key present:', !!apiKey);
+  // Get rate limiter (handles multiple keys)
+  const rateLimiter = getRateLimiter();
+  const apiKey = rateLimiter.getCurrentKey();
+  logger.debug('Using API key:', apiKey ? '***' : 'NOT SET');
 
   if (!apiKey) {
-    logger.error('API key not found in environment');
+    logger.error('API key not found');
     throw new AuthError('DEEPL_API_KEY не задан в .env файле');
   }
 
@@ -173,8 +175,10 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
   logger.info('Characters to translate (uncached):', totalChars);
 
   // Check rate limit before making API calls
-  const rateLimiter = getRateLimiter();
   await rateLimiter.checkLimit(totalChars);
+
+  // Get current API key (may have switched during checkLimit)
+  const currentApiKey = rateLimiter.getCurrentKey();
 
   // Translate uncached texts
   const batches = chunk(uncachedTexts, BATCH_SIZE);
@@ -184,7 +188,7 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     logger.debug(`Processing batch ${i + 1}/${batches.length}, size: ${batch.length}`);
-    const translated = await translateBatch(batch, apiKey);
+    const translated = await translateBatch(batch, currentApiKey);
     newTranslations.push(...translated);
     logger.debug(`Batch ${i + 1} complete, total results so far: ${newTranslations.length}`);
   }

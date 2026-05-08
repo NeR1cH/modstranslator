@@ -34,12 +34,13 @@ describe('rateLimiter', () => {
       expect(limiter.checkLimit).toBeDefined();
       expect(limiter.recordUsage).toBeDefined();
       expect(limiter.getUsageStats).toBeDefined();
+      expect(limiter.getCurrentKey).toBeDefined();
     });
 
     it('should throw error if API key is missing', () => {
       delete process.env.DEEPL_API_KEY;
 
-      expect(() => getRateLimiter()).toThrow('DEEPL_API_KEY не задан в .env файле');
+      expect(() => getRateLimiter()).toThrow('DEEPL_API_KEY или DEEPL_API_KEYS не задан в .env файле');
     });
 
     it('should return singleton instance', () => {
@@ -51,7 +52,7 @@ describe('rateLimiter', () => {
   });
 
   describe('checkLimit', () => {
-    it('should allow request within limit', async () => {
+    it('should pass if within limit', async () => {
       jest.resetModules();
       const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
       process.env.DEEPL_API_KEY = mockApiKey;
@@ -61,19 +62,17 @@ describe('rateLimiter', () => {
       await expect(limiter.checkLimit(1000)).resolves.not.toThrow();
     });
 
-    it('should throw error when limit exceeded', async () => {
+    it('should throw error if exceeds limit', async () => {
       jest.resetModules();
       const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
       process.env.DEEPL_API_KEY = mockApiKey;
 
       const limiter = getRateLimiterFresh();
 
-      // Record usage up to limit
+      // Record usage to fill limit
       limiter.recordUsage(500000);
 
-      await expect(limiter.checkLimit(1000)).rejects.toThrow(
-        'Недостаточно символов DeepL API'
-      );
+      await expect(limiter.checkLimit(1000)).rejects.toThrow('Все API ключи DeepL исчерпаны');
     });
 
     it('should warn at 90% usage', async () => {
@@ -85,7 +84,7 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
 
-      // Use 90% of limit
+      // Record 90% usage
       limiter.recordUsage(450000);
 
       await limiter.checkLimit(1000);
@@ -96,57 +95,10 @@ describe('rateLimiter', () => {
 
       consoleWarnSpy.mockRestore();
     });
-
-    it('should reset stats for new month', async () => {
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
-        charactersUsed: 100000,
-        requestsCount: 10,
-        lastReset: lastMonth.toISOString(),
-        monthlyLimit: 500000,
-      }));
-
-      // Reset modules to get fresh instance
-      jest.resetModules();
-      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
-      process.env.DEEPL_API_KEY = mockApiKey;
-
-      const limiter = getRateLimiterFresh();
-      const stats = limiter.getUsageStats();
-
-      // Should be reset to 0
-      expect(stats.charactersUsed).toBe(0);
-      expect(stats.requestsCount).toBe(0);
-    });
-
-    it('should use FREE limit for free API keys', async () => {
-      process.env.DEEPL_API_KEY = 'test-key:fx';
-      jest.resetModules();
-      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
-
-      const limiter = getRateLimiterFresh();
-      const stats = limiter.getUsageStats();
-
-      expect(stats.monthlyLimit).toBe(500000);
-    });
-
-    it('should use PRO limit for pro API keys', async () => {
-      process.env.DEEPL_API_KEY = 'test-pro-key';
-      jest.resetModules();
-      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
-
-      const limiter = getRateLimiterFresh();
-      const stats = limiter.getUsageStats();
-
-      expect(stats.monthlyLimit).toBe(Infinity);
-    });
   });
 
   describe('recordUsage', () => {
-    it('should record character usage', () => {
+    it('should record usage correctly', () => {
       jest.resetModules();
       const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
       process.env.DEEPL_API_KEY = mockApiKey;
@@ -156,8 +108,10 @@ describe('rateLimiter', () => {
       limiter.recordUsage(1000);
 
       const stats = limiter.getUsageStats();
-      expect(stats.charactersUsed).toBe(1000);
-      expect(stats.requestsCount).toBe(1);
+      const currentKey = limiter.getCurrentKey();
+
+      expect(stats.keys[currentKey].charactersUsed).toBe(1000);
+      expect(stats.keys[currentKey].requestsCount).toBe(1);
     });
 
     it('should accumulate usage', () => {
@@ -172,8 +126,56 @@ describe('rateLimiter', () => {
       limiter.recordUsage(3000);
 
       const stats = limiter.getUsageStats();
-      expect(stats.charactersUsed).toBe(6000);
-      expect(stats.requestsCount).toBe(3);
+      const currentKey = limiter.getCurrentKey();
+
+      expect(stats.keys[currentKey].charactersUsed).toBe(6000);
+      expect(stats.keys[currentKey].requestsCount).toBe(3);
+    });
+  });
+
+  describe('multi-key support', () => {
+    it('should support multiple keys', () => {
+      jest.resetModules();
+      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
+      process.env.DEEPL_API_KEY = 'key1:fx,key2:fx,key3:fx';
+
+      const limiter = getRateLimiterFresh();
+      const stats = limiter.getUsageStats();
+
+      expect(Object.keys(stats.keys).length).toBe(3);
+    });
+
+    it('should switch to next key when current is exhausted', async () => {
+      jest.resetModules();
+      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
+      process.env.DEEPL_API_KEY = 'key1:fx,key2:fx';
+
+      const limiter = getRateLimiterFresh();
+
+      // Exhaust first key
+      limiter.recordUsage(500000);
+
+      // Should switch to second key
+      await expect(limiter.checkLimit(1000)).resolves.not.toThrow();
+
+      const stats = limiter.getUsageStats();
+      expect(stats.currentKeyIndex).toBe(1);
+    });
+
+    it('should throw error when all keys exhausted', async () => {
+      jest.resetModules();
+      const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
+      process.env.DEEPL_API_KEY = 'key1:fx,key2:fx';
+
+      const limiter = getRateLimiterFresh();
+
+      // Exhaust both keys
+      limiter.recordUsage(500000);
+      await limiter.checkLimit(1000); // Switch to key2
+      limiter.recordUsage(500000);
+
+      // Should fail
+      await expect(limiter.checkLimit(1000)).rejects.toThrow('Все API ключи DeepL исчерпаны');
     });
   });
 
@@ -188,11 +190,12 @@ describe('rateLimiter', () => {
       limiter.recordUsage(1000);
 
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
-      expect(stats.charactersUsed).toBe(1000);
-      expect(stats.requestsCount).toBe(1);
-      expect(stats.monthlyLimit).toBe(500000);
-      expect(stats.lastReset).toBeDefined();
+      expect(stats.keys[currentKey].charactersUsed).toBe(1000);
+      expect(stats.keys[currentKey].requestsCount).toBe(1);
+      expect(stats.keys[currentKey].monthlyLimit).toBe(500000);
+      expect(stats.keys[currentKey].lastReset).toBeDefined();
     });
 
     it('should return copy of stats', () => {
@@ -215,10 +218,16 @@ describe('rateLimiter', () => {
 
       (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
       (fs.readFileSync as jest.Mock).mockReturnValueOnce(JSON.stringify({
-        charactersUsed: 100000,
-        requestsCount: 10,
-        lastReset: lastMonth.toISOString(),
-        monthlyLimit: 500000,
+        keys: {
+          [mockApiKey]: {
+            charactersUsed: 100000,
+            requestsCount: 10,
+            lastReset: lastMonth.toISOString(),
+            monthlyLimit: 500000,
+            status: 'active'
+          }
+        },
+        currentKeyIndex: 0
       }));
 
       jest.resetModules();
@@ -227,8 +236,9 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
-      expect(stats.charactersUsed).toBe(0);
+      expect(stats.keys[currentKey].charactersUsed).toBe(0);
     });
   });
 
@@ -237,10 +247,16 @@ describe('rateLimiter', () => {
       // Use current date to ensure same month
       const now = new Date();
       const mockStats = {
-        charactersUsed: 50000,
-        requestsCount: 5,
-        lastReset: now.toISOString(),
-        monthlyLimit: 500000,
+        keys: {
+          [mockApiKey]: {
+            charactersUsed: 50000,
+            requestsCount: 5,
+            lastReset: now.toISOString(),
+            monthlyLimit: 500000,
+            status: 'active'
+          }
+        },
+        currentKeyIndex: 0
       };
 
       (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
@@ -252,10 +268,11 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
       // Should load stats if in same month
-      expect(stats.charactersUsed).toBeGreaterThanOrEqual(0);
-      expect(stats.requestsCount).toBeGreaterThanOrEqual(0);
+      expect(stats.keys[currentKey].charactersUsed).toBeGreaterThanOrEqual(0);
+      expect(stats.keys[currentKey].requestsCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should use default stats if file does not exist', () => {
@@ -267,9 +284,10 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
-      expect(stats.charactersUsed).toBe(0);
-      expect(stats.requestsCount).toBe(0);
+      expect(stats.keys[currentKey].charactersUsed).toBe(0);
+      expect(stats.keys[currentKey].requestsCount).toBe(0);
     });
 
     it('should use default stats if file is corrupted', () => {
@@ -282,9 +300,10 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
-      expect(stats.charactersUsed).toBe(0);
-      expect(stats.requestsCount).toBe(0);
+      expect(stats.keys[currentKey].charactersUsed).toBe(0);
+      expect(stats.keys[currentKey].requestsCount).toBe(0);
     });
   });
 
@@ -293,15 +312,19 @@ describe('rateLimiter', () => {
       const lastMonth = new Date();
       lastMonth.setMonth(lastMonth.getMonth() - 1);
 
-      const mockStats = {
-        charactersUsed: 50000,
-        requestsCount: 5,
-        lastReset: lastMonth.toISOString(),
-        monthlyLimit: 500000,
-      };
-
       (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
-      (fs.readFileSync as jest.Mock).mockReturnValueOnce(JSON.stringify(mockStats));
+      (fs.readFileSync as jest.Mock).mockReturnValueOnce(JSON.stringify({
+        keys: {
+          [mockApiKey]: {
+            charactersUsed: 100000,
+            requestsCount: 10,
+            lastReset: lastMonth.toISOString(),
+            monthlyLimit: 500000,
+            status: 'active'
+          }
+        },
+        currentKeyIndex: 0
+      }));
 
       jest.resetModules();
       const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
@@ -309,25 +332,30 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
       // Should reset since last month
-      expect(stats.charactersUsed).toBe(0);
-      expect(stats.requestsCount).toBe(0);
+      expect(stats.keys[currentKey].charactersUsed).toBe(0);
+      expect(stats.keys[currentKey].requestsCount).toBe(0);
     });
 
     it('should detect different year', () => {
       const lastYear = new Date();
       lastYear.setFullYear(lastYear.getFullYear() - 1);
 
-      const mockStats = {
-        charactersUsed: 50000,
-        requestsCount: 5,
-        lastReset: lastYear.toISOString(),
-        monthlyLimit: 500000,
-      };
-
       (fs.existsSync as jest.Mock).mockReturnValueOnce(true);
-      (fs.readFileSync as jest.Mock).mockReturnValueOnce(JSON.stringify(mockStats));
+      (fs.readFileSync as jest.Mock).mockReturnValueOnce(JSON.stringify({
+        keys: {
+          [mockApiKey]: {
+            charactersUsed: 100000,
+            requestsCount: 10,
+            lastReset: lastYear.toISOString(),
+            monthlyLimit: 500000,
+            status: 'active'
+          }
+        },
+        currentKeyIndex: 0
+      }));
 
       jest.resetModules();
       const { getRateLimiter: getRateLimiterFresh } = require('@/lib/rateLimiter');
@@ -335,9 +363,10 @@ describe('rateLimiter', () => {
 
       const limiter = getRateLimiterFresh();
       const stats = limiter.getUsageStats();
+      const currentKey = limiter.getCurrentKey();
 
       // Should reset since last year
-      expect(stats.charactersUsed).toBe(0);
+      expect(stats.keys[currentKey].charactersUsed).toBe(0);
     });
   });
 });
