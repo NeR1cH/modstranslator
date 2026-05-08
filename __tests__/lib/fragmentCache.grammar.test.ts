@@ -195,10 +195,10 @@ describe('FragmentCache - Grammar Agreement', () => {
 
       const result = cache.tryTranslate('Uranium Block');
 
-      // Should be "урановый блок" (masculine), not "урановая блок"
+      // Should be "Урановый блок" (masculine), not "Урановая блок"
       if (result) {
-        expect(result).toBe('урановый блок');
-        expect(result).not.toBe('урановая блок');
+        expect(result).toBe('Урановый блок');
+        expect(result).not.toBe('Урановая блок');
       }
     });
   });
