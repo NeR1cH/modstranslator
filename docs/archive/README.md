@@ -16,9 +16,11 @@
 - 7 новых компонентов
 - 158 новых тестов
 - Полная документация
+- Реорганизация документации
 
 **Файлы:**
 - [SESSION_SUMMARY_2026-05-08.md](./sessions/2026-05-08/SESSION_SUMMARY_2026-05-08.md)
+- [REORGANIZATION_SUMMARY.md](./sessions/2026-05-08/REORGANIZATION_SUMMARY.md)
 
 ---
 
