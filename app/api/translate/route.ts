@@ -171,6 +171,10 @@ export async function POST(req: NextRequest) {
     // Генерируем HTML отчет
     const htmlReport = reportBuilder.generateHtmlReport();
 
+    // Print cache statistics
+    const { printCacheStats } = await import('../../../lib/serverShutdown');
+    printCacheStats();
+
     const response = {
       resultBase64: Buffer.from(result, 'utf-8').toString('base64'),
       translatedCount: entries.length,

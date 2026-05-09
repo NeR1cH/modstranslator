@@ -35,6 +35,8 @@ class FragmentCache {
   private cacheFile: string;
   private isDirty = false;
   private saveTimer: NodeJS.Timeout | null = null;
+  private hits = 0;
+  private misses = 0;
 
   // Stop words - articles, prepositions, conjunctions that should not be saved as fragments
   private readonly STOP_WORDS = new Set([
@@ -312,6 +314,7 @@ class FragmentCache {
     // Try exact match first (for phrases)
     const exactMatch = this.fragments.get(normalized);
     if (exactMatch && exactMatch.confidence >= 70) {
+      this.hits++;
       console.log(`[fragment-cache] Exact match: "${text}" → "${exactMatch.translation}" (confidence: ${exactMatch.confidence}%)`);
       return exactMatch.translation;
     }
@@ -368,12 +371,14 @@ class FragmentCache {
       // Need at least 70% average confidence
       const avgConfidence = totalConfidence / foundCount;
       if (avgConfidence >= 70) {
+        this.hits++;
         const result = translatedWords.join(' ');
         console.log(`[fragment-cache] Word-by-word: "${text}" → "${result}" (confidence: ${avgConfidence.toFixed(0)}%)`);
         return result;
       }
     }
 
+    this.misses++;
     return null;
   }
 
@@ -495,7 +500,7 @@ class FragmentCache {
   /**
    * Get statistics
    */
-  getStats(): { total: number; words: number; phrases: number; highConfidence: number; lowConfidence: number } {
+  getStats(): { total: number; words: number; phrases: number; highConfidence: number; lowConfidence: number; hits: number; misses: number; hitRate: string } {
     let words = 0;
     let phrases = 0;
     let highConfidence = 0;
@@ -509,12 +514,18 @@ class FragmentCache {
       else lowConfidence++;
     });
 
+    const total = this.hits + this.misses;
+    const hitRate = total > 0 ? (this.hits / total * 100).toFixed(1) : '0.0';
+
     return {
       total: this.fragments.size,
       words,
       phrases,
       highConfidence,
-      lowConfidence
+      lowConfidence,
+      hits: this.hits,
+      misses: this.misses,
+      hitRate
     };
   }
 

@@ -11,6 +11,52 @@ let shutdownTimer: NodeJS.Timeout | null = null;
 let isShuttingDown = false;
 
 /**
+ * Print cache statistics
+ */
+export function printCacheStats(): void {
+  console.log('\n' + '='.repeat(60));
+  console.log('📊 СТАТИСТИКА КЭШЕЙ');
+  console.log('='.repeat(60));
+
+  // Translation Cache stats
+  try {
+    const translationCache = getTranslationCache();
+    const stats = translationCache.getStats();
+    console.log('\n📦 Translation Cache:');
+    console.log(`   Записей: ${stats.size}`);
+    console.log(`   Использовано: ${stats.total} (Hits: ${stats.hits}, Misses: ${stats.misses})`);
+    console.log(`   Hit Rate: ${stats.hitRate}%`);
+  } catch (error) {
+    console.log('\n📦 Translation Cache: недоступен');
+  }
+
+  // Fragment Cache stats
+  try {
+    const fragmentCache = getFragmentCache();
+    const stats = fragmentCache.getStats();
+    console.log('\n🧩 Fragment Cache:');
+    console.log(`   Всего фрагментов: ${stats.total} (Слов: ${stats.words}, Фраз: ${stats.phrases})`);
+    console.log(`   Использовано: ${stats.hits + stats.misses} (Hits: ${stats.hits}, Misses: ${stats.misses})`);
+    console.log(`   Hit Rate: ${stats.hitRate}%`);
+  } catch (error) {
+    console.log('\n🧩 Fragment Cache: недоступен');
+  }
+
+  // Word Cache stats
+  try {
+    const wordCache = getWordCache();
+    const stats = wordCache.getStats();
+    console.log('\n📝 Word Cache:');
+    console.log(`   Всего слов: ${stats.totalWords}`);
+    console.log(`   Средняя уверенность: ${stats.avgConfidence.toFixed(1)}%`);
+  } catch (error) {
+    console.log('\n📝 Word Cache: недоступен');
+  }
+
+  console.log('\n' + '='.repeat(60) + '\n');
+}
+
+/**
  * Schedule server shutdown after 15 seconds
  */
 export function scheduleShutdown(reason: string): void {
@@ -75,46 +121,9 @@ function performShutdown(): void {
     console.error('⚠️ [Shutdown] Failed to flush word cache:', error);
   }
 
-  // Translation Cache stats
-  try {
-    const translationCache = getTranslationCache();
-    const stats = translationCache.getStats();
-    console.log('\n📦 Translation Cache:');
-    console.log(`   Записей: ${stats.size}`);
-    console.log(`   Файл: ${stats.cacheFile}`);
-  } catch (error) {
-    console.log('\n📦 Translation Cache: недоступен');
-  }
+  // Print cache statistics
+  printCacheStats();
 
-  // Fragment Cache stats
-  try {
-    const fragmentCache = getFragmentCache();
-    const stats = fragmentCache.getStats();
-    console.log('\n🧩 Fragment Cache:');
-    console.log(`   Всего фрагментов: ${stats.total}`);
-    console.log(`   Слов: ${stats.words}`);
-    console.log(`   Фраз: ${stats.phrases}`);
-    console.log(`   Высокая уверенность (≥80%): ${stats.highConfidence}`);
-    console.log(`   Низкая уверенность (<80%): ${stats.lowConfidence}`);
-  } catch (error) {
-    console.log('\n🧩 Fragment Cache: недоступен');
-  }
-
-  // Word Cache stats
-  try {
-    const wordCache = getWordCache();
-    const stats = wordCache.getStats();
-    console.log('\n📝 Word Cache:');
-    console.log(`   Всего слов: ${stats.totalWords}`);
-    console.log(`   Средняя уверенность: ${stats.avgConfidence.toFixed(1)}%`);
-    if (Object.keys(stats.byPos).length > 0) {
-      console.log(`   По частям речи:`, stats.byPos);
-    }
-  } catch (error) {
-    console.log('\n📝 Word Cache: недоступен');
-  }
-
-  console.log('\n' + '='.repeat(60));
   console.log('🛑 ЗАВЕРШЕНИЕ РАБОТЫ СЕРВЕРА');
   console.log('='.repeat(60) + '\n');
 

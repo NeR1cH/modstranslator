@@ -243,6 +243,10 @@ export async function POST(req: NextRequest) {
       }
 
       // All files processed
+      console.log('All files processed, printing cache statistics...');
+      const { printCacheStats } = await import('../../../lib/serverShutdown');
+      printCacheStats();
+
       await sendEvent({
         type: 'complete',
         totalFiles,

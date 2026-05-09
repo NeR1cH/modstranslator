@@ -70,6 +70,10 @@ export async function POST(request: NextRequest) {
 
     console.log('[process-upload] Result saved to disk:', resultPath);
 
+    // Print cache statistics
+    const { printCacheStats } = await import('../../../lib/serverShutdown');
+    printCacheStats();
+
     // Return download ID
     return NextResponse.json({
       success: true,

@@ -26,6 +26,8 @@ interface CacheData {
 class TranslationCache extends BaseCache<CacheData> {
   private memoryCache = new Map<string, { original: string; translated: string }>();
   protected logger = createLogger('cache');
+  private hits = 0;
+  private misses = 0;
 
   constructor() {
     super({
@@ -57,10 +59,12 @@ class TranslationCache extends BaseCache<CacheData> {
     const cached = this.memoryCache.get(hash);
 
     if (cached) {
+      this.hits++;
       this.logger.debug('HIT:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
       return cached.translated;
     }
 
+    this.misses++;
     return null;
   }
 
@@ -175,10 +179,17 @@ class TranslationCache extends BaseCache<CacheData> {
    * Get cache statistics
    */
   getStats() {
+    const total = this.hits + this.misses;
+    const hitRate = total > 0 ? (this.hits / total * 100).toFixed(1) : '0.0';
+
     return {
       size: this.memoryCache.size,
       cacheFile: this.cacheFile,
-      cacheDir: this.cacheDir
+      cacheDir: this.cacheDir,
+      hits: this.hits,
+      misses: this.misses,
+      total: total,
+      hitRate: hitRate
     };
   }
 
