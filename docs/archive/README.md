@@ -46,6 +46,17 @@
 
 ### Кэширование и производительность
 
+- **[COMPATIBILITY_CHECK.md](./reports/COMPATIBILITY_CHECK.md)**
+  - Проверка совместимости FragmentCache v3.18.0
+  - Обратная совместимость API
+  - Миграция данных
+
+- **[FRAGMENT_CACHE_VERIFICATION.md](./reports/FRAGMENT_CACHE_VERIFICATION.md)**
+  - Полная проверка FragmentCache v3.18.0
+  - Правила фильтрации
+  - Извлечение паттернов
+  - Согласование по роду
+
 - **[FRAGMENT_CACHE_IMPROVEMENTS.md](./reports/FRAGMENT_CACHE_IMPROVEMENTS.md)**
   - Улучшения кэша фрагментов
   - Грамматическое согласование
@@ -100,6 +111,8 @@
 
 ### По теме
 - **Кэширование** → `reports/FRAGMENT_CACHE_IMPROVEMENTS.md`
+- **Совместимость** → `reports/COMPATIBILITY_CHECK.md`
+- **Верификация** → `reports/FRAGMENT_CACHE_VERIFICATION.md`
 - **Грамматика** → `reports/GRAMMAR_AGREEMENT_REPORT.md`
 - **Тестирование** → `reports/TESTING_SUMMARY.md`
 - **Рефакторинг** → `reports/REFACTORING_REPORT.md`
@@ -122,6 +135,8 @@ archive/
 │       └── FINAL_REPORT_COMPLETE_2026-05-06.md
 │
 └── reports/                     # Технические отчёты
+    ├── COMPATIBILITY_CHECK.md
+    ├── FRAGMENT_CACHE_VERIFICATION.md
     ├── FRAGMENT_CACHE_IMPROVEMENTS.md
     ├── GRAMMAR_AGREEMENT_REPORT.md
     ├── TESTING_SUMMARY.md
@@ -139,4 +154,4 @@ archive/
 
 ---
 
-**Последнее обновление:** 08.05.2026
+**Последнее обновление:** 09.05.2026
