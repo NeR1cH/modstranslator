@@ -1,11 +1,54 @@
-# Session State — modstranslator v3.18.3
+# Session State — modstranslator v3.19.0
 
 **Last Updated:** 2026-05-09  
-**Status:** Release v3.18.3 готов
+**Status:** Release v3.19.0 готов
 
 ---
 
 ## Recent Changes (2026-05-09)
+
+### Удаление Word-Based системы перевода
+
+**Удалено:** 4 модуля + 4 теста (810 строк кода)
+
+**Причины удаления:**
+1. Дублировала функциональность FragmentCache
+2. Дороже (3x API вызовов для фразы из 3 слов)
+3. Неправильные переводы (DeepL переводит слова без контекста)
+4. Никогда не использовалась (0 записей в WordCache)
+
+**Удалённые модули:**
+- `lib/wordBasedTranslator.ts` (191 строк)
+- `lib/wordCache.ts` (287 строк)
+- `lib/grammarAssembler.ts` (212 строк)
+- `lib/sentenceSplitter.ts` (120 строк)
+
+**Оставлено (используются в TemplateCache):**
+- `lib/agreementEngine.ts` ✅
+- `lib/numberResolver.ts` ✅
+- `lib/wordLibrary.ts` ✅
+
+**Изменения:**
+- `lib/translationPipeline.ts` - убран Step 4 (WordBased)
+- `lib/serverShutdown.ts` - убран wordCache
+
+**Результаты:**
+- ✅ 401/401 тестов проходят (было 488)
+- ✅ Код стал проще и понятнее
+- ✅ Нет breaking changes
+- ✅ FragmentCache работает как и раньше
+
+**Файлы:**
+- `docs/releases/v3.19.0.md` - release notes
+- `docs/releases/README.md` - обновлена таблица версий
+- `docs/CHANGELOG.md` - добавлена секция v3.19.0
+- `package.json` - версия 3.19.0
+
+**Тесты:** ✅ 401/401 passing
+
+---
+
+## Previous Changes (2026-05-09)
 
 ### Автоматическое определение рода существительных
 

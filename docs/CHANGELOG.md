@@ -34,11 +34,85 @@
 - `lib/modpackProcessor.ts` - обработка ZIP модпаков
 - `lib/queueLimits.ts` - лимиты очереди (50 файлов, 1000 MB)
 
-**Текущая версия:** 3.18.3
+**Текущая версия:** 3.19.0
 
 **Статус:** ✅ Стабильный, безопасный, готов к использованию
 
 **Цель улучшений:** Повысить надежность, производительность и UX для работы с большими модпаками (500+ MB)
+
+---
+
+## [3.19.0] - 2026-05-09 (Code Cleanup & Optimization)
+
+### 🎯 Главные изменения
+
+**Удалена неиспользуемая Word-Based система перевода:**
+- Дублировала функциональность FragmentCache
+- Имела фундаментальные проблемы (неправильные переводы, 3x API вызовов)
+- Никогда не использовалась (0 записей в WordCache)
+
+### 🗑️ Удалено
+
+**Модули (810 строк кода):**
+- `lib/wordBasedTranslator.ts` (191 строк) - разбивал фразы на слова, переводил каждое через API
+- `lib/wordCache.ts` (287 строк) - кэш переводов отдельных слов
+- `lib/grammarAssembler.ts` (212 строк) - собирал слова в предложение
+- `lib/sentenceSplitter.ts` (120 строк) - определял части речи
+
+**Тесты (87 тестов):**
+- `__tests__/lib/wordBasedTranslator.test.ts`
+- `__tests__/lib/wordCache.test.ts`
+- `__tests__/lib/grammarAssembler.test.ts`
+- `__tests__/lib/sentenceSplitter.test.ts`
+
+### 🔧 Изменения
+
+**lib/translationPipeline.ts:**
+- Убран Step 4 (WordBased translation)
+- Упрощён pipeline: TranslationCache → FragmentCache → TemplateCache → DeepL/OpenRouter
+- Убран импорт `translateWordBased`
+- Убран тип `'word-based'` из TranslationResult
+
+**lib/serverShutdown.ts:**
+- Убран импорт `getWordCache`
+- Убрана секция Word Cache stats из `printCacheStats()`
+- Убран `wordCache.flush()` из `performShutdown()`
+
+### ✅ Оставлено (используются в TemplateCache)
+
+**Модули:**
+- `lib/agreementEngine.ts` - морфологическое согласование
+- `lib/numberResolver.ts` - определение чисел и множественного числа
+- `lib/wordLibrary.ts` - словарь слов с формами
+
+### 📊 Статистика
+
+- **Тестов:** 401 (было 488, удалено 87)
+- **Модулей:** 9 (было 13, удалено 4)
+- **Строк кода:** ~7,300 (было ~8,100, удалено ~810)
+- **Статус:** ✅ Все тесты проходят
+
+### 🎯 Причины удаления
+
+**Проблема 1: Дороже чем обычный перевод**
+- Word-Based: 3 API вызова для фразы из 3 слов
+- Обычный перевод: 1 API вызов
+
+**Проблема 2: Неправильные переводы**
+- DeepL переводит слова без контекста
+- "Iron" → "Железо" (существительное) вместо "Железный" (прилагательное)
+- Результат: "Iron Sword" → "Железо меч" ❌
+
+**Проблема 3: Дублирует FragmentCache**
+- FragmentCache учится из правильных переводов (с контекстом)
+- FragmentCache переиспользует правильные формы
+- FragmentCache работает без дополнительных API вызовов
+
+### 📝 Документация
+
+- Создан релиз: `docs/releases/v3.19.0.md`
+- Обновлён: `docs/releases/README.md`
+- Обновлён: `package.json` (версия 3.19.0)
 
 ---
 
