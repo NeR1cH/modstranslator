@@ -10,6 +10,7 @@ describe('FragmentCache - Enhanced Patterns', () => {
 
   beforeEach(() => {
     cache = getFragmentCache();
+    cache.clear(); // Clear cache before each test to avoid conflicts with disk cache
   });
 
   describe('Expanded Materials', () => {

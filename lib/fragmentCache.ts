@@ -138,6 +138,14 @@ class FragmentCache {
   }
 
   /**
+   * Clear all fragments (for testing)
+   */
+  clear(): void {
+    this.fragments.clear();
+    console.log('[fragment-cache] Cleared all fragments');
+  }
+
+  /**
    * Normalize text for comparison (lowercase, trim)
    */
   private normalizeText(text: string): string {
