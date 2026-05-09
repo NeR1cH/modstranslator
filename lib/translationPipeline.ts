@@ -1,6 +1,6 @@
 /**
  * Translation Pipeline - Integrates all translation components
- * Order: TranslationCache → FragmentCache → TemplateCache → WordBased → MorphologicalTranslate → DeepL/OpenRouter
+ * Order: TranslationCache → FragmentCache → TemplateCache → DeepL/OpenRouter
  *
  * FragmentCache works with both DeepL and OpenRouter providers
  */
@@ -8,12 +8,11 @@
 import { getTranslationCache } from './translationCache';
 import { getFragmentCache } from './fragmentCache';
 import { getTemplateCache } from './templateCache';
-import { translateWordBased } from './wordBasedTranslator';
 import { translator } from './translator';
 
 export interface TranslationResult {
   text: string;
-  source: 'cache' | 'fragment' | 'template' | 'word-based' | 'morphological' | 'deepl' | 'openrouter';
+  source: 'cache' | 'fragment' | 'template' | 'morphological' | 'deepl' | 'openrouter';
 }
 
 /**
@@ -46,21 +45,7 @@ export async function translateThroughPipeline(
     return { text: templated, source: 'template' };
   }
 
-  // Step 4: Try WordBased translation
-  try {
-    const wordBased = await translateWordBased(text, targetLang);
-    if (wordBased && wordBased.text && wordBased.text.length > 0) {
-      translationCache.set(text, wordBased.text);
-      return { text: wordBased.text, source: 'word-based' };
-    }
-  } catch (error) {
-    console.error('[pipeline] Word-based translation failed:', error);
-  }
-
-  // Step 5: TODO - MorphologicalTranslate (not implemented yet)
-  // This would handle simple phrases like "iron ingot" → "железный слиток"
-
-  // Step 6: Fallback to DeepL/OpenRouter (provider-agnostic)
+  // Step 4: Fallback to DeepL/OpenRouter (provider-agnostic)
   const translated = await translator.translate(text, { targetLang: 'RU' });
   translationCache.set(text, translated);
 

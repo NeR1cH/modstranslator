@@ -5,7 +5,6 @@
 
 import { getTranslationCache } from './translationCache';
 import { getFragmentCache } from './fragmentCache';
-import { getWordCache } from './wordCache';
 
 let shutdownTimer: NodeJS.Timeout | null = null;
 let isShuttingDown = false;
@@ -40,17 +39,6 @@ export function printCacheStats(): void {
     console.log(`   Hit Rate: ${stats.hitRate}%`);
   } catch (error) {
     console.log('\n🧩 Fragment Cache: недоступен');
-  }
-
-  // Word Cache stats
-  try {
-    const wordCache = getWordCache();
-    const stats = wordCache.getStats();
-    console.log('\n📝 Word Cache:');
-    console.log(`   Всего слов: ${stats.totalWords}`);
-    console.log(`   Средняя уверенность: ${stats.avgConfidence.toFixed(1)}%`);
-  } catch (error) {
-    console.log('\n📝 Word Cache: недоступен');
   }
 
   console.log('\n' + '='.repeat(60) + '\n');
@@ -112,13 +100,6 @@ function performShutdown(): void {
     fragmentCache.flush();
   } catch (error) {
     console.error('⚠️ [Shutdown] Failed to flush fragment cache:', error);
-  }
-
-  try {
-    const wordCache = getWordCache();
-    wordCache.flush();
-  } catch (error) {
-    console.error('⚠️ [Shutdown] Failed to flush word cache:', error);
   }
 
   // Print cache statistics
