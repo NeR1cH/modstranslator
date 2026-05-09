@@ -141,12 +141,12 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     throw new AuthError('DEEPL_API_KEY не задан в .env файле');
   }
 
-  // Check cache first
+  // Step 1: Check full translation cache first
   const cache = getTranslationCache();
   const fragmentCache = getFragmentCache();
   const cachedTranslations = cache.getMany(texts);
 
-  // Try fragment cache for uncached texts
+  // Step 2: Try fragment cache for uncached texts
   const uncachedTexts: string[] = [];
   const fragmentTranslations = new Map<string, string>();
 
@@ -157,30 +157,32 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     const fragmentResult = fragmentCache.tryTranslate(text);
     if (fragmentResult) {
       fragmentTranslations.set(text, fragmentResult);
+      // Cache fragment result for future use
+      cache.set(text, fragmentResult);
     } else {
       uncachedTexts.push(text);
     }
   }
 
-  logger.info(`Cache stats: ${cachedTranslations.size} full cache hits, ${fragmentTranslations.size} fragment hits, ${uncachedTexts.length} misses`);
+  logger.info(`Cache stats: ${cachedTranslations.size} full cache hits, ${fragmentTranslations.size} fragment hits, ${uncachedTexts.length} API calls needed`);
 
-  // If everything is cached, return immediately
+  // Step 3: If everything is cached/fragmented, return immediately
   if (uncachedTexts.length === 0) {
-    logger.info('All translations found in cache/fragments, skipping API call');
+    logger.info('All translations found in cache/fragments, skipping DeepL API call');
     return texts.map(t => cachedTranslations.get(t) || fragmentTranslations.get(t)!);
   }
 
-  // Calculate total characters for uncached texts only
+  // Step 4: Calculate total characters for uncached texts only
   const totalChars = uncachedTexts.join('').length;
-  logger.info('Characters to translate (uncached):', totalChars);
+  logger.info('Characters to translate via DeepL API (uncached):', totalChars);
 
-  // Check rate limit before making API calls
+  // Step 5: Check rate limit before making API calls
   await rateLimiter.checkLimit(totalChars);
 
   // Get current API key (may have switched during checkLimit)
   const currentApiKey = rateLimiter.getCurrentKey();
 
-  // Translate uncached texts
+  // Step 6: Translate uncached texts via DeepL API
   const batches = chunk(uncachedTexts, BATCH_SIZE);
   logger.info('Split into batches:', batches.length);
 
@@ -193,22 +195,22 @@ export async function translateTexts(texts: string[]): Promise<string[]> {
     logger.debug(`Batch ${i + 1} complete, total results so far: ${newTranslations.length}`);
   }
 
-  // Record usage after successful translation
+  // Step 7: Record usage after successful translation
   rateLimiter.recordUsage(totalChars);
 
-  // Cache new translations
+  // Step 8: Cache new translations
   const translationPairs = uncachedTexts.map((original, i) => ({
     original,
     translated: newTranslations[i]
   }));
   cache.setMany(translationPairs);
 
-  // Learn fragments from new translations
+  // Step 9: Learn fragments from new translations for future reuse
   translationPairs.forEach(({ original, translated }) => {
     fragmentCache.learn(original, translated);
   });
 
-  // Combine cached, fragment, and new translations in correct order
+  // Step 10: Combine cached, fragment, and new translations in correct order
   const results: string[] = [];
   let uncachedIndex = 0;
 

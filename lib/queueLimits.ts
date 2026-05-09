@@ -4,7 +4,8 @@
 
 export const QUEUE_LIMITS = {
   // Maximum number of files in queue
-  MAX_FILES: 20,
+  // Infinity = no limit on file count, only total size matters
+  MAX_FILES: Infinity,
 
   // Maximum total size of all files in queue (in bytes)
   // 5 GB total

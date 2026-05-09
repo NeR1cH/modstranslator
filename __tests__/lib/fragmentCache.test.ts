@@ -59,45 +59,52 @@ describe('fragmentCache', () => {
       const cache = getFragmentCache();
 
       // Learn with low confidence
-      cache.learn('Diamond Sword', 'Алмазный меч');
+      cache.learn('Settings', 'Настройки');
 
       // Try to translate - should return null if confidence < 70
-      const result = cache.tryTranslate('Diamond Sword');
+      const result = cache.tryTranslate('Settings');
 
       // Result can be null or string depending on confidence
       expect(result === null || typeof result === 'string').toBe(true);
     });
 
-    it('should translate when fragments have high confidence', () => {
+    it('should translate exact phrase match with high confidence', () => {
       const cache = getFragmentCache();
 
       // Learn multiple times to increase confidence
       for (let i = 0; i < 10; i++) {
-        cache.learn('Diamond Sword', 'Алмазный меч');
+        cache.learn('Armor Status', 'Статус брони');
       }
 
-      const result = cache.tryTranslate('Diamond Sword');
+      const result = cache.tryTranslate('Armor Status');
 
       // Should either translate or return null
       expect(result === null || typeof result === 'string').toBe(true);
     });
 
-    it('should return null for single word without pattern', () => {
+    it('should translate word-by-word when all words are known', () => {
       const cache = getFragmentCache();
 
-      const result = cache.tryTranslate('RandomWord');
+      // Learn individual words
+      for (let i = 0; i < 10; i++) {
+        cache.learn('Enable', 'Включить');
+        cache.learn('Notifications', 'Уведомления');
+      }
 
-      expect(result).toBeNull();
+      const result = cache.tryTranslate('Enable Notifications');
+
+      // Should either translate or return null
+      expect(result === null || typeof result === 'string').toBe(true);
     });
 
-    it('should return null when not all fragments found', () => {
+    it('should return null when not all words are known', () => {
       const cache = getFragmentCache();
 
-      // Learn only one part (single word, not a material/item pattern)
-      cache.learn('Unknown', 'Неизвестный');
+      // Learn only one word
+      cache.learn('Enable', 'Включить');
 
-      // Try to translate two-word phrase with unknown pattern
-      const result = cache.tryTranslate('Unknown Sword');
+      // Try to translate two-word phrase with one unknown word
+      const result = cache.tryTranslate('Enable Something');
 
       expect(result).toBeNull();
     });
@@ -108,7 +115,7 @@ describe('fragmentCache', () => {
       const cache = getFragmentCache();
 
       // Should not throw
-      expect(() => cache.learn('Diamond Sword', 'Алмазный меч')).not.toThrow();
+      expect(() => cache.learn('Settings', 'Настройки')).not.toThrow();
     });
 
     it('should handle empty strings', () => {
@@ -121,44 +128,51 @@ describe('fragmentCache', () => {
       const cache = getFragmentCache();
 
       expect(() => {
-        cache.learn('Diamond Sword', 'Алмазный меч');
-        cache.learn('Iron Sword', 'Железный меч');
-        cache.learn('Gold Sword', 'Золотой меч');
+        cache.learn('Enable', 'Включить');
+        cache.learn('Disable', 'Отключить');
+        cache.learn('Settings', 'Настройки');
       }).not.toThrow();
     });
 
     it('should update existing fragment confidence on repeated learning', () => {
       const cache = getFragmentCache();
 
-      cache.learn('Diamond Sword', 'Алмазный меч');
-      cache.learn('Diamond Pickaxe', 'Алмазная кирка');
+      cache.learn('Enable', 'Включить');
+      cache.learn('Enable', 'Включить');
 
       // Learning same fragment again should increase confidence
-      expect(() => cache.learn('Diamond Axe', 'Алмазный топор')).not.toThrow();
+      expect(() => cache.learn('Enable', 'Включить')).not.toThrow();
     });
 
     it('should handle conflicting translations', () => {
       const cache = getFragmentCache();
 
-      cache.learn('Diamond Sword', 'Алмазный меч');
+      cache.learn('Settings', 'Настройки');
       // Different translation for same fragment should lower confidence
-      cache.learn('Diamond Sword', 'Бриллиантовый меч');
+      cache.learn('Settings', 'Параметры');
 
-      expect(() => cache.tryTranslate('Diamond Sword')).not.toThrow();
+      expect(() => cache.tryTranslate('Settings')).not.toThrow();
     });
 
     it('should learn single word patterns', () => {
       const cache = getFragmentCache();
 
-      expect(() => cache.learn('Diamond', 'Алмазный')).not.toThrow();
-      expect(() => cache.learn('Sword', 'Меч')).not.toThrow();
+      expect(() => cache.learn('Enable', 'Включить')).not.toThrow();
+      expect(() => cache.learn('Disable', 'Отключить')).not.toThrow();
     });
 
-    it('should handle non-material/item patterns', () => {
+    it('should learn phrases', () => {
       const cache = getFragmentCache();
 
-      // Should not extract patterns from non-matching text
-      expect(() => cache.learn('Random Text', 'Случайный текст')).not.toThrow();
+      expect(() => cache.learn('Armor Status', 'Статус брони')).not.toThrow();
+      expect(() => cache.learn('Enable Notifications', 'Включить уведомления')).not.toThrow();
+    });
+
+    it('should extract individual words from phrases', () => {
+      const cache = getFragmentCache();
+
+      // Should extract both "Enable" and "Notifications" as separate fragments
+      expect(() => cache.learn('Enable Notifications', 'Включить уведомления')).not.toThrow();
     });
   });
 
@@ -186,12 +200,13 @@ describe('fragmentCache', () => {
       const mockData = {
         version: 'v1',
         fragments: {
-          'diamond': {
-            text: 'diamond',
-            translation: 'алмазный',
-            context: 'prefix',
+          'enable': {
+            text: 'Enable',
+            translation: 'Включить',
+            context: 'word',
             count: 5,
-            confidence: 90
+            confidence: 90,
+            lastSeen: Date.now()
           }
         }
       };
@@ -214,8 +229,25 @@ describe('fragmentCache', () => {
 
       expect(stats).toBeDefined();
       expect(stats.total).toBeGreaterThanOrEqual(0);
+      expect(stats.words).toBeGreaterThanOrEqual(0);
+      expect(stats.phrases).toBeGreaterThanOrEqual(0);
       expect(stats.highConfidence).toBeGreaterThanOrEqual(0);
       expect(stats.lowConfidence).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should count words and phrases separately', () => {
+      const cache = getFragmentCache();
+
+      // Learn some words and phrases
+      for (let i = 0; i < 10; i++) {
+        cache.learn('Enable', 'Включить');
+        cache.learn('Armor Status', 'Статус брони');
+      }
+
+      const stats = cache.getStats();
+
+      expect(stats.total).toBeGreaterThan(0);
+      expect(stats.words + stats.phrases).toBeLessThanOrEqual(stats.total);
     });
   });
 

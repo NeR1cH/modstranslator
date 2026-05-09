@@ -6,14 +6,22 @@ import type { NextRequest } from 'next/server';
 const requestCache = new Map<string, number[]>();
 
 function checkRateLimit(ip: string): boolean {
+  // Rate limiting disabled for local development
+  // Set to Infinity to allow unlimited requests
+  const RATE_LIMIT = Infinity; // Was: 20 requests per minute
+
+  if (RATE_LIMIT === Infinity) {
+    return true; // No rate limiting
+  }
+
   const now = Date.now();
   const requests = requestCache.get(ip) || [];
 
   // Remove requests older than 1 minute
   const recentRequests = requests.filter(time => now - time < 60000);
 
-  // Allow 20 requests per minute per IP
-  if (recentRequests.length >= 20) {
+  // Check rate limit
+  if (recentRequests.length >= RATE_LIMIT) {
     return false;
   }
 

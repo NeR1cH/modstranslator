@@ -29,6 +29,7 @@ describe('deepl', () => {
     (translationCache.getTranslationCache as jest.Mock).mockReturnValue({
       getMany: jest.fn().mockReturnValue(new Map()),
       setMany: jest.fn(),
+      set: jest.fn(),
     });
 
     // Mock fragment cache

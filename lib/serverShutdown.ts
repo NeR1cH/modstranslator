@@ -92,6 +92,8 @@ function performShutdown(): void {
     const stats = fragmentCache.getStats();
     console.log('\n🧩 Fragment Cache:');
     console.log(`   Всего фрагментов: ${stats.total}`);
+    console.log(`   Слов: ${stats.words}`);
+    console.log(`   Фраз: ${stats.phrases}`);
     console.log(`   Высокая уверенность (≥80%): ${stats.highConfidence}`);
     console.log(`   Низкая уверенность (<80%): ${stats.lowConfidence}`);
   } catch (error) {

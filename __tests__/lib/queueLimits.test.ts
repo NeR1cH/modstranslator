@@ -3,7 +3,7 @@ import { QUEUE_LIMITS, ERROR_MESSAGES, formatBytes } from '@/lib/queueLimits';
 describe('queueLimits', () => {
   describe('QUEUE_LIMITS', () => {
     it('should have correct limit values', () => {
-      expect(QUEUE_LIMITS.MAX_FILES).toBe(20);
+      expect(QUEUE_LIMITS.MAX_FILES).toBe(Infinity);
       expect(QUEUE_LIMITS.MAX_TOTAL_SIZE).toBe(5 * 1024 * 1024 * 1024);
       expect(QUEUE_LIMITS.MAX_FILE_SIZE).toBe(1.5 * 1024 * 1024 * 1024);
       expect(QUEUE_LIMITS.MAX_CONCURRENT).toBe(3);

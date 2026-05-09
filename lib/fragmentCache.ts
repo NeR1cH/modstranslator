@@ -1,20 +1,27 @@
 /**
  * Fragment Cache - Smart caching system for reusable translation fragments
- * Automatically extracts and reuses common patterns like "Diamond Sword" → "Diamond" + "Sword"
+ * Automatically extracts and reuses common words and phrases from ANY content:
+ * - Item names (Diamond Sword)
+ * - UI strings (Settings, Options, Enable)
+ * - Descriptions (powerful, enchanted, rare)
+ * - Quest text (complete, reward, objective)
  * Works transparently in the background, no user configuration needed
+ *
+ * Provider-agnostic: works with both DeepL and OpenRouter
  */
 
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 
 interface Fragment {
   text: string;
   translation: string;
-  context: 'prefix' | 'suffix' | 'standalone';
-  gender?: 'masculine' | 'feminine' | 'neuter';
+  context: 'word' | 'phrase';
   count: number; // How many times seen
   confidence: number; // 0-100
+  lastSeen: number; // Timestamp
+  gender?: 'masculine' | 'feminine' | 'neuter'; // For nouns
+  isAdjective?: boolean; // For adjectives that need agreement
 }
 
 interface FragmentCacheData {
@@ -29,87 +36,63 @@ class FragmentCache {
   private isDirty = false;
   private saveTimer: NodeJS.Timeout | null = null;
 
-  // Gender dictionary for Russian nouns (item types)
-  private readonly ITEM_GENDERS: Record<string, 'masculine' | 'feminine' | 'neuter'> = {
+  // Stop words - articles, prepositions, conjunctions that should not be saved as fragments
+  private readonly STOP_WORDS = new Set([
+    'the', 'a', 'an', 'in', 'of', 'to', 'for', 'with', 'and', 'or',
+    'at', 'by', 'from', 'on', 'is', 'are', 'was', 'were', 'be',
+    'this', 'that', 'these', 'those', 'it', 'its', 'as', 'but',
+    'if', 'so', 'no', 'not', 'can', 'will', 'has', 'have', 'had',
+    'do', 'does', 'did', 'am', 'been', 'being', 'may', 'might',
+    'must', 'shall', 'should', 'would', 'could'
+  ]);
+
+  // Gender dictionary for Russian nouns
+  private readonly NOUN_GENDERS: Record<string, 'masculine' | 'feminine' | 'neuter'> = {
     // Masculine (мужской род)
-    'sword': 'masculine',      // меч
-    'axe': 'masculine',        // топор
-    'helmet': 'masculine',     // шлем
-    'bow': 'masculine',        // лук
-    'shield': 'masculine',     // щит
-    'dagger': 'masculine',     // кинжал
-    'hammer': 'masculine',     // молот
-    'scythe': 'feminine',      // коса
-    'katana': 'feminine',      // катана
-    'rapier': 'feminine',      // рапира
-    'stiletto': 'masculine',   // стилет
-    'saber': 'feminine',       // сабля
-    'cutlass': 'masculine',    // кортик
-    'claymore': 'masculine',   // клеймор
-    'greatsword': 'masculine', // двуручный меч
-    'ingot': 'masculine',      // слиток
-    'block': 'masculine',      // блок
-    'rod': 'masculine',        // стержень
-    'nugget': 'masculine',     // самородок
-    'chunk': 'masculine',      // кусок
-    'clump': 'masculine',      // комок
-    'shard': 'masculine',      // осколок
-    'crystal': 'masculine',    // кристалл
-    'coil': 'feminine',        // катушка
-    'casing': 'masculine',     // корпус
-    'frame': 'masculine',      // каркас
+    'sword': 'masculine', 'axe': 'masculine', 'helmet': 'masculine',
+    'bow': 'masculine', 'shield': 'masculine', 'dagger': 'masculine',
+    'hammer': 'masculine', 'stiletto': 'masculine', 'cutlass': 'masculine',
+    'claymore': 'masculine', 'greatsword': 'masculine',
+    'ingot': 'masculine', 'block': 'masculine', 'rod': 'masculine',
+    'nugget': 'masculine', 'chunk': 'masculine', 'clump': 'masculine',
+    'shard': 'masculine', 'crystal': 'masculine', 'casing': 'masculine',
+    'frame': 'masculine', 'boots': 'masculine', 'sheet': 'masculine',
 
     // Feminine (женский род)
-    'chestplate': 'feminine',  // кираса
-    'leggings': 'feminine',    // поножи (plural, but feminine)
-    'boots': 'masculine',      // ботинки (plural, but masculine)
-    'arrow': 'feminine',       // стрела
-    'ore': 'feminine',         // руда
-    'dust': 'feminine',        // пыль
-    'plate': 'feminine',       // пластина
-    'gear': 'feminine',        // шестерня
-    'sheet': 'masculine',      // лист
-    'wire': 'feminine',        // проволока
-    'pickaxe': 'feminine',     // кирка (corrected)
-    'shovel': 'feminine',      // лопата (corrected)
-    'hoe': 'feminine',         // мотыга (corrected)
-    'pike': 'feminine',        // пика (corrected)
-    'mace': 'feminine',        // булава (corrected)
+    'scythe': 'feminine', 'katana': 'feminine', 'rapier': 'feminine',
+    'saber': 'feminine', 'chestplate': 'feminine', 'leggings': 'feminine',
+    'arrow': 'feminine', 'ore': 'feminine', 'dust': 'feminine',
+    'plate': 'feminine', 'gear': 'feminine', 'wire': 'feminine',
+    'pickaxe': 'feminine', 'shovel': 'feminine', 'hoe': 'feminine',
+    'pike': 'feminine', 'mace': 'feminine', 'coil': 'feminine',
 
     // Neuter (средний род)
-    'spear': 'neuter',         // копьё (corrected)
-    'lance': 'neuter',         // копьё (corrected)
+    'spear': 'neuter', 'lance': 'neuter'
   };
 
-  // Common Minecraft material patterns
-  private readonly MATERIALS = [
+  // Common Minecraft materials (adjectives)
+  private readonly MATERIALS = new Set([
     'diamond', 'iron', 'gold', 'golden', 'stone', 'wooden', 'wood',
     'netherite', 'leather', 'chainmail', 'steel', 'bronze', 'silver',
     'copper', 'tin', 'brass', 'aluminum', 'titanium', 'obsidian',
     'emerald', 'ruby', 'sapphire', 'amethyst', 'quartz',
-    // Added materials from modpacks
     'zinc', 'lead', 'uranium', 'nickel', 'osmium', 'platinum',
     'iridium', 'tungsten', 'chromium', 'cobalt', 'invar', 'electrum',
     'constantan', 'signalum', 'lumium', 'enderium'
-  ];
+  ]);
 
-  // Common Minecraft item types
-  private readonly ITEM_TYPES = [
-    'sword', 'pickaxe', 'axe', 'shovel', 'hoe', 'helmet', 'chestplate',
-    'leggings', 'boots', 'bow', 'arrow', 'shield', 'dagger', 'spear',
-    'pike', 'lance', 'mace', 'hammer', 'scythe', 'katana', 'rapier',
-    'stiletto', 'saber', 'cutlass', 'claymore', 'greatsword',
-    // Added item types from modpacks
-    'ore', 'dust', 'plate', 'gear', 'rod', 'sheet', 'nugget',
-    'ingot', 'block', 'chunk', 'clump', 'shard', 'crystal',
-    'wire', 'coil', 'casing', 'frame'
-  ];
-
-  // Common prefixes for materials
-  private readonly PREFIXES = [
+  // Common prefixes (adjectives)
+  private readonly PREFIXES = new Set([
     'raw', 'crushed', 'molten', 'refined', 'processed', 'purified',
     'enriched', 'compressed', 'dense', 'dirty'
-  ];
+  ]);
+
+  // Minimum word length to consider for fragments
+  private readonly MIN_WORD_LENGTH = 3;
+
+  // Minimum phrase length (in words) to consider
+  private readonly MIN_PHRASE_WORDS = 2;
+  private readonly MAX_PHRASE_WORDS = 4;
 
   constructor() {
     this.cacheDir = path.join(process.cwd(), '.translation-cache');
@@ -155,80 +138,140 @@ class FragmentCache {
   }
 
   /**
-   * Apply gender agreement to adjective based on noun gender
-   * Russian adjectives must agree with nouns in gender
+   * Normalize text for comparison (lowercase, trim)
    */
-  private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter'): string {
-    // Remove common adjective endings
+  private normalizeText(text: string): string {
+    return text.toLowerCase().trim();
+  }
+
+  /**
+   * Detect if a Russian word is an adjective and extract its gender
+   */
+  private detectAdjectiveGender(word: string): 'masculine' | 'feminine' | 'neuter' | null {
+    if (word.endsWith('ый') || word.endsWith('ой') || word.endsWith('ий')) {
+      return 'masculine';
+    } else if (word.endsWith('ая') || word.endsWith('яя')) {
+      return 'feminine';
+    } else if (word.endsWith('ое') || word.endsWith('ее')) {
+      return 'neuter';
+    }
+    return null;
+  }
+
+  /**
+   * Normalize adjective to masculine form (base form)
+   */
+  private normalizeToMasculine(adjective: string): string {
     let stem = adjective;
 
-    // Remove endings: -ый, -ой, -ая, -яя, -ое, -ее
-    if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ая') || stem.endsWith('яя') || stem.endsWith('ое') || stem.endsWith('ее')) {
+    if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ий')) {
+      return stem; // Already masculine
+    } else if (stem.endsWith('ая') || stem.endsWith('яя')) {
+      stem = stem.slice(0, -2);
+    } else if (stem.endsWith('ое') || stem.endsWith('ее')) {
       stem = stem.slice(0, -2);
     }
-    // Remove -ий, -ья, -ье (soft endings)
-    else if (stem.endsWith('ий') || stem.endsWith('ья') || stem.endsWith('ье')) {
+
+    // Apply masculine ending
+    return stem + 'ый';
+  }
+
+  /**
+   * Apply gender agreement to adjective
+   */
+  private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter'): string {
+    let stem = adjective;
+
+    // Remove existing endings
+    if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ий') ||
+        stem.endsWith('ая') || stem.endsWith('яя') ||
+        stem.endsWith('ое') || stem.endsWith('ее')) {
       stem = stem.slice(0, -2);
     }
 
-    // Apply correct ending based on gender
-    const endings: Record<'masculine' | 'feminine' | 'neuter', string[]> = {
-      masculine: ['ый', 'ой', 'ий'],  // железный, золотой, синий
-      feminine: ['ая', 'яя'],          // железная, синяя
-      neuter: ['ое', 'ее']             // железное, синее
-    };
-
-    // Determine which ending to use based on stem
-    let ending: string;
-
+    // Apply correct ending
     if (gender === 'masculine') {
-      // Use -ий for soft stems (ending in н, т, д, etc. after vowel)
-      if (stem.endsWith('н') || stem.endsWith('т') || stem.endsWith('д')) {
-        ending = 'ый';
-      } else {
-        ending = 'ый';  // Default masculine
-      }
+      return stem + 'ый';
     } else if (gender === 'feminine') {
-      // Use -яя for soft stems
-      if (stem.endsWith('н') || stem.endsWith('т') || stem.endsWith('д')) {
-        ending = 'ая';
-      } else {
-        ending = 'ая';  // Default feminine
-      }
+      return stem + 'ая';
     } else {
-      // Neuter
-      ending = 'ое';
+      return stem + 'ое';
+    }
+  }
+
+  /**
+   * Check if a word should be saved as a fragment
+   */
+  private isValidWord(word: string): boolean {
+    const normalized = this.normalizeText(word);
+
+    // Skip stop words
+    if (this.STOP_WORDS.has(normalized)) return false;
+
+    // Skip too short words
+    if (normalized.length < this.MIN_WORD_LENGTH) return false;
+
+    // Skip numbers
+    if (/^\d+$/.test(normalized)) return false;
+
+    // Skip single characters
+    if (normalized.length === 1) return false;
+
+    return true;
+  }
+
+  /**
+   * Check if a phrase should be saved as a fragment
+   */
+  private isValidPhrase(phrase: string): boolean {
+    const words = phrase.split(/\s+/);
+
+    // Check word count
+    if (words.length < this.MIN_PHRASE_WORDS || words.length > this.MAX_PHRASE_WORDS) {
+      return false;
     }
 
-    return stem + ending;
+    // At least one word must be valid (not a stop word)
+    return words.some(word => this.isValidWord(word));
   }
 
   /**
    * Learn fragments from a successful translation
+   * Extracts individual words and common phrases
    */
   learn(original: string, translated: string): void {
-    console.log(`[fragment-cache] Learning from: "${original}" → "${translated}"`);
-
+    const now = Date.now();
     const patterns = this.extractPatterns(original, translated);
-    console.log(`[fragment-cache] Extracted ${patterns.length} patterns`);
 
-    patterns.forEach(({ fragment, translation, context, confidence, gender }) => {
-      const key = fragment.toLowerCase();
+    if (patterns.length === 0) return;
+
+    console.log(`[fragment-cache] Learning ${patterns.length} fragments from: "${original}"`);
+
+    patterns.forEach(({ fragment, translation, context, confidence, gender, isAdjective }) => {
+      const key = this.normalizeText(fragment);
       const existing = this.fragments.get(key);
 
       if (existing) {
         // Update existing fragment
         existing.count++;
-        existing.confidence = Math.min(100, existing.confidence + 5);
-        if (existing.translation !== translation) {
-          // Conflict detected - lower confidence
-          existing.confidence = Math.max(50, existing.confidence - 10);
+        existing.lastSeen = now;
+
+        if (existing.translation === translation) {
+          // Same translation - increase confidence
+          existing.confidence = Math.min(100, existing.confidence + 3);
+        } else {
+          // Different translation - conflict detected
+          existing.confidence = Math.max(30, existing.confidence - 10);
+          console.log(`[fragment-cache] Conflict: "${fragment}" → "${existing.translation}" vs "${translation}"`);
         }
-        // Update gender if provided and not set
+
+        // Update gender and isAdjective if not set
         if (gender && !existing.gender) {
           existing.gender = gender;
         }
-        console.log(`[fragment-cache] Updated fragment: "${fragment}" → "${translation}" (confidence: ${existing.confidence})`);
+        if (isAdjective && !existing.isAdjective) {
+          existing.isAdjective = isAdjective;
+        }
       } else {
         // New fragment
         this.fragments.set(key, {
@@ -237,9 +280,11 @@ class FragmentCache {
           context,
           count: 1,
           confidence,
-          gender
+          lastSeen: now,
+          gender,
+          isAdjective
         });
-        console.log(`[fragment-cache] New fragment: "${fragment}" → "${translation}" (confidence: ${confidence})`);
+        console.log(`[fragment-cache] New fragment: "${fragment}" → "${translation}" (${context}, confidence: ${confidence})`);
       }
     });
 
@@ -251,220 +296,187 @@ class FragmentCache {
 
   /**
    * Try to translate using fragments
-   * Returns null if confidence is too low
+   * Returns null if confidence is too low or no fragments found
    */
   tryTranslate(text: string): string | null {
-    const patterns = this.detectPatterns(text);
-    if (patterns.length === 0) return null;
+    const normalized = this.normalizeText(text);
 
-    let totalConfidence = 0;
-    let fragments: Fragment[] = [];
-    let allFound = true;
+    // Try exact match first (for phrases)
+    const exactMatch = this.fragments.get(normalized);
+    if (exactMatch && exactMatch.confidence >= 70) {
+      console.log(`[fragment-cache] Exact match: "${text}" → "${exactMatch.translation}" (confidence: ${exactMatch.confidence}%)`);
+      return exactMatch.translation;
+    }
 
-    for (const pattern of patterns) {
-      const fragment = this.fragments.get(pattern.toLowerCase());
-      if (!fragment || fragment.confidence < 70) {
-        allFound = false;
-        break;
+    // Try word-by-word translation with gender agreement
+    const words = text.split(/\s+/);
+    if (words.length > 1 && words.length <= this.MAX_PHRASE_WORDS) {
+      const translatedWords: string[] = [];
+      let totalConfidence = 0;
+      let foundCount = 0;
+      let nounGender: 'masculine' | 'feminine' | 'neuter' | null = null;
+
+      // First pass: find noun and its gender
+      for (let i = words.length - 1; i >= 0; i--) {
+        const word = words[i];
+        const wordNormalized = this.normalizeText(word);
+        const fragment = this.fragments.get(wordNormalized);
+
+        if (fragment && fragment.gender) {
+          nounGender = fragment.gender;
+          break;
+        }
+
+        // Check if word is a known noun
+        const knownGender = this.NOUN_GENDERS[wordNormalized];
+        if (knownGender) {
+          nounGender = knownGender;
+          break;
+        }
       }
-      fragments.push(fragment);
-      totalConfidence += fragment.confidence;
+
+      // Second pass: translate with gender agreement
+      for (const word of words) {
+        const wordNormalized = this.normalizeText(word);
+        const fragment = this.fragments.get(wordNormalized);
+
+        if (fragment && fragment.confidence >= 60) {
+          let translation = fragment.translation;
+
+          // Apply gender agreement if this is an adjective and we know the noun gender
+          if (fragment.isAdjective && nounGender) {
+            translation = this.applyGenderAgreement(translation, nounGender);
+          }
+
+          translatedWords.push(translation);
+          totalConfidence += fragment.confidence;
+          foundCount++;
+        } else {
+          // Word not found - cannot translate
+          return null;
+        }
+      }
+
+      // Need at least 70% average confidence
+      const avgConfidence = totalConfidence / foundCount;
+      if (avgConfidence >= 70) {
+        const result = translatedWords.join(' ');
+        console.log(`[fragment-cache] Word-by-word: "${text}" → "${result}" (confidence: ${avgConfidence.toFixed(0)}%)`);
+        return result;
+      }
     }
 
-    if (!allFound) return null;
-
-    const avgConfidence = totalConfidence / patterns.length;
-    if (avgConfidence < 75) return null;
-
-    // Apply gender agreement for 2-word patterns (Material + Item)
-    let result: string;
-    if (fragments.length === 2 && fragments[0].context === 'prefix' && fragments[1].context === 'suffix') {
-      const material = fragments[0];
-      const item = fragments[1];
-
-      // Get item gender from dictionary or fragment
-      const itemGender = item.gender || this.ITEM_GENDERS[item.text.toLowerCase()] || 'masculine';
-
-      // Apply gender agreement to material (adjective)
-      const agreedMaterial = this.applyGenderAgreement(material.translation, itemGender);
-
-      result = `${agreedMaterial} ${item.translation}`;
-    }
-    // Apply gender agreement for 3-word patterns (Prefix + Material + Item)
-    else if (fragments.length === 3) {
-      const prefix = fragments[0];
-      const material = fragments[1];
-      const item = fragments[2];
-
-      // Get item gender
-      const itemGender = item.gender || this.ITEM_GENDERS[item.text.toLowerCase()] || 'masculine';
-
-      // Apply gender agreement to both prefix and material
-      const agreedPrefix = this.applyGenderAgreement(prefix.translation, itemGender);
-      const agreedMaterial = this.applyGenderAgreement(material.translation, itemGender);
-
-      result = `${agreedPrefix} ${agreedMaterial} ${item.translation}`;
-    }
-    // Fallback: simple concatenation
-    else {
-      result = fragments.map(f => f.translation).join(' ');
-    }
-
-    console.log(`[fragment-cache] Translated "${text}" → "${result}" (confidence: ${avgConfidence.toFixed(0)}%)`);
-    return result;
+    return null;
   }
 
   /**
    * Extract patterns from original and translated text
+   * Extracts both individual words and phrases
    */
   private extractPatterns(original: string, translated: string): Array<{
     fragment: string;
     translation: string;
-    context: 'prefix' | 'suffix' | 'standalone';
+    context: 'word' | 'phrase';
     confidence: number;
     gender?: 'masculine' | 'feminine' | 'neuter';
+    isAdjective?: boolean;
   }> {
     const results: Array<{
       fragment: string;
       translation: string;
-      context: 'prefix' | 'suffix' | 'standalone';
+      context: 'word' | 'phrase';
       confidence: number;
       gender?: 'masculine' | 'feminine' | 'neuter';
+      isAdjective?: boolean;
     }> = [];
 
-    // Pattern 1: "Material + Item" (e.g., "Diamond Sword")
-    const materialMatch = original.match(/^(\w+)\s+(\w+)$/i);
-    if (materialMatch) {
-      const [, material, item] = materialMatch;
-      const translatedParts = translated.split(/\s+/);
+    const originalWords = original.split(/\s+/);
+    const translatedWords = translated.split(/\s+/);
 
-      // Allow 1-3 words in translation (was: exactly 2)
-      if (translatedParts.length >= 1 && translatedParts.length <= 3) {
-        const isMaterial = this.MATERIALS.includes(material.toLowerCase());
-        const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
-
-        if (isMaterial || isItem) {
-          // Get item gender from dictionary
-          const itemGender = this.ITEM_GENDERS[item.toLowerCase()];
-
-          // For 2-word translations, extract both parts
-          if (translatedParts.length === 2) {
-            results.push({
-              fragment: material,
-              translation: translatedParts[0],
-              context: 'prefix',
-              confidence: isMaterial ? 90 : 70,
-              gender: itemGender  // Store gender for agreement
-            });
-            results.push({
-              fragment: item,
-              translation: translatedParts[1],
-              context: 'suffix',
-              confidence: isItem ? 90 : 70,
-              gender: itemGender  // Store gender of the noun
-            });
-          }
-          // For 1-word translations, extract as single fragment
-          else if (translatedParts.length === 1) {
-            results.push({
-              fragment: original,
-              translation: translated,
-              context: 'standalone',
-              confidence: (isMaterial && isItem) ? 85 : 75,
-              gender: itemGender
-            });
-          }
-          // For 3-word translations, try to map intelligently
-          else if (translatedParts.length === 3) {
-            // Assume first word is material, last word is item type
-            if (isMaterial) {
-              results.push({
-                fragment: material,
-                translation: translatedParts[0],
-                context: 'prefix',
-                confidence: 85,
-                gender: itemGender
-              });
-            }
-            if (isItem) {
-              results.push({
-                fragment: item,
-                translation: translatedParts[2],
-                context: 'suffix',
-                confidence: 85,
-                gender: itemGender
-              });
-            }
-          }
-        }
-      }
+    // Pattern 1: Exact phrase (if valid)
+    if (this.isValidPhrase(original)) {
+      results.push({
+        fragment: original.trim(),
+        translation: translated.trim(),
+        context: 'phrase',
+        confidence: 75
+      });
     }
 
-    // Pattern 2: Single known word
-    const singleWord = original.trim();
-    if (!/\s/.test(singleWord)) {
-      const isMaterial = this.MATERIALS.includes(singleWord.toLowerCase());
-      const isItem = this.ITEM_TYPES.includes(singleWord.toLowerCase());
+    // Pattern 2: Individual words (if word counts match or are close)
+    if (originalWords.length === translatedWords.length) {
+      // 1:1 mapping - extract all valid words
+      for (let i = 0; i < originalWords.length; i++) {
+        const word = originalWords[i].trim();
+        const trans = translatedWords[i].trim();
 
-      if (isMaterial || isItem) {
-        const itemGender = isItem ? this.ITEM_GENDERS[singleWord.toLowerCase()] : undefined;
+        if (this.isValidWord(word)) {
+          const wordLower = this.normalizeText(word);
+
+          // Detect if this is a material/prefix (adjective)
+          const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
+
+          // Detect gender from Russian translation
+          const adjectiveGender = this.detectAdjectiveGender(trans);
+
+          // Get noun gender if this is a known noun
+          const nounGender = this.NOUN_GENDERS[wordLower];
+
+          // Normalize adjectives to masculine form
+          const normalizedTrans = isAdjective && adjectiveGender ? this.normalizeToMasculine(trans) : trans;
+
+          results.push({
+            fragment: word,
+            translation: normalizedTrans,
+            context: 'word',
+            confidence: 80,
+            gender: nounGender,
+            isAdjective
+          });
+        }
+      }
+    } else if (originalWords.length === 1 && this.isValidWord(originalWords[0])) {
+      // Single word - save regardless of translation word count
+      const wordLower = this.normalizeText(originalWords[0]);
+      const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
+      const nounGender = this.NOUN_GENDERS[wordLower];
+
+      results.push({
+        fragment: originalWords[0].trim(),
+        translation: translated.trim(),
+        context: 'word',
+        confidence: 85,
+        gender: nounGender,
+        isAdjective
+      });
+    } else if (translatedWords.length === 1 && originalWords.length > 1) {
+      // Multiple English words → single Russian word
+      // Save as phrase
+      if (this.isValidPhrase(original)) {
         results.push({
-          fragment: singleWord,
+          fragment: original.trim(),
           translation: translated.trim(),
-          context: 'standalone',
-          confidence: 85,
-          gender: itemGender
+          context: 'phrase',
+          confidence: 70
         });
       }
     }
 
-    // Pattern 3: "Prefix + Material + Item" (e.g., "Raw Iron Ore", "Crushed Gold Dust")
-    const prefixMatch = original.match(/^(\w+)\s+(\w+)\s+(\w+)$/i);
-    if (prefixMatch) {
-      const [, prefix, material, item] = prefixMatch;
-      const translatedParts = translated.split(/\s+/);
-
-      const isPrefix = this.PREFIXES.includes(prefix.toLowerCase());
-      const isMaterial = this.MATERIALS.includes(material.toLowerCase());
-      const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
-
-      // Get item gender from dictionary
-      const itemGender = this.ITEM_GENDERS[item.toLowerCase()];
-
-      // Extract fragments if we recognize at least 2 out of 3 parts
-      if ((isPrefix && isMaterial) || (isMaterial && isItem) || (isPrefix && isItem)) {
-        // Extract prefix if recognized
-        if (isPrefix && translatedParts.length >= 1) {
-          results.push({
-            fragment: prefix,
-            translation: translatedParts[0],
-            context: 'prefix',
-            confidence: 80,
-            gender: itemGender
-          });
-        }
-
-        // Extract material if recognized
-        if (isMaterial && translatedParts.length >= 2) {
-          const materialIndex = isPrefix ? 1 : 0;
-          results.push({
-            fragment: material,
-            translation: translatedParts[materialIndex],
-            context: 'prefix',
-            confidence: 85,
-            gender: itemGender
-          });
-        }
-
-        // Extract item type if recognized
-        if (isItem && translatedParts.length >= 2) {
-          results.push({
-            fragment: item,
-            translation: translatedParts[translatedParts.length - 1],
-            context: 'suffix',
-            confidence: 85,
-            gender: itemGender
-          });
+    // Pattern 3: Sub-phrases (2-3 word combinations)
+    if (originalWords.length >= 3 && translatedWords.length >= 3) {
+      for (let len = 2; len <= Math.min(3, originalWords.length); len++) {
+        for (let i = 0; i <= originalWords.length - len; i++) {
+          const subPhrase = originalWords.slice(i, i + len).join(' ');
+          if (this.isValidPhrase(subPhrase)) {
+            // Try to find corresponding translation
+            const subTrans = translatedWords.slice(i, i + len).join(' ');
+            results.push({
+              fragment: subPhrase,
+              translation: subTrans,
+              context: 'phrase',
+              confidence: 65
+            });
+          }
         }
       }
     }
@@ -473,52 +485,26 @@ class FragmentCache {
   }
 
   /**
-   * Detect patterns in text that might be translatable via fragments
-   */
-  private detectPatterns(text: string): string[] {
-    const patterns: string[] = [];
-
-    // Pattern 1: "Prefix + Material + Item" (3 words)
-    const prefixMatch = text.match(/^(\w+)\s+(\w+)\s+(\w+)$/i);
-    if (prefixMatch) {
-      const [, prefix, material, item] = prefixMatch;
-      const isPrefix = this.PREFIXES.includes(prefix.toLowerCase());
-      const isMaterial = this.MATERIALS.includes(material.toLowerCase());
-      const isItem = this.ITEM_TYPES.includes(item.toLowerCase());
-
-      // If we recognize at least 2 out of 3 parts, try to use fragments
-      if ((isPrefix && isMaterial) || (isMaterial && isItem) || (isPrefix && isItem)) {
-        if (isPrefix) patterns.push(prefix);
-        if (isMaterial) patterns.push(material);
-        if (isItem) patterns.push(item);
-        return patterns;
-      }
-    }
-
-    // Pattern 2: "Material + Item" (2 words)
-    const materialMatch = text.match(/^(\w+)\s+(\w+)$/i);
-    if (materialMatch) {
-      const [, material, item] = materialMatch;
-      patterns.push(material, item);
-    }
-
-    return patterns;
-  }
-
-  /**
    * Get statistics
    */
-  getStats(): { total: number; highConfidence: number; lowConfidence: number } {
+  getStats(): { total: number; words: number; phrases: number; highConfidence: number; lowConfidence: number } {
+    let words = 0;
+    let phrases = 0;
     let highConfidence = 0;
     let lowConfidence = 0;
 
     this.fragments.forEach(fragment => {
+      if (fragment.context === 'word') words++;
+      else if (fragment.context === 'phrase') phrases++;
+
       if (fragment.confidence >= 80) highConfidence++;
       else lowConfidence++;
     });
 
     return {
       total: this.fragments.size,
+      words,
+      phrases,
       highConfidence,
       lowConfidence
     };
