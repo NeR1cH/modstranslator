@@ -515,17 +515,7 @@ class FragmentCache {
     const originalWords = original.split(/\s+/);
     const translatedWords = translated.split(/\s+/);
 
-    // Pattern 1: Exact phrase (if valid)
-    if (this.isValidPhrase(original)) {
-      results.push({
-        fragment: original.trim(),
-        translation: translated.trim(),
-        context: 'phrase',
-        confidence: 75
-      });
-    }
-
-    // Pattern 2: Individual words (if word counts match or are close)
+    // Pattern: Individual words only (1:1 mapping)
     if (originalWords.length === translatedWords.length) {
       // 1:1 mapping - extract all valid words
       for (let i = 0; i < originalWords.length; i++) {
@@ -571,36 +561,6 @@ class FragmentCache {
         gender: nounGender,
         isAdjective
       });
-    } else if (translatedWords.length === 1 && originalWords.length > 1) {
-      // Multiple English words → single Russian word
-      // Save as phrase
-      if (this.isValidPhrase(original)) {
-        results.push({
-          fragment: original.trim(),
-          translation: translated.trim(),
-          context: 'phrase',
-          confidence: 70
-        });
-      }
-    }
-
-    // Pattern 3: Sub-phrases (2-3 word combinations)
-    if (originalWords.length >= 3 && translatedWords.length >= 3) {
-      for (let len = 2; len <= Math.min(3, originalWords.length); len++) {
-        for (let i = 0; i <= originalWords.length - len; i++) {
-          const subPhrase = originalWords.slice(i, i + len).join(' ');
-          if (this.isValidPhrase(subPhrase)) {
-            // Try to find corresponding translation
-            const subTrans = translatedWords.slice(i, i + len).join(' ');
-            results.push({
-              fragment: subPhrase,
-              translation: subTrans,
-              context: 'phrase',
-              confidence: 65
-            });
-          }
-        }
-      }
     }
 
     return results;
