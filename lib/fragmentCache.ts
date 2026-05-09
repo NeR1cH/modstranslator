@@ -58,7 +58,16 @@ class FragmentCache {
     'ingot': 'masculine', 'block': 'masculine', 'rod': 'masculine',
     'nugget': 'masculine', 'chunk': 'masculine', 'clump': 'masculine',
     'shard': 'masculine', 'crystal': 'masculine', 'casing': 'masculine',
-    'frame': 'masculine', 'boots': 'masculine', 'sheet': 'masculine',
+    'casing': 'masculine',
+    'boots': 'masculine', 'sheet': 'masculine',
+    'shaft': 'masculine', 'gearbox': 'masculine', 'pilot': 'masculine',
+    'container': 'masculine', 'cement': 'masculine', 'concrete': 'masculine',
+    'placard': 'masculine', 'gearshift': 'masculine', 'deployer': 'masculine',
+    'mixer': 'masculine', 'press': 'masculine', 'trapdoor': 'masculine',
+    'harvester': 'masculine', 'plough': 'masculine', 'roller': 'masculine',
+    'engine': 'masculine', 'conveyor': 'masculine', 'depot': 'masculine',
+    'fence': 'masculine', 'metal': 'masculine', 'jetpack': 'masculine',
+    'bucket': 'neuter', 'tank': 'masculine',
 
     // Feminine (женский род)
     'scythe': 'feminine', 'katana': 'feminine', 'rapier': 'feminine',
@@ -67,9 +76,17 @@ class FragmentCache {
     'plate': 'feminine', 'gear': 'feminine', 'wire': 'feminine',
     'pickaxe': 'feminine', 'shovel': 'feminine', 'hoe': 'feminine',
     'pike': 'feminine', 'mace': 'feminine', 'coil': 'feminine',
+    'cogwheel': 'feminine', 'stairs': 'feminine', 'slab': 'feminine',
+    'wall': 'feminine', 'lamp': 'feminine', 'door': 'feminine',
+    'drill': 'feminine', 'cloth': 'feminine', 'saw': 'feminine',
+    'pane': 'feminine', 'catwalk': 'feminine', 'coin': 'feminine',
+    'railing': 'feminine', 'support': 'feminine', 'wedge': 'feminine',
+    'frame': 'feminine', 'chain': 'feminine', 'seal': 'feminine',
+    'steel': 'feminine',
 
     // Neuter (средний род)
-    'spear': 'neuter', 'lance': 'neuter'
+    'spear': 'neuter', 'lance': 'neuter', 'window': 'neuter',
+    'clutch': 'neuter'
   };
 
   // Common Minecraft materials (adjectives)
@@ -89,12 +106,17 @@ class FragmentCache {
     'enriched', 'compressed', 'dense', 'dirty'
   ]);
 
+  // Adjectives that use "ой" ending instead of "ый" for masculine (stressed ending)
+  private readonly OJ_ENDING_ADJECTIVES = new Set([
+    'золот', 'больш', 'молод', 'дорог', 'чуж', 'живой'
+  ]);
+
   // Minimum word length to consider for fragments
   private readonly MIN_WORD_LENGTH = 3;
 
   // Minimum phrase length (in words) to consider
   private readonly MIN_PHRASE_WORDS = 2;
-  private readonly MAX_PHRASE_WORDS = 4;
+  private readonly MAX_PHRASE_WORDS = 8;
 
   constructor() {
     this.cacheDir = path.join(process.cwd(), '.translation-cache');
@@ -182,7 +204,11 @@ class FragmentCache {
       stem = stem.slice(0, -2);
     }
 
-    // Apply masculine ending
+    // Apply masculine ending - check if this adjective uses "ой" instead of "ый"
+    const hasOjEnding = this.OJ_ENDING_ADJECTIVES.has(stem.toLowerCase());
+    if (hasOjEnding) {
+      return stem + 'ой';
+    }
     return stem + 'ый';
   }
 
@@ -201,12 +227,66 @@ class FragmentCache {
 
     // Apply correct ending
     if (gender === 'masculine') {
+      // Check if this adjective uses "ой" instead of "ый"
+      if (this.OJ_ENDING_ADJECTIVES.has(stem.toLowerCase())) {
+        return stem + 'ой';
+      }
       return stem + 'ый';
     } else if (gender === 'feminine') {
       return stem + 'ая';
     } else {
       return stem + 'ое';
     }
+  }
+
+  /**
+   * Check if two adjectives are the same word with different gender endings
+   */
+  private isSameAdjectiveDifferentGender(adj1: string, adj2: string): boolean {
+    // Get stems by removing gender endings
+    const getStem = (word: string): string => {
+      let stem = word;
+      if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ий') ||
+          stem.endsWith('ая') || stem.endsWith('яя') ||
+          stem.endsWith('ое') || stem.endsWith('ее') ||
+          stem.endsWith('ые') || stem.endsWith('ие')) {
+        stem = stem.slice(0, -2);
+      }
+      return stem.toLowerCase();
+    };
+
+    const stem1 = getStem(adj1);
+    const stem2 = getStem(adj2);
+
+    // Same stem = same adjective, different gender
+    return stem1 === stem2 && stem1.length > 0;
+  }
+
+  /**
+   * Infer gender of Russian noun from its ending
+   * Used as fallback when noun is not in NOUN_GENDERS dictionary
+   */
+  private inferGenderFromRussian(russianWord: string): 'masculine' | 'feminine' | 'neuter' {
+    const word = russianWord.toLowerCase().trim();
+
+    // Rule 1: -а or -я → feminine (рама, катушка, проволока, кирка)
+    if (word.endsWith('а') || word.endsWith('я')) {
+      return 'feminine';
+    }
+
+    // Rule 2: -о or -е → neuter (окно, поле, устройство)
+    if (word.endsWith('о') || word.endsWith('е')) {
+      return 'neuter';
+    }
+
+    // Rule 3: -ь → usually masculine, but can be feminine (кабель, корень, уголь)
+    // We default to masculine as it's more common
+    if (word.endsWith('ь')) {
+      return 'masculine';
+    }
+
+    // Rule 4: Everything else (consonant ending) → masculine (корпус, блок, вал, ключ)
+    return 'masculine';
   }
 
   /**
@@ -270,9 +350,19 @@ class FragmentCache {
           // Same translation - increase confidence
           existing.confidence = Math.min(100, existing.confidence + 3);
         } else {
-          // Different translation - conflict detected
-          existing.confidence = Math.max(30, existing.confidence - 10);
-          console.log(`[fragment-cache] Conflict: "${fragment}" → "${existing.translation}" vs "${translation}"`);
+          // Different translation - check if it's a gender variation of adjective
+          const isGenderVariation = existing.isAdjective && isAdjective &&
+            this.isSameAdjectiveDifferentGender(existing.translation, translation);
+
+          if (isGenderVariation) {
+            // Same adjective, different gender - NOT a conflict
+            // Keep the normalized (masculine) form
+            existing.confidence = Math.min(100, existing.confidence + 1);
+          } else {
+            // Real conflict - different translations
+            existing.confidence = Math.max(30, existing.confidence - 10);
+            console.log(`[fragment-cache] Conflict: "${fragment}" → "${existing.translation}" vs "${translation}"`);
+          }
         }
 
         // Update gender and isAdjective if not set
@@ -346,8 +436,22 @@ class FragmentCache {
         }
       }
 
+      // Fallback: if noun gender is still unknown, try to infer from Russian translation
+      if (!nounGender) {
+        // Look for the last word's translation (likely the noun)
+        const lastWord = words[words.length - 1];
+        const lastWordNormalized = this.normalizeText(lastWord);
+        const lastFragment = this.fragments.get(lastWordNormalized);
+
+        if (lastFragment && lastFragment.translation) {
+          nounGender = this.inferGenderFromRussian(lastFragment.translation);
+          console.log(`[fragment-cache] Inferred gender for "${lastWord}" → "${lastFragment.translation}": ${nounGender}`);
+        }
+      }
+
       // Second pass: translate with gender agreement
-      for (const word of words) {
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
         const wordNormalized = this.normalizeText(word);
         const fragment = this.fragments.get(wordNormalized);
 
@@ -357,6 +461,11 @@ class FragmentCache {
           // Apply gender agreement if this is an adjective and we know the noun gender
           if (fragment.isAdjective && nounGender) {
             translation = this.applyGenderAgreement(translation, nounGender);
+          }
+
+          // Lowercase all words except the first one
+          if (i > 0) {
+            translation = translation.charAt(0).toLowerCase() + translation.slice(1);
           }
 
           translatedWords.push(translation);
