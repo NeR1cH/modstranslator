@@ -7,7 +7,7 @@ import {
   rebuildJsonLang, rebuildDotLang, rebuildSnbt, rebuildToml, rebuildCfg,
   rebuildNestedJson, rebuildXml, rebuildPlainText, rebuildProperties, rebuildYaml,
 } from '@/lib/langParsers';
-import { translator } from '@/lib/translator';
+import { translateBatchThroughPipeline } from '@/lib/translationPipeline';
 import { LangEntry } from '@/types';
 import { TranslationReportBuilder } from '@/lib/translationReport';
 import { validateBase64Size } from '@/lib/security';
@@ -136,7 +136,8 @@ export async function POST(req: NextRequest) {
             // Collect report data for JAR
             for (const langFile of langFiles) {
               const values = langFile.entries.map(e => e.value);
-              const translated = await translator.translateBatch(values, { targetLang: 'RU' });
+              const results = await translateBatchThroughPipeline(values);
+              const translated = results.map(r => r.text);
 
               const entries = langFile.entries.map((entry, i) => ({
                 key: entry.key,
@@ -184,7 +185,8 @@ export async function POST(req: NextRequest) {
             });
 
             const values = entries.map(e => e.value);
-            const translated = await translator.translateBatch(values, { targetLang: 'RU' });
+            const results = await translateBatchThroughPipeline(values);
+            const translated = results.map(r => r.text);
             const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
             const result = rebuild(content, transMap);
 
