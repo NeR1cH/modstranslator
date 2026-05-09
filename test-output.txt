@@ -1,0 +1,1030 @@
+
+> minecraft-mod-translator@3.18.2 test
+> jest __tests__/lib/realWorldFragmentTest.test.ts
+
+  console.log
+    🔧 [Translator] Initializing with provider: hybrid
+
+      at new log (lib/translator.ts:29:13)
+
+  console.log
+    ✅ [Translator] OpenRouter configured with model: openai/gpt-oss-120b:free
+
+      at new log (lib/translator.ts:36:15)
+
+  console.log
+    
+    === REAL TRANSLATION TEST ===
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:64:13)
+
+  console.log
+    [fragment-cache] Loaded 0 fragments from disk
+
+      at FragmentCache.log [as loadFromDisk] (lib/fragmentCache.ts:132:17)
+
+  console.log
+    [cache] Loaded 2218 entries from disk
+
+      at Logger.log [as info] (lib/logger.ts:30:15)
+
+  console.log
+    [fragment-cache] Cleared all fragments
+
+      at FragmentCache.log [as clear] (lib/fragmentCache.ts:166:13)
+
+  console.log
+    Caches cleared
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:106:13)
+
+  console.log
+    ============================================================
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:109:13)
+
+  console.log
+    📚 PHASE 1: Learning from base translations
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:110:13)
+
+  console.log
+    ============================================================
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:111:13)
+
+  console.log
+    Translating base items:
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:113:13)
+
+  console.log
+      - Iron Sword
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Diamond Pickaxe
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Golden Helmet
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Copper Ingot
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Steel Plate
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Bronze Gear
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Titanium Wrench
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Aluminum Cable
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Platinum Coil
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Silver Wire
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Osmium Dust
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Uranium Chunk
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Reinforced Iron Casing
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Advanced Steel Frame
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Heavy Duty Copper Plate
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:114:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:115:13)
+
+  console.log
+    [pipeline] Batch: 15 texts, 15 need API translation
+
+      at log (lib/translationPipeline.ts:133:11)
+
+  console.log
+    💾 [Translator] Cache: 0/15 hits (15 need translation)
+
+      at UniversalTranslator.log [as translateBatch] (lib/translator.ts:107:13)
+
+  console.log
+    🚀 [Translator] Attempting batch translation with OpenRouter (15 texts)...
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:244:13)
+
+  console.log
+    📦 [OpenRouter] Batch translation: 15 texts
+
+      at OpenRouterTranslator.log [as translateBatch] (lib/openrouter.ts:111:13)
+
+  console.log
+    🤖 [OpenRouter] Translating with model: openai/gpt-oss-120b:free
+
+      at OpenRouterTranslator.log [as translate] (lib/openrouter.ts:41:13)
+
+  console.log
+    📝 [OpenRouter] Text length: 396 chars
+
+      at OpenRouterTranslator.log [as translate] (lib/openrouter.ts:42:13)
+
+  console.error
+    ❌ [OpenRouter] Translation error: ReferenceError: fetch is not defined
+        at OpenRouterTranslator.translate (C:\VSCODE PROJECTS\modstranslator\lib\openrouter.ts:49:24)
+        at OpenRouterTranslator.translate [as translateBatch] (C:\VSCODE PROJECTS\modstranslator\lib\openrouter.ts:132:35)
+        at UniversalTranslator.translateBatch [as translateBatchWithFallback] (C:\VSCODE PROJECTS\modstranslator\lib\translator.ts:246:50)
+        at UniversalTranslator.translateBatchWithFallback [as translateBatch] (C:\VSCODE PROJECTS\modstranslator\lib\translator.ts:123:41)
+        at translateBatch (C:\VSCODE PROJECTS\modstranslator\lib\translationPipeline.ts:136:39)
+        at Object.<anonymous> (C:\VSCODE PROJECTS\modstranslator\__tests__\lib\realWorldFragmentTest.test.ts:117:57)
+        at Promise.finally.completed (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+        at _callCircusTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+        at _runTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+        at C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+        at _runTestsForDescribeBlock (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+        at _runTestsForDescribeBlock (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+        at run (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+        at runAndTransformResultsToJestFormat (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+        at jestAdapter (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\runner.js:101:19)
+        at runTestInternal (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-runner\build\index.js:275:16)
+        at runTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-runner\build\index.js:343:7)
+
+    [0m [90m  95 |[39m       [36mreturn[39m translated[33m.[39mtrim()[33m;[39m
+     [90m  96 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m  97 |[39m       console[33m.[39merror([32m'❌ [OpenRouter] Translation error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m  98 |[39m       [36mthrow[39m error[33m;[39m
+     [90m  99 |[39m     }
+     [90m 100 |[39m   }[0m
+
+      at OpenRouterTranslator.error [as translate] (lib/openrouter.ts:97:15)
+      at OpenRouterTranslator.translate [as translateBatch] (lib/openrouter.ts:132:35)
+      at UniversalTranslator.translateBatch [as translateBatchWithFallback] (lib/translator.ts:246:50)
+      at UniversalTranslator.translateBatchWithFallback [as translateBatch] (lib/translator.ts:123:41)
+      at translateBatch (lib/translationPipeline.ts:136:39)
+      at Object.<anonymous> (__tests__/lib/realWorldFragmentTest.test.ts:117:57)
+
+  console.warn
+    ⚠️ [Translator] OpenRouter batch failed, falling back to DeepL
+
+    [0m [90m 252 |[39m       [36mreturn[39m results[33m;[39m
+     [90m 253 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+    [31m[1m>[22m[39m[90m 254 |[39m       console[33m.[39mwarn([32m'⚠️ [Translator] OpenRouter batch failed, falling back to DeepL'[39m)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 255 |[39m       console[33m.[39mwarn([32m`   Error: ${error.message}`[39m)[33m;[39m
+     [90m 256 |[39m
+     [90m 257 |[39m       [90m// Помечаем OpenRouter как недоступный[39m[0m
+
+      at UniversalTranslator.warn [as translateBatchWithFallback] (lib/translator.ts:254:15)
+      at UniversalTranslator.translateBatch (lib/translator.ts:123:30)
+      at translateBatchThroughPipeline (lib/translationPipeline.ts:136:22)
+      at Object.<anonymous> (__tests__/lib/realWorldFragmentTest.test.ts:117:22)
+
+  console.warn
+       Error: fetch is not defined
+
+    [0m [90m 253 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+     [90m 254 |[39m       console[33m.[39mwarn([32m'⚠️ [Translator] OpenRouter batch failed, falling back to DeepL'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 255 |[39m       console[33m.[39mwarn([32m`   Error: ${error.message}`[39m)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 256 |[39m
+     [90m 257 |[39m       [90m// Помечаем OpenRouter как недоступный[39m
+     [90m 258 |[39m       [36mthis[39m[33m.[39mopenrouterFailed [33m=[39m [36mtrue[39m[33m;[39m[0m
+
+      at UniversalTranslator.warn [as translateBatchWithFallback] (lib/translator.ts:255:15)
+      at UniversalTranslator.translateBatch (lib/translator.ts:123:30)
+      at translateBatchThroughPipeline (lib/translationPipeline.ts:136:22)
+      at Object.<anonymous> (__tests__/lib/realWorldFragmentTest.test.ts:117:22)
+
+  console.log
+    🔄 [Translator] Switching to DeepL for batch (15 texts)...
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:262:15)
+
+  console.log
+    ✅ [Translator] DeepL batch translation successful (15 results)
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:265:17)
+
+  console.log
+    [cache] Cached 15 new translations
+
+      at Logger.log [as info] (lib/logger.ts:30:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Sword"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Sword" → "Железный меч" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Iron" → "Железный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Sword" → "меч" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_sword
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Diamond Pickaxe"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Diamond Pickaxe" → "Алмазная кирка" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Diamond" → "Алмазный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Pickaxe" → "кирка" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): diamond_pickaxe
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Golden Helmet"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Golden Helmet" → "Золотой шлем" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Golden" → "Золотой" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Helmet" → "шлем" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): golden_helmet
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Copper Ingot"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Copper Ingot" → "Медный слиток" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Copper" → "Медный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Ingot" → "слиток" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): copper_ingot
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Steel Plate"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Steel Plate" → "Стальная пластина" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Steel" → "Стальный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Plate" → "пластина" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): steel_plate
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Bronze Gear"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Bronze Gear" → "Бронзовая шестерня" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Bronze" → "Бронзовый" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Gear" → "шестерня" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): bronze_gear
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 1 fragments from: "Titanium Wrench"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Titanium Wrench" → "Титановый гаечный ключ" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): titanium_wrench
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Aluminum Cable"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Aluminum Cable" → "Алюминиевый кабель" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Aluminum" → "Алюминиевый" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Cable" → "кабель" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): aluminum_cable
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Platinum Coil"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Platinum Coil" → "Платиновая катушка" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Platinum" → "Платиновый" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Coil" → "катушка" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): platinum_coil
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Silver Wire"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Silver Wire" → "Серебряная проволока" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Silver" → "Серебряный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Wire" → "проволока" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): silver_wire
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Osmium Dust"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Osmium Dust" → "Осмиевая пыль" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Osmium" → "Осмиевый" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Dust" → "пыль" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): osmium_dust
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Uranium Chunk"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Uranium Chunk" → "Урановый кусок" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Uranium" → "Урановый" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Chunk" → "кусок" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): uranium_chunk
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 7 fragments from: "Reinforced Iron Casing"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Reinforced Iron Casing" → "Усиленный железный корпус" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Reinforced" → "Усиленный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Casing" → "корпус" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Reinforced Iron" → "Усиленный железный" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Casing" → "железный корпус" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): reinforced_iron_casing
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 7 fragments from: "Advanced Steel Frame"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Advanced Steel Frame" → "Продвинутая стальная рама" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Advanced" → "Продвинутая" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Frame" → "рама" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Advanced Steel" → "Продвинутая стальная" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Steel Frame" → "стальная рама" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): advanced_steel_frame
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 6 fragments from: "Heavy Duty Copper Plate"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:308:13)
+
+  console.log
+    [fragment-cache] New fragment: "Heavy Duty Copper Plate" → "Сверхпрочная медная пластина" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Heavy Duty" → "Сверхпрочная медная" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Duty Copper" → "медная пластина" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Copper Plate" → "пластина" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Heavy Duty Copper" → "Сверхпрочная медная пластина" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Duty Copper Plate" → "медная пластина" (phrase, confidence: 65)
+
+      at log (lib/fragmentCache.ts:357:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): heavy_duty_copper_plate
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    Translations:
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:119:13)
+
+  console.log
+      Iron Sword → Железный меч (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Diamond Pickaxe → Алмазная кирка (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Golden Helmet → Золотой шлем (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Copper Ingot → Медный слиток (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Steel Plate → Стальная пластина (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Bronze Gear → Бронзовая шестерня (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Titanium Wrench → Титановый гаечный ключ (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Aluminum Cable → Алюминиевый кабель (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Platinum Coil → Платиновая катушка (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Silver Wire → Серебряная проволока (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Osmium Dust → Осмиевая пыль (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Uranium Chunk → Урановый кусок (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Reinforced Iron Casing → Усиленный железный корпус (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Advanced Steel Frame → Продвинутая стальная рама (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Heavy Duty Copper Plate → Сверхпрочная медная пластина (deepl)
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:121:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    
+    Fragments learned: 50 (26 words, 24 phrases)
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:125:13)
+
+  console.log
+    High confidence: 26
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:126:13)
+
+  console.log
+    ============================================================
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:129:13)
+
+  console.log
+    🔄 PHASE 2: Testing variations (different materials)
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:130:13)
+
+  console.log
+    ============================================================
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:131:13)
+
+  console.log
+    Translating variations:
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:133:13)
+
+  console.log
+      - Steel Sword
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Bronze Pickaxe
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Silver Helmet
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Brass Ingot
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Iron Plate
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Copper Gear
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Steel Wrench
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Copper Cable
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Iron Coil
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Gold Wire
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Iron Dust
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Copper Chunk
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Reinforced Steel Casing
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Advanced Iron Frame
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      - Heavy Duty Steel Plate
+
+      at log (__tests__/lib/realWorldFragmentTest.test.ts:134:38)
+          at Array.forEach (<anonymous>)
+
+  console.log
+
+
+      at Object.log (__tests__/lib/realWorldFragmentTest.test.ts:135:13)
+
+  console.log
+    [fragment-cache] Word-by-word: "Steel Sword" → "Стальный меч" (confidence: 81%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Bronze Pickaxe" → "Бронзовая кирка" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Silver Helmet" → "Серебряный шлем" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Iron Plate" → "Железная пластина" (confidence: 81%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Gear" → "Медная шестерня" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Cable" → "Медный кабель" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Iron Coil" → "Железная катушка" (confidence: 81%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Iron Dust" → "Железная пыль" (confidence: 81%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Chunk" → "Медный кусок" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Reinforced Steel Casing" → "Усиленный Стальный корпус" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Advanced Iron Frame" → "Продвинутая Железный рама" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:436:17)
+
+  console.log
+    [pipeline] Batch: 15 texts, 4 need API translation
+
+      at log (lib/translationPipeline.ts:133:11)
+
+  console.log
+    💾 [Translator] Cache: 0/4 hits (4 need translation)
+
+      at UniversalTranslator.log [as translateBatch] (lib/translator.ts:107:13)
+
+FAIL __tests__/lib/realWorldFragmentTest.test.ts
+  ● Real-world FragmentCache test › should handle unknown nouns and show gender agreement behavior
+
+    Unexpected API call for: Brass Ingot
+
+    [0m [90m 55 |[39m         [36mreturn[39m translations[text][33m;[39m
+     [90m 56 |[39m       }
+    [31m[1m>[22m[39m[90m 57 |[39m       [36mthrow[39m [36mnew[39m [33mError[39m([32m`Unexpected API call for: ${text}`[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 58 |[39m     }))[33m;[39m
+     [90m 59 |[39m   })
+     [90m 60 |[39m }))[33m;[39m[0m
+
+      at __tests__/lib/realWorldFragmentTest.test.ts:57:13
+          at Array.map (<anonymous>)
+      at map (__tests__/lib/realWorldFragmentTest.test.ts:53:34)
+      at UniversalTranslator.translateBatch (lib/translator.ts:121:50)
+      at translateBatch (lib/translationPipeline.ts:136:39)
+      at Object.<anonymous> (__tests__/lib/realWorldFragmentTest.test.ts:137:57)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.928 s, estimated 1 s
+Ran all test suites matching __tests__/lib/realWorldFragmentTest.test.ts.

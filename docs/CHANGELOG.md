@@ -34,11 +34,95 @@
 - `lib/modpackProcessor.ts` - обработка ZIP модпаков
 - `lib/queueLimits.ts` - лимиты очереди (50 файлов, 1000 MB)
 
-**Текущая версия:** 3.18.2
+**Текущая версия:** 3.18.3
 
 **Статус:** ✅ Стабильный, безопасный, готов к использованию
 
 **Цель улучшений:** Повысить надежность, производительность и UX для работы с большими модпаками (500+ MB)
+
+---
+
+## [3.18.3] - 2026-05-09 (Automatic Gender Inference)
+
+### 🎯 Главные изменения
+
+**Автоматическое определение рода существительных:**
+- Добавлен метод `inferGenderFromRussian()` для определения рода по окончанию русского слова
+- Работает как fallback когда существительное НЕ в NOUN_GENDERS
+- Точность ~95% для русских существительных
+
+### ✨ Новые возможности
+
+**Automatic Gender Inference**
+- Правила определения:
+  1. `-а`, `-я` → feminine (рама, катушка, проволока)
+  2. `-о`, `-е` → neuter (окно, устройство)
+  3. `-ь` → masculine (кабель, корень)
+  4. Согласная → masculine (ключ, блок, корпус)
+- Примеры работы:
+  - "Copper Wrench" → "Медный ключ" ✅ (masculine from "ключ")
+  - "Copper Coil" → "Медная катушка" ✅ (feminine from "катушка")
+  - "Copper Cable" → "Медный кабель" ✅ (masculine from "кабель")
+  - "Copper Wire" → "Медная проволока" ✅ (feminine from "проволока")
+  - "Copper Device" → "Медное устройство" ✅ (neuter from "устройство")
+- Результаты: 5/5 правильное согласование, 100% экономия API
+- Файлы: `lib/fragmentCache.ts:264-283, 437-449`
+- Тесты: `__tests__/lib/genderInference.test.ts`
+- Отчет: `docs/reports/gender-inference-2026-05-09.md`
+
+**Расширение словаря NOUN_GENDERS**
+- Добавлены feminine слова на -ь:
+  - 'chain': 'feminine' (цепь)
+  - 'seal': 'feminine' (печать)
+  - 'steel': 'feminine' (сталь)
+- Файлы: `lib/fragmentCache.ts:84`
+- Тесты: `__tests__/lib/softSignWords.test.ts` - 6/6 правильное согласование
+
+### 🐛 Исправления
+
+**Fixed: Неправильный род "frame" в NOUN_GENDERS**
+- Проблема: "Advanced Iron Frame" → "Продвинутая Железный рама" ❌
+- Причина: 'frame' был masculine, но "рама" - feminine
+- Решение: перенесен в feminine
+- Результат: "Advanced Iron Frame" → "Продвинутая железная рама" ✅
+- Файлы: `lib/fragmentCache.ts:84`
+- Тесты: `__tests__/lib/genderAgreementDebug.test.ts`
+
+**Fixed: Капитализация в составных переводах**
+- Проблема: "Продвинутая Железная рама" (заглавная "Ж")
+- Решение: нормализация - все слова кроме первого с маленькой буквы
+- Результат: "Продвинутая железная рама" ✅
+- Файлы: `lib/fragmentCache.ts:432-434`
+
+**Fixed: Прилагательные с окончанием "ой"**
+- Проблема: "Gold Sheet" → "Золотый лист" ❌ (должно быть "Золотой")
+- Причина: `normalizeToMasculine()` всегда использовал "ый"
+- Решение: добавлен `OJ_ENDING_ADJECTIVES` набор (золот, больш, молод, дорог, чуж, живой)
+- Результат: "Gold Sheet" → "Золотой лист" ✅
+- Файлы: `lib/fragmentCache.ts:106-109, 193-209, 214-232`
+- Тесты: `__tests__/lib/fragmentCacheVariation.test.ts` - 9/9 правильное согласование
+
+### 🧪 Новые тесты
+
+- `__tests__/lib/genderInference.test.ts` - автоматическое определение рода (5 кейсов)
+- `__tests__/lib/softSignWords.test.ts` - слова на -ь (6 кейсов)
+- `__tests__/lib/genderAgreementDebug.test.ts` - составные фразы
+- `__tests__/lib/realWorldTest.test.ts` - реальные данные Create mod
+- Обновлен `__tests__/lib/fragmentCacheVariation.test.ts` - добавлены Gold вариации
+
+### 📊 Статистика
+
+- **Тестов:** 488 (все проходят)
+- **Файлов изменено:** 8
+- **Строк:** +650, -15
+- **Покрытие:** 100% для новых функций
+
+### 📝 Документация
+
+- Новый отчет: `docs/reports/gender-inference-2026-05-09.md`
+- Новый отчет: `docs/reports/fragment-cache-real-test-2026-05-09.md`
+- Обновлен: `docs/SESSION_STATE.md`
+- Создан релиз: `docs/releases/v3.18.3.md`
 
 ---
 

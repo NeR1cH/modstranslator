@@ -1,7 +1,7 @@
-# Session State — modstranslator v3.18.2
+# Session State — modstranslator v3.18.3
 
 **Last Updated:** 2026-05-09  
-**Status:** Автоматическое определение рода реализовано
+**Status:** Release v3.18.3 готов
 
 ---
 

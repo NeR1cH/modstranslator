@@ -1,0 +1,624 @@
+
+> minecraft-mod-translator@3.18.2 test
+> jest __tests__/lib/softSignWords.test.ts
+
+  console.log
+    🔧 [Translator] Initializing with provider: hybrid
+
+      at new log (lib/translator.ts:29:13)
+
+  console.log
+    ✅ [Translator] OpenRouter configured with model: openai/gpt-oss-120b:free
+
+      at new log (lib/translator.ts:36:15)
+
+  console.log
+    
+    === WORDS ENDING WITH -Ь TEST ===
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:43:13)
+
+  console.log
+    [fragment-cache] Loaded 0 fragments from disk
+
+      at FragmentCache.log [as loadFromDisk] (lib/fragmentCache.ts:135:17)
+
+  console.log
+    [fragment-cache] Cleared all fragments
+
+      at FragmentCache.log [as clear] (lib/fragmentCache.ts:169:13)
+
+  console.log
+    Phase 1: Learning base translations
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:49:13)
+
+  console.log
+    [cache] Loaded 2218 entries from disk
+
+      at Logger.log [as info] (lib/logger.ts:30:15)
+
+  console.log
+    [pipeline] Batch: 8 texts, 8 need API translation
+
+      at log (lib/translationPipeline.ts:133:11)
+
+  console.log
+    💾 [Translator] Cache: 0/8 hits (8 need translation)
+
+      at UniversalTranslator.log [as translateBatch] (lib/translator.ts:107:13)
+
+  console.log
+    🚀 [Translator] Attempting batch translation with OpenRouter (8 texts)...
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:244:13)
+
+  console.log
+    📦 [OpenRouter] Batch translation: 8 texts
+
+      at OpenRouterTranslator.log [as translateBatch] (lib/openrouter.ts:111:13)
+
+  console.log
+    🤖 [OpenRouter] Translating with model: openai/gpt-oss-120b:free
+
+      at OpenRouterTranslator.log [as translate] (lib/openrouter.ts:41:13)
+
+  console.log
+    📝 [OpenRouter] Text length: 173 chars
+
+      at OpenRouterTranslator.log [as translate] (lib/openrouter.ts:42:13)
+
+  console.error
+    ❌ [OpenRouter] Translation error: ReferenceError: fetch is not defined
+        at OpenRouterTranslator.translate (C:\VSCODE PROJECTS\modstranslator\lib\openrouter.ts:49:24)
+        at OpenRouterTranslator.translate [as translateBatch] (C:\VSCODE PROJECTS\modstranslator\lib\openrouter.ts:132:35)
+        at UniversalTranslator.translateBatch [as translateBatchWithFallback] (C:\VSCODE PROJECTS\modstranslator\lib\translator.ts:246:50)
+        at UniversalTranslator.translateBatchWithFallback [as translateBatch] (C:\VSCODE PROJECTS\modstranslator\lib\translator.ts:123:41)
+        at translateBatch (C:\VSCODE PROJECTS\modstranslator\lib\translationPipeline.ts:136:39)
+        at Object.<anonymous> (C:\VSCODE PROJECTS\modstranslator\__tests__\lib\softSignWords.test.ts:61:57)
+        at Promise.finally.completed (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+        at _callCircusTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+        at _runTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+        at C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+        at _runTestsForDescribeBlock (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+        at _runTestsForDescribeBlock (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+        at run (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+        at runAndTransformResultsToJestFormat (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+        at jestAdapter (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-circus\build\runner.js:101:19)
+        at runTestInternal (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-runner\build\index.js:275:16)
+        at runTest (C:\VSCODE PROJECTS\modstranslator\node_modules\jest-runner\build\index.js:343:7)
+
+    [0m [90m  95 |[39m       [36mreturn[39m translated[33m.[39mtrim()[33m;[39m
+     [90m  96 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m  97 |[39m       console[33m.[39merror([32m'❌ [OpenRouter] Translation error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m  98 |[39m       [36mthrow[39m error[33m;[39m
+     [90m  99 |[39m     }
+     [90m 100 |[39m   }[0m
+
+      at OpenRouterTranslator.error [as translate] (lib/openrouter.ts:97:15)
+      at OpenRouterTranslator.translate [as translateBatch] (lib/openrouter.ts:132:35)
+      at UniversalTranslator.translateBatch [as translateBatchWithFallback] (lib/translator.ts:246:50)
+      at UniversalTranslator.translateBatchWithFallback [as translateBatch] (lib/translator.ts:123:41)
+      at translateBatch (lib/translationPipeline.ts:136:39)
+      at Object.<anonymous> (__tests__/lib/softSignWords.test.ts:61:57)
+
+  console.warn
+    ⚠️ [Translator] OpenRouter batch failed, falling back to DeepL
+
+    [0m [90m 252 |[39m       [36mreturn[39m results[33m;[39m
+     [90m 253 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+    [31m[1m>[22m[39m[90m 254 |[39m       console[33m.[39mwarn([32m'⚠️ [Translator] OpenRouter batch failed, falling back to DeepL'[39m)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 255 |[39m       console[33m.[39mwarn([32m`   Error: ${error.message}`[39m)[33m;[39m
+     [90m 256 |[39m
+     [90m 257 |[39m       [90m// Помечаем OpenRouter как недоступный[39m[0m
+
+      at UniversalTranslator.warn [as translateBatchWithFallback] (lib/translator.ts:254:15)
+      at UniversalTranslator.translateBatch (lib/translator.ts:123:30)
+      at translateBatchThroughPipeline (lib/translationPipeline.ts:136:22)
+      at Object.<anonymous> (__tests__/lib/softSignWords.test.ts:61:22)
+
+  console.warn
+       Error: fetch is not defined
+
+    [0m [90m 253 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+     [90m 254 |[39m       console[33m.[39mwarn([32m'⚠️ [Translator] OpenRouter batch failed, falling back to DeepL'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 255 |[39m       console[33m.[39mwarn([32m`   Error: ${error.message}`[39m)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 256 |[39m
+     [90m 257 |[39m       [90m// Помечаем OpenRouter как недоступный[39m
+     [90m 258 |[39m       [36mthis[39m[33m.[39mopenrouterFailed [33m=[39m [36mtrue[39m[33m;[39m[0m
+
+      at UniversalTranslator.warn [as translateBatchWithFallback] (lib/translator.ts:255:15)
+      at UniversalTranslator.translateBatch (lib/translator.ts:123:30)
+      at translateBatchThroughPipeline (lib/translationPipeline.ts:136:22)
+      at Object.<anonymous> (__tests__/lib/softSignWords.test.ts:61:22)
+
+  console.log
+    🔄 [Translator] Switching to DeepL for batch (8 texts)...
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:262:15)
+
+  console.log
+    ✅ [Translator] DeepL batch translation successful (8 results)
+
+      at UniversalTranslator.log [as translateBatchWithFallback] (lib/translator.ts:265:17)
+
+  console.log
+    [cache] Cached 8 new translations
+
+      at Logger.log [as info] (lib/logger.ts:30:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Door"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Door" → "Железная дверь" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Iron" → "Железный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Door" → "дверь" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_door
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Chain"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Chain" → "Железная цепь" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Chain" → "цепь" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_chain
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Seal"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Seal" → "Железная печать" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Seal" → "печать" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_seal
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Pane"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Pane" → "Железная панель" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Pane" → "панель" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_pane
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Steel Plate"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Steel Plate" → "Стальная пластина" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Steel" → "Стальный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Plate" → "пластина" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): steel_plate
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Gearshift"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Gearshift" → "Железный переключатель" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Gearshift" → "переключатель" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_gearshift
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Iron Mixer"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Iron Mixer" → "Железный смеситель" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Mixer" → "смеситель" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): iron_mixer
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    [fragment-cache] Learning 3 fragments from: "Copper Ore"
+
+      at FragmentCache.log [as learn] (lib/fragmentCache.ts:338:13)
+
+  console.log
+    [fragment-cache] New fragment: "Copper Ore" → "Медная руда" (phrase, confidence: 75)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Copper" → "Медный" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [fragment-cache] New fragment: "Ore" → "руда" (word, confidence: 80)
+
+      at log (lib/fragmentCache.ts:387:17)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    [template-cache] Learned (simple): copper_ore
+
+      at TemplateCache.log [as learn] (lib/templateCache.ts:55:15)
+
+  console.log
+    Base translations:
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:63:13)
+
+  console.log
+      Iron Door → Железная дверь (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Iron Chain → Железная цепь (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Iron Seal → Железная печать (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Iron Pane → Железная панель (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Steel Plate → Стальная пластина (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Iron Gearshift → Железный переключатель (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Iron Mixer → Железный смеситель (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+      Copper Ore → Медная руда (deepl)
+
+      at log (__tests__/lib/softSignWords.test.ts:65:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    
+    Fragments learned: 19
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:69:13)
+
+  console.log
+    Phase 2: Testing variations (Copper items)
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:72:13)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Door" → "Медная дверь" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:485:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Chain" → "Медная цепь" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:485:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Seal" → "Медная печать" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:485:17)
+
+  console.log
+    [fragment-cache] Word-by-word: "Copper Pane" → "Медная панель" (confidence: 80%)
+
+      at FragmentCache.log [as tryTranslate] (lib/fragmentCache.ts:485:17)
+
+  console.log
+    Translation results:
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:84:13)
+
+  console.log
+    ✅ Copper Door
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медная дверь
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медная дверь
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: fragment
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ✅ Copper Chain
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медная цепь
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медная цепь
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: fragment
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ✅ Copper Seal
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медная печать
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медная печать
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: fragment
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ✅ Copper Pane
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медная панель
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медная панель
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: fragment
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ❌ Copper Gearshift
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медный рычаг переключения передач
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медный переключатель
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: cache
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    ❌ Copper Mixer
+
+      at log (__tests__/lib/softSignWords.test.ts:104:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       → Медный миксер
+
+      at log (__tests__/lib/softSignWords.test.ts:105:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Expected: Медный смеситель
+
+      at log (__tests__/lib/softSignWords.test.ts:106:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       Source: cache
+
+      at log (__tests__/lib/softSignWords.test.ts:107:15)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    Results:
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:115:13)
+
+  console.log
+      Correct gender: 4/6 (66.7%)
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:116:13)
+
+  console.log
+      From FragmentCache: 4/6 (66.7%)
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:117:13)
+
+  console.log
+      Hit rate: 100.0%
+
+      at Object.log (__tests__/lib/softSignWords.test.ts:118:13)
+
+FAIL __tests__/lib/softSignWords.test.ts
+  ● Words ending with -ь test › should correctly handle gender for words ending with -ь
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 6
+    Received: 4
+
+    [0m [90m 120 |[39m     [90m// Assertions[39m
+     [90m 121 |[39m     expect(results2[33m.[39mlength)[33m.[39mtoBe(variationTexts[33m.[39mlength)[33m;[39m
+    [31m[1m>[22m[39m[90m 122 |[39m     expect(correctGender)[33m.[39mtoBe(results2[33m.[39mlength)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 123 |[39m     expect(fromFragment)[33m.[39mtoBe(results2[33m.[39mlength)[33m;[39m
+     [90m 124 |[39m   }[33m,[39m [35m300000[39m)[33m;[39m
+     [90m 125 |[39m })[33m;[39m[0m
+
+      at Object.toBe (__tests__/lib/softSignWords.test.ts:122:27)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.974 s, estimated 1 s
+Ran all test suites matching __tests__/lib/softSignWords.test.ts.
