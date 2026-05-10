@@ -3,7 +3,7 @@
  */
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 
 // Mock fetch globally for OpenRouter
 global.fetch = jest.fn();
@@ -30,7 +30,8 @@ describe('Gender agreement debug test', () => {
   it('should apply gender agreement to all adjectives', async () => {
     console.log('\n=== GENDER AGREEMENT DEBUG TEST ===\n');
 
-    const fragmentCache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    const fragmentCache = getFragmentCache('.translation-cache-test');
     fragmentCache.clear();
 
     // Phase 1: Learn base translations (twice for count >= 2)

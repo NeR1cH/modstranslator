@@ -4,7 +4,7 @@
  */
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 
 // Mock fetch globally for OpenRouter
 global.fetch = jest.fn();
@@ -47,7 +47,8 @@ describe('FragmentCache gender inference test', () => {
   it('should infer gender from Russian word endings and apply correct agreement', async () => {
     console.log('\n=== GENDER INFERENCE TEST ===\n');
 
-    const fragmentCache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    const fragmentCache = getFragmentCache('.translation-cache-test');
     fragmentCache.clear();
 
     // ========== PHASE 1: Learn base translations ==========

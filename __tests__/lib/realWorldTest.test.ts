@@ -4,7 +4,7 @@
  */
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 import { getTemplateCache } from '../../lib/templateCache';
 import { getTranslationCache } from '../../lib/translationCache';
 import fs from 'fs';
@@ -57,7 +57,8 @@ describe('Real-world translation test', () => {
     console.log('  ...\n');
 
     // Get caches
-    const fragmentCache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    const fragmentCache = getFragmentCache('.translation-cache-test');
     const templateCache = getTemplateCache();
     const translationCache = getTranslationCache();
 

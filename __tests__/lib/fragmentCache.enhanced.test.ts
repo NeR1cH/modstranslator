@@ -3,13 +3,14 @@
  * Tests for new pattern extraction (3-word patterns, expanded materials/items)
  */
 
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 
 describe('FragmentCache - Enhanced Patterns', () => {
   let cache: ReturnType<typeof getFragmentCache>;
 
   beforeEach(() => {
-    cache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    cache = getFragmentCache('.translation-cache-test');
     cache.clear(); // Clear cache before each test to avoid conflicts with disk cache
   });
 

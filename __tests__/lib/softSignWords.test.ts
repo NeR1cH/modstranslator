@@ -4,7 +4,7 @@
  */
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 import { getTranslationCache } from '../../lib/translationCache';
 
 // Mock fetch globally for OpenRouter
@@ -46,7 +46,8 @@ describe('Words ending with -ь test', () => {
   it('should correctly handle gender for words ending with -ь', async () => {
     console.log('\n=== WORDS ENDING WITH -Ь TEST ===\n');
 
-    const fragmentCache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    const fragmentCache = getFragmentCache('.translation-cache-test');
     const translationCache = getTranslationCache();
 
     fragmentCache.clear();

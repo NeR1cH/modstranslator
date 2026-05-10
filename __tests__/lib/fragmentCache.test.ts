@@ -6,7 +6,7 @@ import { getFragmentCache } from '@/lib/fragmentCache';
 jest.mock('fs');
 
 describe('fragmentCache', () => {
-  const mockCacheDir = path.join(process.cwd(), '.translation-cache');
+  const mockCacheDir = path.join(process.cwd(), '.translation-cache-test');
   const mockCacheFile = path.join(mockCacheDir, 'fragments-v1.json');
 
   beforeAll(() => {
@@ -23,7 +23,7 @@ describe('fragmentCache', () => {
 
   describe('getFragmentCache', () => {
     it('should create fragment cache instance', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       expect(cache).toBeDefined();
       expect(cache.tryTranslate).toBeDefined();
@@ -31,8 +31,8 @@ describe('fragmentCache', () => {
     });
 
     it('should return singleton instance', () => {
-      const cache1 = getFragmentCache();
-      const cache2 = getFragmentCache();
+      const cache1 = getFragmentCache(".translation-cache-test");
+      const cache2 = getFragmentCache(".translation-cache-test");
 
       expect(cache1).toBe(cache2);
     });
@@ -40,7 +40,7 @@ describe('fragmentCache', () => {
 
   describe('tryTranslate', () => {
     it('should return null for unknown text', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       const result = cache.tryTranslate('Unknown Text');
 
@@ -48,7 +48,7 @@ describe('fragmentCache', () => {
     });
 
     it('should return null for empty text', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       const result = cache.tryTranslate('');
 
@@ -56,7 +56,7 @@ describe('fragmentCache', () => {
     });
 
     it('should return null when confidence is too low', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Learn with low confidence
       cache.learn('Settings', 'Настройки');
@@ -69,7 +69,7 @@ describe('fragmentCache', () => {
     });
 
     it('should translate exact phrase match with high confidence', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Learn multiple times to increase confidence
       for (let i = 0; i < 10; i++) {
@@ -83,7 +83,7 @@ describe('fragmentCache', () => {
     });
 
     it('should translate word-by-word when all words are known', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Learn individual words
       for (let i = 0; i < 10; i++) {
@@ -98,7 +98,7 @@ describe('fragmentCache', () => {
     });
 
     it('should return null when not all words are known', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Learn only one word
       cache.learn('Enable', 'Включить');
@@ -112,20 +112,20 @@ describe('fragmentCache', () => {
 
   describe('learn', () => {
     it('should learn from translation pairs', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Should not throw
       expect(() => cache.learn('Settings', 'Настройки')).not.toThrow();
     });
 
     it('should handle empty strings', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       expect(() => cache.learn('', '')).not.toThrow();
     });
 
     it('should handle multiple learns', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       expect(() => {
         cache.learn('Enable', 'Включить');
@@ -135,7 +135,7 @@ describe('fragmentCache', () => {
     });
 
     it('should update existing fragment confidence on repeated learning', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       cache.learn('Enable', 'Включить');
       cache.learn('Enable', 'Включить');
@@ -145,7 +145,7 @@ describe('fragmentCache', () => {
     });
 
     it('should handle conflicting translations', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       cache.learn('Settings', 'Настройки');
       // Different translation for same fragment should lower confidence
@@ -155,21 +155,21 @@ describe('fragmentCache', () => {
     });
 
     it('should learn single word patterns', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       expect(() => cache.learn('Enable', 'Включить')).not.toThrow();
       expect(() => cache.learn('Disable', 'Отключить')).not.toThrow();
     });
 
     it('should learn phrases', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       expect(() => cache.learn('Armor Status', 'Статус брони')).not.toThrow();
       expect(() => cache.learn('Enable Notifications', 'Включить уведомления')).not.toThrow();
     });
 
     it('should extract individual words from phrases', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Should extract both "Enable" and "Notifications" as separate fragments
       expect(() => cache.learn('Enable Notifications', 'Включить уведомления')).not.toThrow();
@@ -223,7 +223,7 @@ describe('fragmentCache', () => {
 
   describe('getStats', () => {
     it('should return cache statistics', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       const stats = cache.getStats();
 
@@ -236,7 +236,7 @@ describe('fragmentCache', () => {
     });
 
     it('should count words and phrases separately', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       // Learn some known words (materials and nouns with known gender)
       for (let i = 0; i < 10; i++) {
@@ -253,7 +253,7 @@ describe('fragmentCache', () => {
 
   describe('flush', () => {
     it('should flush cache to disk', () => {
-      const cache = getFragmentCache();
+      const cache = getFragmentCache(".translation-cache-test");
 
       cache.learn('Diamond Sword', 'Алмазный меч');
 

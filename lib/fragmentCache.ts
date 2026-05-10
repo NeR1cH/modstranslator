@@ -118,8 +118,8 @@ class FragmentCache {
   private readonly MIN_PHRASE_WORDS = 2;
   private readonly MAX_PHRASE_WORDS = 8;
 
-  constructor() {
-    this.cacheDir = path.join(process.cwd(), '.translation-cache');
+  constructor(cacheDir?: string) {
+    this.cacheDir = cacheDir || path.join(process.cwd(), '.translation-cache');
     this.cacheFile = path.join(this.cacheDir, 'fragments-v1.json');
     this.loadFromDisk();
   }
@@ -633,11 +633,18 @@ class FragmentCache {
 // Singleton instance
 let instance: FragmentCache | null = null;
 
-export function getFragmentCache(): FragmentCache {
+export function getFragmentCache(cacheDir?: string): FragmentCache {
   if (!instance) {
-    instance = new FragmentCache();
+    instance = new FragmentCache(cacheDir);
   }
   return instance;
+}
+
+export function resetFragmentCache(): void {
+  if (instance) {
+    instance.flush();
+  }
+  instance = null;
 }
 
 export function flushFragmentCache(): void {

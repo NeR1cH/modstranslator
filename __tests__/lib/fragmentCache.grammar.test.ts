@@ -3,13 +3,14 @@
  * Tests for gender agreement between adjectives and nouns
  */
 
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 
 describe('FragmentCache - Grammar Agreement', () => {
   let cache: ReturnType<typeof getFragmentCache>;
 
   beforeEach(() => {
-    cache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    cache = getFragmentCache('.translation-cache-test');
   });
 
   describe('Masculine Gender Agreement', () => {

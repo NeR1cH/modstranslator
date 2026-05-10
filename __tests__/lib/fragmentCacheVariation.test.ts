@@ -4,7 +4,7 @@
  */
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
-import { getFragmentCache } from '../../lib/fragmentCache';
+import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 import { getTemplateCache } from '../../lib/templateCache';
 import { getTranslationCache } from '../../lib/translationCache';
 
@@ -50,7 +50,8 @@ describe('FragmentCache variation test', () => {
   it('should compose translations from learned fragments with correct gender agreement', async () => {
     console.log('\n=== FRAGMENT CACHE VARIATION TEST ===\n');
 
-    const fragmentCache = getFragmentCache();
+    resetFragmentCache(); // Reset singleton before creating test cache
+    const fragmentCache = getFragmentCache('.translation-cache-test');
     const templateCache = getTemplateCache();
     const translationCache = getTranslationCache();
 
