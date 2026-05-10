@@ -1,14 +1,13 @@
-```
 # TypeScript build info
 tsconfig.tsbuildinfo
-CLAUDE.md
-openrouterkey.txt
+
 # Dependencies
 node_modules/
 
 # Logs and temp files
 *.log
 *.tmp
+*.txt
 
 # Environment
 .env
@@ -38,6 +37,8 @@ modsfortranslate/
 test.json
 test_result.zip
 temp_test/
+test-*.json
+*.snbt
 
 # Test coverage
 coverage/
@@ -45,6 +46,7 @@ coverage/
 
 # Release notes (temporary files for GitHub releases)
 RELEASE_NOTES_*.md
+release-notes-*.txt
 
 # Python
 __pycache__/
@@ -82,4 +84,3 @@ out/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
