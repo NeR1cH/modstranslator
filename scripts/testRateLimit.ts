@@ -2,10 +2,11 @@
  * Test script to simulate OpenRouter rate limit (429) handling
  *
  * Expected behavior:
- * - First 2 requests return 429 with Retry-After: 5
+ * - First 2 requests return 429 with Retry-After: 2
  * - Third request succeeds
  * - Should NOT fallback to DeepL
  * - Should retry with OpenRouter
+ * - translationPipeline should handle RateLimitError and retry up to 5 times
  */
 
 // Load environment variables from .env file
@@ -40,7 +41,7 @@ global.fetch = (async (url: string | URL | Request, options?: any) => {
     console.log(`[MOCK FETCH] ❌ Returning 429 (rate limit)`);
 
     const headers = new Headers();
-    headers.set('Retry-After', '5');
+    headers.set('Retry-After', '2'); // Shorter wait for faster test
 
     return Promise.resolve({
       ok: false,
@@ -161,10 +162,11 @@ async function runTest() {
       });
     }
 
-    if (elapsed >= 10000) {
-      console.log(`✅ Elapsed time >= 10s (waited for retries)`);
+    // With 2s retry-after and 2 retries, expect at least 4s elapsed
+    if (elapsed >= 4000) {
+      console.log(`✅ Elapsed time >= 4s (waited for retries)`);
     } else {
-      console.log(`⚠️ Elapsed time < 10s (${elapsed}ms) - retries may not have waited full duration`);
+      console.log(`⚠️ Elapsed time < 4s (${elapsed}ms) - retries may not have waited full duration`);
     }
 
     console.log('\n=== RATE LIMIT TEST END ===\n');

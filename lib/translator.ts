@@ -194,6 +194,12 @@ class UniversalTranslator {
       console.log('✅ [Translator] OpenRouter translation successful');
       return result;
     } catch (error: any) {
+      // Если это RateLimitError — пробрасываем выше (не fallback)
+      if (error.name === 'RateLimitError') {
+        console.error('❌ [Translator] OpenRouter rate limit exhausted, rethrowing');
+        throw error;
+      }
+
       console.warn('⚠️ [Translator] OpenRouter failed, falling back to DeepL');
       console.warn(`   Error: ${error.message}`);
 
@@ -251,6 +257,12 @@ class UniversalTranslator {
       console.log(`✅ [Translator] OpenRouter batch translation successful (${results.length} results)`);
       return results;
     } catch (error: any) {
+      // Если это RateLimitError — пробрасываем выше (не fallback)
+      if (error.name === 'RateLimitError') {
+        console.error('❌ [Translator] OpenRouter rate limit exhausted, rethrowing');
+        throw error;
+      }
+
       console.warn('⚠️ [Translator] OpenRouter batch failed, falling back to DeepL');
       console.warn(`   Error: ${error.message}`);
 

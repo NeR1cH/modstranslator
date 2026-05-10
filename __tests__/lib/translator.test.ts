@@ -4,12 +4,22 @@
 
 import { translator } from '../../lib/translator';
 import { translateTexts as deeplTranslate } from '../../lib/deepl';
-import { openrouterTranslator } from '../../lib/openrouter';
+import { openrouterTranslator, RateLimitError } from '../../lib/openrouter';
 import { getTranslationCache } from '../../lib/translationCache';
 
 // Mock dependencies
 jest.mock('../../lib/deepl');
-jest.mock('../../lib/openrouter');
+jest.mock('../../lib/openrouter', () => {
+  const actual = jest.requireActual('../../lib/openrouter');
+  return {
+    ...actual,
+    openrouterTranslator: {
+      translate: jest.fn(),
+      translateBatch: jest.fn(),
+      getModel: jest.fn()
+    }
+  };
+});
 jest.mock('../../lib/translationCache');
 
 describe('UniversalTranslator', () => {
@@ -240,6 +250,84 @@ describe('UniversalTranslator', () => {
       expect(result).toBe('Алмазный меч');
       expect(deeplTranslate).toHaveBeenCalled();
       expect(openrouterTranslator.translate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('RateLimitError handling', () => {
+    beforeEach(() => {
+      // Reset translator state and clear all mocks
+      translator.resetFailedState();
+      jest.clearAllMocks();
+
+      // Ensure cache returns null for these specific tests
+      mockCache.get.mockReturnValue(null);
+      mockCache.getMany.mockReturnValue(new Map());
+    });
+
+    it('should rethrow RateLimitError without falling back to DeepL (single)', async () => {
+      const rateLimitError = new RateLimitError('Rate limit exceeded', 60);
+
+      // Verify error has correct name
+      expect(rateLimitError.name).toBe('RateLimitError');
+
+      (openrouterTranslator.translate as jest.Mock).mockRejectedValueOnce(rateLimitError);
+
+      await expect(translator.translate('Test Unique String 1')).rejects.toThrow('Rate limit exceeded');
+
+      // Verify OpenRouter was called
+      expect(openrouterTranslator.translate).toHaveBeenCalledTimes(1);
+
+      // Verify DeepL was NOT called
+      expect(deeplTranslate).not.toHaveBeenCalled();
+    });
+
+    it('should rethrow RateLimitError without falling back to DeepL (batch)', async () => {
+      const rateLimitError = new RateLimitError('Rate limit exceeded', 60);
+
+      // Verify error has correct name
+      expect(rateLimitError.name).toBe('RateLimitError');
+
+      (openrouterTranslator.translateBatch as jest.Mock).mockRejectedValueOnce(rateLimitError);
+
+      await expect(translator.translateBatch(['Test Unique String 2', 'Test Unique String 3'])).rejects.toThrow('Rate limit exceeded');
+
+      // Verify OpenRouter was called
+      expect(openrouterTranslator.translateBatch).toHaveBeenCalledTimes(1);
+
+      // Verify DeepL was NOT called
+      expect(deeplTranslate).not.toHaveBeenCalled();
+    });
+
+    it('should fallback to DeepL on non-RateLimitError (single)', async () => {
+      const networkError = new Error('Network error');
+
+      (openrouterTranslator.translate as jest.Mock).mockRejectedValueOnce(networkError);
+      (deeplTranslate as jest.Mock).mockResolvedValueOnce(['Алмазный меч']);
+
+      const result = await translator.translate('Test Unique String 4');
+
+      expect(result).toBe('Алмазный меч');
+      expect(openrouterTranslator.translate).toHaveBeenCalledTimes(1);
+      expect(deeplTranslate).toHaveBeenCalledTimes(1);
+
+      // Reset for next test
+      translator.resetFailedState();
+    });
+
+    it('should fallback to DeepL on non-RateLimitError (batch)', async () => {
+      const networkError = new Error('Network error');
+
+      (openrouterTranslator.translateBatch as jest.Mock).mockRejectedValueOnce(networkError);
+      (deeplTranslate as jest.Mock).mockResolvedValueOnce(['Алмазный меч', 'Железная кирка']);
+
+      const results = await translator.translateBatch(['Test Unique String 5', 'Test Unique String 6']);
+
+      expect(results).toEqual(['Алмазный меч', 'Железная кирка']);
+      expect(openrouterTranslator.translateBatch).toHaveBeenCalledTimes(1);
+      expect(deeplTranslate).toHaveBeenCalledTimes(1);
+
+      // Reset for next test
+      translator.resetFailedState();
     });
   });
 });

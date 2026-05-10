@@ -144,48 +144,67 @@ export async function translateBatchThroughPipeline(
   console.log(`[pipeline] Batch: ${texts.length} texts, ${uncachedTexts.length} need API translation`);
 
   // Step 3: Translate uncached texts in batch via API with rate limit handling
-  try {
-    const translated = await translator.translateBatch(uncachedTexts, { targetLang: 'RU' });
+  const MAX_RATE_LIMIT_RETRIES = 5;
+  let rateLimitRetryCount = 0;
 
-    // Step 4: Learn from new translations
-    for (let i = 0; i < uncachedTexts.length; i++) {
-      const original = uncachedTexts[i];
-      const translation = translated[i];
-      const originalIndex = uncachedIndices[i];
-      const textId = generateTextId(original, originalIndex);
+  while (rateLimitRetryCount <= MAX_RATE_LIMIT_RETRIES) {
+    try {
+      const translated = await translator.translateBatch(uncachedTexts, { targetLang: 'RU' });
 
-      // Save to cache
-      translationCache.set(original, translation);
+      // Step 4: Learn from new translations
+      for (let i = 0; i < uncachedTexts.length; i++) {
+        const original = uncachedTexts[i];
+        const translation = translated[i];
+        const originalIndex = uncachedIndices[i];
+        const textId = generateTextId(original, originalIndex);
 
-      // Learn fragments and templates
-      fragmentCache.learn(original, translation);
-      templateCache.learn(original, translation);
+        // Save to cache
+        translationCache.set(original, translation);
 
-      // Mark as completed
-      progressTracker.markCompleted(textId);
+        // Learn fragments and templates
+        fragmentCache.learn(original, translation);
+        templateCache.learn(original, translation);
 
-      // Store result
-      const provider = translator.getProvider();
-      const source = provider === 'openrouter' ? 'openrouter' : 'deepl';
-      results[uncachedIndices[i]] = { text: translation, source };
-    }
+        // Mark as completed
+        progressTracker.markCompleted(textId);
 
-    // All completed successfully
-    progressTracker.clear();
-
-  } catch (error) {
-    // Handle rate limit error
-    if (error instanceof RateLimitError) {
-      console.error(`[pipeline] Rate limit error: ${error.message}`);
-      const message = progressTracker.getResumeMessage();
-      if (message) {
-        console.log(`[pipeline] ${message}`);
+        // Store result
+        const provider = translator.getProvider();
+        const source = provider === 'openrouter' ? 'openrouter' : 'deepl';
+        results[uncachedIndices[i]] = { text: translation, source };
       }
-      throw error; // Re-throw to notify caller
-    }
 
-    // Other errors
-    throw error;
+      // All completed successfully
+      progressTracker.clear();
+      break; // Success, exit retry loop
+
+    } catch (error) {
+      // Handle rate limit error with retry
+      if (error instanceof RateLimitError) {
+        rateLimitRetryCount++;
+
+        if (rateLimitRetryCount > MAX_RATE_LIMIT_RETRIES) {
+          console.error(`[pipeline] ❌ Rate limit persists after ${MAX_RATE_LIMIT_RETRIES} retries, stopping translation`);
+          const message = progressTracker.getResumeMessage();
+          if (message) {
+            console.log(`[pipeline] ${message}`);
+          }
+          throw new Error(`OpenRouter rate limit exceeded. Tried ${MAX_RATE_LIMIT_RETRIES} times. Please wait and try again later.`);
+        }
+
+        const waitTime = error.retryAfter || 60;
+        console.warn(`[pipeline] ⏳ OpenRouter rate limit. Waiting ${waitTime}s (attempt ${rateLimitRetryCount}/${MAX_RATE_LIMIT_RETRIES})...`);
+
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+
+        console.log(`[pipeline] 🔄 Retrying translation after ${waitTime}s wait...`);
+        continue; // Retry the translation
+      }
+
+      // Other errors
+      throw error;
+    }
   }
 
   return results;

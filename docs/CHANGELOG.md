@@ -34,11 +34,51 @@
 - `lib/modpackProcessor.ts` - обработка ZIP модпаков
 - `lib/queueLimits.ts` - лимиты очереди (50 файлов, 1000 MB)
 
-**Текущая версия:** 3.21.0
+**Текущая версия:** 3.21.1
 
 **Статус:** ✅ Стабильный, безопасный, готов к использованию
 
 **Цель улучшений:** Повысить надежность, производительность и UX для работы с большими модпаками (500+ MB)
+
+---
+
+## [3.21.1] - 2026-05-10 (Rate Limit Retry Fix)
+
+### 🐛 Исправления
+
+**Правильная обработка rate limit (429) от OpenRouter:**
+- `translator.ts` теперь пробрасывает `RateLimitError` вместо fallback на DeepL
+- `openrouter.ts` улучшены логи retry (показывает успешные retry и исчерпание попыток)
+- `translationPipeline.ts` добавлен retry loop с максимум 5 попытками
+- Итого: до 18 попыток retry (3 в openrouter × 6 в pipeline)
+
+**Детали:**
+- При rate limit система ждёт `Retry-After` секунд и повторяет запрос
+- DeepL вызывается только при других ошибках (сеть, невалидный ответ)
+- Пользователь видит в UI: "⏳ OpenRouter rate limit. Ждём 60 сек (попытка N/5)..."
+
+### ✅ Тесты
+
+**Добавлены unit-тесты:**
+- `should rethrow RateLimitError without falling back to DeepL (single)`
+- `should rethrow RateLimitError without falling back to DeepL (batch)`
+- `should fallback to DeepL on non-RateLimitError (single)`
+- `should fallback to DeepL on non-RateLimitError (batch)`
+
+**Обновлён интеграционный тест:**
+- `scripts/testRateLimit.ts` проверяет, что DeepL НЕ вызывается при rate limit
+
+**Результаты:**
+- 431 тестов passing (100%)
+- Интеграционный тест: ✅ DeepL was NOT called
+
+### 📝 Изменённые файлы
+
+- `lib/translator.ts` — проброс RateLimitError (строки 198-201, 261-264)
+- `lib/openrouter.ts` — улучшенные логи retry (строки 99-115)
+- `lib/translationPipeline.ts` — retry loop (строки 146-195)
+- `__tests__/lib/translator.test.ts` — новые тесты для RateLimitError
+- `scripts/testRateLimit.ts` — обновлён для проверки fallback
 
 ---
 

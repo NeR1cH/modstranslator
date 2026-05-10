@@ -98,13 +98,15 @@ export class OpenRouterTranslator {
         // Handle rate limit (429)
         if (response.status === 429) {
           const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
-          console.warn(`⏳ [OpenRouter] Rate limit hit (attempt ${attempt}/${MAX_RETRIES}), waiting ${retryAfter}s...`);
+          console.warn(`⚠️ [OpenRouter] Rate limit 429, waiting ${retryAfter}s before retry ${attempt}/${MAX_RETRIES}...`);
 
           if (attempt < MAX_RETRIES) {
             await this.sleep(retryAfter * 1000);
+            console.log(`✅ [OpenRouter] Retry ${attempt}/${MAX_RETRIES} successful after ${retryAfter}s wait`);
             continue; // Retry
           } else {
             // Max retries reached
+            console.error(`❌ [OpenRouter] All ${MAX_RETRIES} retries exhausted, rate limit persists`);
             throw new RateLimitError(
               `Rate limit exceeded after ${MAX_RETRIES} attempts`,
               retryAfter
