@@ -7,6 +7,7 @@ import {
 } from '@/lib/jarProcessor';
 import * as translationPipeline from '@/lib/translationPipeline';
 import * as langParsers from '@/lib/langParsers';
+import { resetFragmentCache } from '@/lib/fragmentCache';
 
 // Mock dependencies
 jest.mock('@/lib/translationPipeline');
@@ -14,6 +15,7 @@ jest.mock('@/lib/langParsers');
 
 describe('jarProcessor', () => {
   beforeEach(() => {
+    resetFragmentCache(); // Reset singleton to use test cache
     jest.clearAllMocks();
   });
 

@@ -4,6 +4,7 @@
 
 import { translateThroughPipeline, getPipelineStats } from '../../lib/translationPipeline';
 import { getTemplateCache } from '../../lib/templateCache';
+import { resetFragmentCache } from '../../lib/fragmentCache';
 
 // Mock deepl module
 jest.mock('../../lib/deepl', () => ({
@@ -19,6 +20,9 @@ jest.mock('../../lib/deepl', () => ({
 
 describe('TranslationPipeline', () => {
   beforeEach(() => {
+    // Reset fragment cache singleton to use test cache
+    resetFragmentCache();
+
     // Clear all caches before each test
     jest.clearAllMocks();
 

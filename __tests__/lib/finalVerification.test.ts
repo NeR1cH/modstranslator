@@ -5,6 +5,7 @@
 
 import { translateThroughPipeline } from '../../lib/translationPipeline';
 import { getTemplateCache } from '../../lib/templateCache';
+import { resetFragmentCache } from '../../lib/fragmentCache';
 
 // Mock deepl module
 jest.mock('../../lib/deepl', () => ({
@@ -19,6 +20,7 @@ jest.mock('../../lib/deepl', () => ({
 
 describe('Final Verification - Template System', () => {
   beforeEach(() => {
+    resetFragmentCache(); // Reset singleton to use test cache
     jest.clearAllMocks();
   });
 

@@ -119,7 +119,12 @@ class FragmentCache {
   private readonly MAX_PHRASE_WORDS = 8;
 
   constructor(cacheDir?: string) {
-    this.cacheDir = cacheDir || path.join(process.cwd(), '.translation-cache');
+    // Use test cache directory when running tests
+    const defaultDir = process.env.NODE_ENV === 'test'
+      ? path.join(process.cwd(), '.translation-cache-test')
+      : path.join(process.cwd(), '.translation-cache');
+
+    this.cacheDir = cacheDir || defaultDir;
     this.cacheFile = path.join(this.cacheDir, 'fragments-v1.json');
     this.loadFromDisk();
   }
