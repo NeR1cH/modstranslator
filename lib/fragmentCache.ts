@@ -216,6 +216,7 @@ class FragmentCache {
    * Apply gender agreement to adjective
    */
   private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter'): string {
+    const isCapitalized = adjective.charAt(0) === adjective.charAt(0).toUpperCase();
     let stem = adjective;
 
     // Remove existing endings
@@ -226,17 +227,26 @@ class FragmentCache {
     }
 
     // Apply correct ending
+    let result: string;
     if (gender === 'masculine') {
       // Check if this adjective uses "ой" instead of "ый"
       if (this.OJ_ENDING_ADJECTIVES.has(stem.toLowerCase())) {
-        return stem + 'ой';
+        result = stem + 'ой';
+      } else {
+        result = stem + 'ый';
       }
-      return stem + 'ый';
     } else if (gender === 'feminine') {
-      return stem + 'ая';
+      result = stem + 'ая';
     } else {
-      return stem + 'ое';
+      result = stem + 'ое';
     }
+
+    // Preserve capitalization
+    if (isCapitalized && result.charAt(0) === result.charAt(0).toLowerCase()) {
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+    }
+
+    return result;
   }
 
   /**
@@ -464,8 +474,12 @@ class FragmentCache {
             translation = this.applyGenderAgreement(translation, nounGender);
           }
 
-          // Lowercase all words except the first one
-          if (i > 0) {
+          // Capitalize first word, lowercase others
+          if (i === 0) {
+            // First word - ensure it starts with uppercase
+            translation = translation.charAt(0).toUpperCase() + translation.slice(1);
+          } else {
+            // Other words - ensure they start with lowercase
             translation = translation.charAt(0).toLowerCase() + translation.slice(1);
           }
 
