@@ -80,6 +80,11 @@ class FragmentCache {
       if (data.version === 'v1' && data.fragments) {
         Object.entries(data.fragments).forEach(([key, fragment]) => {
           this.fragments.set(key, fragment);
+
+          // Copy gender info to nounGenders Map for non-adjectives
+          if (fragment.gender && !fragment.isAdjective) {
+            this.nounGenders.set(fragment.text.toLowerCase(), fragment.gender);
+          }
         });
         console.log(`[fragment-cache] Loaded ${this.fragments.size} fragments from disk`);
       }

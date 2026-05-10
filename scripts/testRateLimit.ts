@@ -107,8 +107,11 @@ async function runTest() {
   try {
     const startTime = Date.now();
 
-    // Translate through pipeline
-    const results = await translateBatchThroughPipeline(testStrings, 'RU');
+    // Translate through pipeline with progress tracking
+    const results = await translateBatchThroughPipeline(testStrings, 'RU', {
+      fileName: 'test-rate-limit.json',
+      fileContent: JSON.stringify(testStrings)
+    });
 
     const elapsed = Date.now() - startTime;
 

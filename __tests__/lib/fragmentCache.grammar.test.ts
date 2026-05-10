@@ -141,7 +141,8 @@ describe('FragmentCache - Grammar Agreement', () => {
 
       if (result3) {
         // Both "очищенный" and "стальной" should be masculine (слиток - masculine)
-        expect(result3).toMatch(/ый.*ый слиток|ой.*ой слиток/i);
+        // Accept any combination of masculine endings: -ый, -ой, -ий
+        expect(result3).toMatch(/(ый|ой|ий).*(ый|ой|ий) слиток/i);
         expect(result3).not.toMatch(/ая.*слиток/i);
       }
     });
