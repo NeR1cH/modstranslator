@@ -34,11 +34,136 @@
 - `lib/modpackProcessor.ts` - обработка ZIP модпаков
 - `lib/queueLimits.ts` - лимиты очереди (50 файлов, 1000 MB)
 
-**Текущая версия:** 3.19.1
+**Текущая версия:** 3.20.0
 
 **Статус:** ✅ Стабильный, безопасный, готов к использованию
 
 **Цель улучшений:** Повысить надежность, производительность и UX для работы с большими модпаками (500+ MB)
+
+---
+
+## [3.20.0] - 2026-05-10 (Translation Resume & FragmentCache Quality)
+
+### 🎯 Главные изменения
+
+**Translation Resume System:**
+- Автоматическое возобновление перевода после rate limit ошибок
+- Сохранение прогресса в `.translation-cache/progress.json`
+- Идентификация файлов по хешу содержимого
+- Автоматическое истечение через 24 часа
+
+**OpenRouter Retry Logic:**
+- 3 попытки повтора при ошибках
+- Поддержка Retry-After header для rate limits
+- Обработка сетевых ошибок с экспоненциальной задержкой
+- RateLimitError класс для правильной обработки
+
+**FragmentCache Quality Improvements:**
+- ИСПРАВЛЕНИЕ 1: Удаление пунктуации из переводов
+- ИСПРАВЛЕНИЕ 2: Фильтрация неизвестных слов (только materials/nouns)
+- ИСПРАВЛЕНИЕ 3: Минимум 2 вхождения для надёжности
+
+### ✨ Новые возможности
+
+**lib/progressTracker.ts** (NEW - 160 строк)
+- Отслеживание прогресса перевода
+- Методы: start(), markCompleted(), isCompleted(), getProgress(), clear()
+- Персистентность в `.translation-cache/progress.json`
+- Автоматическое возобновление при повторном запуске
+
+**Тестовые скрипты:**
+- `scripts/testGender.ts` - тестирование согласования по роду
+- `scripts/analyzeFragments.ts` - анализ confidence уровней
+- `scripts/showFragments.ts` - просмотр текущего состояния кэша
+- `scripts/directTranslate.ts` - прямой перевод без API
+
+### 🔧 Улучшения
+
+**lib/openrouter.ts**
+- Добавлен RateLimitError класс
+- Retry logic с 3 попытками
+- Поддержка Retry-After header
+- Вложенный try-catch для fetch ошибок
+
+**lib/translationPipeline.ts**
+- Интеграция ProgressTracker
+- Параметры fileName и fileContent
+- Автоматическая пометка завершённых элементов
+- Обработка RateLimitError
+
+**lib/fragmentCache.ts**
+- Удаление пунктуации перед сохранением
+- Фильтрация неизвестных слов (tree, fluid, speed, etc.)
+- Требование минимум 2 вхождений для использования
+
+**app/api/translate-stream/route.ts**
+- Обработка RateLimitError
+- Отправка rate_limit события на frontend
+- Сообщение с инструкциями по возобновлению
+
+### 🧪 Тестирование
+
+**Новые тесты:**
+- `__tests__/lib/progressTracker.test.ts` - 17 новых тестов
+- Обновлены тесты OpenRouter для retry logic
+- Обновлены тесты FragmentCache для известных слов
+
+**Результаты тестирования:**
+- ✅ 418/418 тестов проходят (+17 новых)
+- ✅ Кэш очищен: 2,428 → 14 фрагментов (99.4% reduction)
+- ✅ 100% cache hit rate при повторном переводе
+- ✅ 13/14 фрагментов имеют ≥80% confidence
+- ✅ Нет проблемных слов в кэше
+
+### 📊 Статистика
+
+**Качество кэша:**
+```
+До исправлений:  2,428 фрагментов (510KB)
+После исправлений: 14 фрагментов
+Сохранённые слова: brass, copper, gold, leather, steel, stone, wooden,
+                   axe, boots, casing, cogwheel, gear, ingot, ore
+```
+
+**Translation sources (create111.snbt):**
+```
+Первый запуск:  3 cache + 17 OpenRouter = 20 total
+Второй запуск: 20 cache + 0 API = 20 total (100% cache hit)
+```
+
+### 📁 Новые файлы
+
+- `lib/progressTracker.ts` - система отслеживания прогресса
+- `__tests__/lib/progressTracker.test.ts` - тесты ProgressTracker
+- `scripts/testGender.ts` - тестирование gender agreement
+- `scripts/analyzeFragments.ts` - анализ фрагментов
+- `scripts/showFragments.ts` - просмотр кэша
+- `scripts/directTranslate.ts` - прямой перевод
+
+### 🔄 Изменённые файлы
+
+- `lib/openrouter.ts` - retry logic и RateLimitError
+- `lib/translationPipeline.ts` - интеграция ProgressTracker
+- `lib/fragmentCache.ts` - 3 исправления качества
+- `app/api/translate-stream/route.ts` - обработка rate limit
+- `__tests__/lib/openrouter.test.ts` - обновлены для retry
+- `__tests__/lib/fragmentCache.test.ts` - обновлены для known words
+
+### 🐛 Известные проблемы
+
+**Минорные проблемы перевода:**
+- "ore" → "руду" (винительный падеж вместо именительного "руда")
+- Требует морфологического анализа для исправления
+- Будет исправлено автоматически при накоплении данных
+- Не блокирует релиз
+
+### 📈 Метрики
+
+- **Строк кода добавлено:** ~500
+- **Тестов добавлено:** 17
+- **Покрытие тестами:** 75% statements, 82% functions
+- **Улучшение качества кэша:** 99.4% reduction
+- **Cache hit rate:** 100% при повторе
 
 ---
 
