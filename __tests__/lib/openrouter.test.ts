@@ -113,22 +113,46 @@ describe('OpenRouterTranslator', () => {
     });
 
     it('should throw error on API failure', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({ error: { message: 'Internal Server Error' } })
-      });
+      // Mock all 3 retry attempts to return error
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          json: async () => ({ error: { message: 'Internal Server Error' } })
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          json: async () => ({ error: { message: 'Internal Server Error' } })
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          json: async () => ({ error: { message: 'Internal Server Error' } })
+        });
 
       const translator = new OpenRouterTranslator();
       await expect(translator.translate('test')).rejects.toThrow('OpenRouter API error');
     });
 
     it('should handle 402 insufficient credits error', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 402,
-        json: async () => ({ error: { message: 'Insufficient credits' } })
-      });
+      // Mock all 3 retry attempts to return error
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 402,
+          json: async () => ({ error: { message: 'Insufficient credits' } })
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 402,
+          json: async () => ({ error: { message: 'Insufficient credits' } })
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 402,
+          json: async () => ({ error: { message: 'Insufficient credits' } })
+        });
 
       const translator = new OpenRouterTranslator();
       await expect(translator.translate('test')).rejects.toThrow('Insufficient credits');

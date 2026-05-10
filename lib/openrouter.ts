@@ -9,6 +9,16 @@ interface TranslateOptions {
   model?: string;
 }
 
+export class RateLimitError extends Error {
+  constructor(
+    message: string,
+    public retryAfter: number
+  ) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
 export class OpenRouterTranslator {
   private apiKey: string;
   private model: string;
@@ -22,7 +32,7 @@ export class OpenRouterTranslator {
   }
 
   /**
-   * Translate single text
+   * Translate single text with retry logic for rate limits
    */
   async translate(
     text: string,
@@ -43,60 +53,120 @@ export class OpenRouterTranslator {
 
     const systemPrompt = this.buildSystemPrompt(targetLang, preserveFormatting);
 
-    try {
-      const startTime = Date.now();
+    // Retry logic for rate limits
+    const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
 
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/NeR1cH/modstranslator',
-          'X-Title': 'MOD_TRANSLATOR'
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: text }
-          ]
-        })
-      });
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const startTime = Date.now();
 
-      const elapsed = Date.now() - startTime;
+        let response;
+        try {
+          response = await fetch(this.endpoint, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://github.com/NeR1cH/modstranslator',
+              'X-Title': 'MOD_TRANSLATOR'
+            },
+            body: JSON.stringify({
+              model,
+              temperature: 0,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: text }
+              ]
+            })
+          });
+        } catch (fetchError) {
+          // Network error or fetch failure
+          console.error(`❌ [OpenRouter] Fetch error (attempt ${attempt}/${MAX_RETRIES}):`, fetchError);
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error(`❌ [OpenRouter] API error: ${response.status} - ${error.error?.message || 'Unknown error'}`);
-        throw new Error(
-          `OpenRouter API error: ${response.status} - ${error.error?.message || 'Unknown error'}`
-        );
+          if (attempt < MAX_RETRIES) {
+            console.log(`🔄 [OpenRouter] Retrying in 2 seconds...`);
+            await this.sleep(2000);
+            continue;
+          } else {
+            throw fetchError;
+          }
+        }
+
+        const elapsed = Date.now() - startTime;
+
+        // Handle rate limit (429)
+        if (response.status === 429) {
+          const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
+          console.warn(`⏳ [OpenRouter] Rate limit hit (attempt ${attempt}/${MAX_RETRIES}), waiting ${retryAfter}s...`);
+
+          if (attempt < MAX_RETRIES) {
+            await this.sleep(retryAfter * 1000);
+            continue; // Retry
+          } else {
+            // Max retries reached
+            throw new RateLimitError(
+              `Rate limit exceeded after ${MAX_RETRIES} attempts`,
+              retryAfter
+            );
+          }
+        }
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          console.error(`❌ [OpenRouter] API error: ${response.status} - ${error.error?.message || 'Unknown error'}`);
+          throw new Error(
+            `OpenRouter API error: ${response.status} - ${error.error?.message || 'Unknown error'}`
+          );
+        }
+
+        const data = await response.json();
+
+        // Validate response structure
+        if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+          console.error('❌ [OpenRouter] Invalid response structure:', JSON.stringify(data).substring(0, 200));
+          throw new Error('Invalid response: no choices array');
+        }
+
+        if (!data.choices[0].message || !data.choices[0].message.content) {
+          console.error('❌ [OpenRouter] Invalid message structure:', JSON.stringify(data.choices[0]).substring(0, 200));
+          throw new Error('Invalid response: no message content');
+        }
+
+        const translated = data.choices[0].message.content;
+
+        console.log(`✅ [OpenRouter] Translation successful (${elapsed}ms)`);
+        console.log(`📊 [OpenRouter] Result length: ${translated.length} chars`);
+
+        return translated.trim();
+      } catch (error) {
+        lastError = error as Error;
+
+        // If it's a RateLimitError, rethrow immediately (already retried)
+        if (error instanceof RateLimitError) {
+          throw error;
+        }
+
+        // For other errors, log and continue to next attempt
+        console.error(`❌ [OpenRouter] Translation error (attempt ${attempt}/${MAX_RETRIES}):`, error);
+
+        if (attempt < MAX_RETRIES) {
+          console.log(`🔄 [OpenRouter] Retrying in 2 seconds...`);
+          await this.sleep(2000);
+        }
       }
-
-      const data = await response.json();
-
-      // Validate response structure
-      if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
-        console.error('❌ [OpenRouter] Invalid response structure:', JSON.stringify(data).substring(0, 200));
-        throw new Error('Invalid response: no choices array');
-      }
-
-      if (!data.choices[0].message || !data.choices[0].message.content) {
-        console.error('❌ [OpenRouter] Invalid message structure:', JSON.stringify(data.choices[0]).substring(0, 200));
-        throw new Error('Invalid response: no message content');
-      }
-
-      const translated = data.choices[0].message.content;
-
-      console.log(`✅ [OpenRouter] Translation successful (${elapsed}ms)`);
-      console.log(`📊 [OpenRouter] Result length: ${translated.length} chars`);
-
-      return translated.trim();
-    } catch (error) {
-      console.error('❌ [OpenRouter] Translation error:', error);
-      throw error;
     }
+
+    // All retries failed
+    console.error('❌ [OpenRouter] All retry attempts failed');
+    throw lastError || new Error('Translation failed after all retries');
+  }
+
+  /**
+   * Sleep helper
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**

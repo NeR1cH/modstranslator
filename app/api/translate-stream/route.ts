@@ -11,6 +11,8 @@ import { translateBatchThroughPipeline } from '@/lib/translationPipeline';
 import { LangEntry } from '@/types';
 import { TranslationReportBuilder } from '@/lib/translationReport';
 import { validateBase64Size } from '@/lib/security';
+import { RateLimitError } from '@/lib/openrouter';
+import { getProgressTracker } from '@/lib/progressTracker';
 
 // ============================================================
 // BLOCK: Streaming translation endpoint with SSE
@@ -136,7 +138,10 @@ export async function POST(req: NextRequest) {
             // Collect report data for JAR
             for (const langFile of langFiles) {
               const values = langFile.entries.map(e => e.value);
-              const results = await translateBatchThroughPipeline(values);
+              const results = await translateBatchThroughPipeline(values, 'RU', {
+                fileName: `${file.fileName}:${langFile.path}`,
+                fileContent: values.join('\n')
+              });
               const translated = results.map(r => r.text);
 
               const entries = langFile.entries.map((entry, i) => ({
@@ -185,7 +190,10 @@ export async function POST(req: NextRequest) {
             });
 
             const values = entries.map(e => e.value);
-            const results = await translateBatchThroughPipeline(values);
+            const results = await translateBatchThroughPipeline(values, 'RU', {
+              fileName: file.fileName,
+              fileContent: content
+            });
             const translated = results.map(r => r.text);
             const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
             const result = rebuild(content, transMap);
@@ -232,15 +240,31 @@ export async function POST(req: NextRequest) {
         } catch (fileError) {
           console.error(`Error processing file ${fileNumber}:`, fileError);
 
-          await sendEvent({
-            type: 'file_error',
-            fileId: file.id,
-            fileName: file.fileName,
-            error: String(fileError),
-            current: fileNumber,
-            total: totalFiles,
-            message: `[${fileNumber}/${totalFiles}] ✗ Ошибка: ${file.fileName}`
-          });
+          // Handle rate limit error specifically
+          if (fileError instanceof RateLimitError) {
+            const progressTracker = getProgressTracker();
+            const resumeMessage = progressTracker.getResumeMessage();
+
+            await sendEvent({
+              type: 'rate_limit',
+              fileId: file.id,
+              fileName: file.fileName,
+              message: resumeMessage || 'Достигнут лимит запросов. Перезапустите через 60 секунд.',
+              retryAfter: fileError.retryAfter,
+              current: fileNumber,
+              total: totalFiles
+            });
+          } else {
+            await sendEvent({
+              type: 'file_error',
+              fileId: file.id,
+              fileName: file.fileName,
+              error: String(fileError),
+              current: fileNumber,
+              total: totalFiles,
+              message: `[${fileNumber}/${totalFiles}] ✗ Ошибка: ${file.fileName}`
+            });
+          }
         }
       }
 
@@ -261,11 +285,23 @@ export async function POST(req: NextRequest) {
       console.error('=== API /api/translate-stream ERROR ===');
       console.error('Error:', error);
 
-      await sendEvent({
-        type: 'error',
-        error: String(error),
-        message: 'Критическая ошибка при обработке'
-      });
+      // Handle rate limit error specifically
+      if (error instanceof RateLimitError) {
+        const progressTracker = getProgressTracker();
+        const resumeMessage = progressTracker.getResumeMessage();
+
+        await sendEvent({
+          type: 'rate_limit',
+          message: resumeMessage || 'Достигнут лимит запросов. Перезапустите через 60 секунд.',
+          retryAfter: error.retryAfter
+        });
+      } else {
+        await sendEvent({
+          type: 'error',
+          error: String(error),
+          message: 'Критическая ошибка при обработке'
+        });
+      }
 
       console.log('=== API /api/translate-stream END (error) ===\n');
     } finally {
