@@ -11,6 +11,7 @@ import { getTemplateCache } from './templateCache';
 import { translator } from './translator';
 import { getProgressTracker } from './progressTracker';
 import { RateLimitError } from './openrouter';
+import { getRateLimitStatsTracker } from './rateLimitStats';
 import crypto from 'crypto';
 
 export interface TranslationResult {
@@ -146,65 +147,77 @@ export async function translateBatchThroughPipeline(
   // Step 3: Translate uncached texts in batch via API with rate limit handling
   const MAX_RATE_LIMIT_RETRIES = 5;
   let rateLimitRetryCount = 0;
+  const rateLimitStats = getRateLimitStatsTracker();
 
-  while (rateLimitRetryCount <= MAX_RATE_LIMIT_RETRIES) {
-    try {
-      const translated = await translator.translateBatch(uncachedTexts, { targetLang: 'RU' });
+  try {
+    while (rateLimitRetryCount <= MAX_RATE_LIMIT_RETRIES) {
+      try {
+        const translated = await translator.translateBatch(uncachedTexts, { targetLang: 'RU' });
 
-      // Step 4: Learn from new translations
-      for (let i = 0; i < uncachedTexts.length; i++) {
-        const original = uncachedTexts[i];
-        const translation = translated[i];
-        const originalIndex = uncachedIndices[i];
-        const textId = generateTextId(original, originalIndex);
+        // Step 4: Learn from new translations
+        for (let i = 0; i < uncachedTexts.length; i++) {
+          const original = uncachedTexts[i];
+          const translation = translated[i];
+          const originalIndex = uncachedIndices[i];
+          const textId = generateTextId(original, originalIndex);
 
-        // Save to cache
-        translationCache.set(original, translation);
+          // Save to cache
+          translationCache.set(original, translation);
 
-        // Learn fragments and templates
-        fragmentCache.learn(original, translation);
-        templateCache.learn(original, translation);
+          // Learn fragments and templates
+          fragmentCache.learn(original, translation);
+          templateCache.learn(original, translation);
 
-        // Mark as completed
-        progressTracker.markCompleted(textId);
+          // Mark as completed
+          progressTracker.markCompleted(textId);
 
-        // Store result
-        const provider = translator.getProvider();
-        const source = provider === 'openrouter' ? 'openrouter' : 'deepl';
-        results[uncachedIndices[i]] = { text: translation, source };
-      }
-
-      // All completed successfully
-      progressTracker.clear();
-      break; // Success, exit retry loop
-
-    } catch (error) {
-      // Handle rate limit error with retry
-      if (error instanceof RateLimitError) {
-        rateLimitRetryCount++;
-
-        if (rateLimitRetryCount > MAX_RATE_LIMIT_RETRIES) {
-          console.error(`[pipeline] ❌ Rate limit persists after ${MAX_RATE_LIMIT_RETRIES} retries, stopping translation`);
-          const message = progressTracker.getResumeMessage();
-          if (message) {
-            console.log(`[pipeline] ${message}`);
-          }
-          throw new Error(`OpenRouter rate limit exceeded. Tried ${MAX_RATE_LIMIT_RETRIES} times. Please wait and try again later.`);
+          // Store result
+          const provider = translator.getProvider();
+          const source = provider === 'openrouter' ? 'openrouter' : 'deepl';
+          results[uncachedIndices[i]] = { text: translation, source };
         }
 
-        const waitTime = error.retryAfter || 60;
-        console.warn(`[pipeline] ⏳ OpenRouter rate limit. Waiting ${waitTime}s (attempt ${rateLimitRetryCount}/${MAX_RATE_LIMIT_RETRIES})...`);
+        // All completed successfully
+        progressTracker.clear();
+        rateLimitStats.setStopReason('completed');
+        break; // Success, exit retry loop
 
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+      } catch (error) {
+        // Handle rate limit error with retry
+        if (error instanceof RateLimitError) {
+          rateLimitRetryCount++;
+          rateLimitStats.recordFailedAttempt();
 
-        console.log(`[pipeline] 🔄 Retrying translation after ${waitTime}s wait...`);
-        continue; // Retry the translation
+          if (rateLimitRetryCount > MAX_RATE_LIMIT_RETRIES) {
+            console.error(`[pipeline] ❌ Rate limit persists after ${MAX_RATE_LIMIT_RETRIES} retries, stopping translation`);
+            const message = progressTracker.getResumeMessage();
+            if (message) {
+              console.log(`[pipeline] ${message}`);
+            }
+            rateLimitStats.setStopReason('rate_limit_exhausted');
+            throw new Error(`OpenRouter rate limit exceeded. Tried ${MAX_RATE_LIMIT_RETRIES} times. Please wait and try again later.`);
+          }
+
+          const waitTime = error.retryAfter || 60;
+          rateLimitStats.recordPause(waitTime);
+          console.warn(`[pipeline] ⏳ OpenRouter rate limit. Waiting ${waitTime}s (attempt ${rateLimitRetryCount}/${MAX_RATE_LIMIT_RETRIES})...`);
+
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+
+          console.log(`[pipeline] 🔄 Retrying translation after ${waitTime}s wait...`);
+          rateLimitStats.recordSuccessfulRetry();
+          continue; // Retry the translation
+        }
+
+        // Other errors
+        rateLimitStats.setStopReason('error');
+        throw error;
       }
-
-      // Other errors
-      throw error;
     }
+  } finally {
+    // Always print rate limit stats at the end
+    rateLimitStats.printStats();
   }
 
   return results;

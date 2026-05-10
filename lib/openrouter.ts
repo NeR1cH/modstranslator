@@ -3,6 +3,8 @@
  * Alternative to DeepL using LLM models
  */
 
+import { getRateLimitStatsTracker } from './rateLimitStats';
+
 interface TranslateOptions {
   targetLang?: string;
   preserveFormatting?: boolean;
@@ -98,10 +100,16 @@ export class OpenRouterTranslator {
         // Handle rate limit (429)
         if (response.status === 429) {
           const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
+          const statsTracker = getRateLimitStatsTracker();
+
+          statsTracker.recordFailedAttempt();
+
           console.warn(`⚠️ [OpenRouter] Rate limit 429, waiting ${retryAfter}s before retry ${attempt}/${MAX_RETRIES}...`);
 
           if (attempt < MAX_RETRIES) {
+            statsTracker.recordPause(retryAfter);
             await this.sleep(retryAfter * 1000);
+            statsTracker.recordSuccessfulRetry();
             console.log(`✅ [OpenRouter] Retry ${attempt}/${MAX_RETRIES} successful after ${retryAfter}s wait`);
             continue; // Retry
           } else {

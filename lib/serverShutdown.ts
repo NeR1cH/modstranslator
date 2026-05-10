@@ -5,6 +5,7 @@
 
 import { getTranslationCache } from './translationCache';
 import { getFragmentCache } from './fragmentCache';
+import { getRateLimitStatsTracker } from './rateLimitStats';
 
 let shutdownTimer: NodeJS.Timeout | null = null;
 let isShuttingDown = false;
@@ -42,6 +43,14 @@ export function printCacheStats(): void {
   }
 
   console.log('\n' + '='.repeat(60) + '\n');
+
+  // Rate Limit stats
+  try {
+    const rateLimitStats = getRateLimitStatsTracker();
+    rateLimitStats.printStats();
+  } catch (error) {
+    // Silently ignore if rate limit stats not available
+  }
 }
 
 /**

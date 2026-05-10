@@ -93,6 +93,11 @@ async function runTest() {
 
   // Dynamic import AFTER env is set
   const { translateBatchThroughPipeline } = await import('../lib/translationPipeline');
+  const { getRateLimitStatsTracker } = await import('../lib/rateLimitStats');
+
+  // Reset stats before test
+  const statsTracker = getRateLimitStatsTracker();
+  statsTracker.reset();
 
   // Test strings from create111.snbt
   const testStrings = [
@@ -167,6 +172,39 @@ async function runTest() {
       console.log(`✅ Elapsed time >= 4s (waited for retries)`);
     } else {
       console.log(`⚠️ Elapsed time < 4s (${elapsed}ms) - retries may not have waited full duration`);
+    }
+
+    // Verify rate limit stats
+    console.log('\n=== RATE LIMIT STATS VERIFICATION ===\n');
+    const stats = statsTracker.getStats();
+    console.log(`Total pauses: ${stats.totalPauses}`);
+    console.log(`Total wait time: ${stats.totalWaitTime}s`);
+    console.log(`Successful retries: ${stats.successfulRetries}`);
+    console.log(`Failed attempts: ${stats.failedAttempts}`);
+    console.log(`Stop reason: ${stats.stopReason}`);
+
+    if (stats.totalPauses === 2) {
+      console.log('✅ Correct number of pauses (2)');
+    } else {
+      console.log(`❌ Expected 2 pauses, got ${stats.totalPauses}`);
+    }
+
+    if (stats.totalWaitTime === 4) {
+      console.log('✅ Correct total wait time (4s)');
+    } else {
+      console.log(`❌ Expected 4s wait time, got ${stats.totalWaitTime}s`);
+    }
+
+    if (stats.successfulRetries === 2) {
+      console.log('✅ Correct number of successful retries (2)');
+    } else {
+      console.log(`❌ Expected 2 successful retries, got ${stats.successfulRetries}`);
+    }
+
+    if (stats.stopReason === 'completed') {
+      console.log('✅ Correct stop reason (completed)');
+    } else {
+      console.log(`❌ Expected stop reason "completed", got "${stats.stopReason}"`);
     }
 
     console.log('\n=== RATE LIMIT TEST END ===\n');
