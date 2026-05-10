@@ -16,6 +16,7 @@
     "predev:safe": "echo Running tests before starting server..."
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "jszip": "^3.10.1",
     "next": "14.2.0",
     "node-fetch": "^3.3.2",
