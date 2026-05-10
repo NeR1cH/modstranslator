@@ -472,6 +472,9 @@ export default function Home() {
                   if (data.htmlReportBase64) {
                     setHtmlReportBase64(data.htmlReportBase64);
                   }
+                } else if (data.type === 'rate_limit_wait') {
+                  // Show rate limit pause message
+                  addLog(`> ⏳ ${data.message}`, 'warning');
                 } else if (data.type === 'error') {
                   throw new Error(data.error);
                 }

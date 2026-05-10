@@ -135,13 +135,51 @@ export async function POST(req: NextRequest) {
 
             const translations = await translateLangFiles(langFiles);
 
-            // Collect report data for JAR
+            // Collect report data for JAR with retry logic
             for (const langFile of langFiles) {
               const values = langFile.entries.map(e => e.value);
-              const results = await translateBatchThroughPipeline(values, 'RU', {
-                fileName: `${file.fileName}:${langFile.path}`,
-                fileContent: values.join('\n')
-              });
+
+              // Retry loop for rate limit handling
+              let results: any[];
+              let retryCount = 0;
+              const MAX_RETRIES = 5;
+
+              while (retryCount < MAX_RETRIES) {
+                try {
+                  results = await translateBatchThroughPipeline(values, 'RU', {
+                    fileName: `${file.fileName}:${langFile.path}`,
+                    fileContent: values.join('\n')
+                  });
+                  break; // Success, exit retry loop
+                } catch (error) {
+                  if (error instanceof RateLimitError) {
+                    retryCount++;
+                    const waitTime = error.retryAfter;
+
+                    await sendEvent({
+                      type: 'rate_limit_wait',
+                      fileId: file.id,
+                      fileName: file.fileName,
+                      message: `⏳ Пауза ${waitTime} сек (попытка ${retryCount}/${MAX_RETRIES}), продолжаем...`,
+                      retryAfter: waitTime,
+                      retryCount,
+                      maxRetries: MAX_RETRIES
+                    });
+
+                    // Wait and retry
+                    await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+                    continue;
+                  } else {
+                    // Other error, rethrow
+                    throw error;
+                  }
+                }
+              }
+
+              if (!results!) {
+                throw new Error(`Не удалось перевести после ${MAX_RETRIES} попыток`);
+              }
+
               const translated = results.map(r => r.text);
 
               const entries = langFile.entries.map((entry, i) => ({
@@ -190,10 +228,48 @@ export async function POST(req: NextRequest) {
             });
 
             const values = entries.map(e => e.value);
-            const results = await translateBatchThroughPipeline(values, 'RU', {
-              fileName: file.fileName,
-              fileContent: content
-            });
+
+            // Retry loop for rate limit handling
+            let results: any[];
+            let retryCount = 0;
+            const MAX_RETRIES = 5;
+
+            while (retryCount < MAX_RETRIES) {
+              try {
+                results = await translateBatchThroughPipeline(values, 'RU', {
+                  fileName: file.fileName,
+                  fileContent: content
+                });
+                break; // Success, exit retry loop
+              } catch (error) {
+                if (error instanceof RateLimitError) {
+                  retryCount++;
+                  const waitTime = error.retryAfter;
+
+                  await sendEvent({
+                    type: 'rate_limit_wait',
+                    fileId: file.id,
+                    fileName: file.fileName,
+                    message: `⏳ Пауза ${waitTime} сек (попытка ${retryCount}/${MAX_RETRIES}), продолжаем...`,
+                    retryAfter: waitTime,
+                    retryCount,
+                    maxRetries: MAX_RETRIES
+                  });
+
+                  // Wait and retry
+                  await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+                  continue;
+                } else {
+                  // Other error, rethrow
+                  throw error;
+                }
+              }
+            }
+
+            if (!results!) {
+              throw new Error(`Не удалось перевести после ${MAX_RETRIES} попыток`);
+            }
+
             const translated = results.map(r => r.text);
             const transMap = new Map(entries.map((e, i) => [e.key, translated[i] ?? e.value]));
             const result = rebuild(content, transMap);
@@ -240,31 +316,15 @@ export async function POST(req: NextRequest) {
         } catch (fileError) {
           console.error(`Error processing file ${fileNumber}:`, fileError);
 
-          // Handle rate limit error specifically
-          if (fileError instanceof RateLimitError) {
-            const progressTracker = getProgressTracker();
-            const resumeMessage = progressTracker.getResumeMessage();
-
-            await sendEvent({
-              type: 'rate_limit',
-              fileId: file.id,
-              fileName: file.fileName,
-              message: resumeMessage || 'Достигнут лимит запросов. Перезапустите через 60 секунд.',
-              retryAfter: fileError.retryAfter,
-              current: fileNumber,
-              total: totalFiles
-            });
-          } else {
-            await sendEvent({
-              type: 'file_error',
-              fileId: file.id,
-              fileName: file.fileName,
-              error: String(fileError),
-              current: fileNumber,
-              total: totalFiles,
-              message: `[${fileNumber}/${totalFiles}] ✗ Ошибка: ${file.fileName}`
-            });
-          }
+          await sendEvent({
+            type: 'file_error',
+            fileId: file.id,
+            fileName: file.fileName,
+            error: String(fileError),
+            current: fileNumber,
+            total: totalFiles,
+            message: `[${fileNumber}/${totalFiles}] ✗ Ошибка: ${file.fileName}`
+          });
         }
       }
 
@@ -285,23 +345,11 @@ export async function POST(req: NextRequest) {
       console.error('=== API /api/translate-stream ERROR ===');
       console.error('Error:', error);
 
-      // Handle rate limit error specifically
-      if (error instanceof RateLimitError) {
-        const progressTracker = getProgressTracker();
-        const resumeMessage = progressTracker.getResumeMessage();
-
-        await sendEvent({
-          type: 'rate_limit',
-          message: resumeMessage || 'Достигнут лимит запросов. Перезапустите через 60 секунд.',
-          retryAfter: error.retryAfter
-        });
-      } else {
-        await sendEvent({
-          type: 'error',
-          error: String(error),
-          message: 'Критическая ошибка при обработке'
-        });
-      }
+      await sendEvent({
+        type: 'error',
+        error: String(error),
+        message: 'Критическая ошибка при обработке'
+      });
 
       console.log('=== API /api/translate-stream END (error) ===\n');
     } finally {
