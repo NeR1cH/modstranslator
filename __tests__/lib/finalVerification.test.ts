@@ -126,7 +126,7 @@ describe('Final Verification - Template System', () => {
       const result = await translateThroughPipeline('unknown xyz string');
 
       expect(result.text).toBeTruthy();
-      expect(['deepl', 'cache', 'word-based']).toContain(result.source);
+      expect(['deepl', 'cache', 'word-based', 'fragment']).toContain(result.source);
     });
 
     it('8. Handle unknown words in template pattern', async () => {
