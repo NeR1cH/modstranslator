@@ -22,6 +22,7 @@ interface Fragment {
   lastSeen: number; // Timestamp
   gender?: 'masculine' | 'feminine' | 'neuter'; // For nouns
   isAdjective?: boolean; // For adjectives that need agreement
+  stressedEnding?: boolean; // For adjectives: true = -ой, false = -ый
 }
 
 interface FragmentCacheData {
@@ -168,32 +169,44 @@ class FragmentCache {
 
   /**
    * Normalize adjective to masculine form (base form)
+   * Preserves the original ending type (-ый vs -ой)
+   * Returns [normalized form, stressedEnding flag]
    */
-  private normalizeToMasculine(adjective: string): string {
+  private normalizeToMasculine(adjective: string): [string, boolean] {
+    const original = adjective;
     let stem = adjective;
+    let stressedEnding = false;
 
-    if (stem.endsWith('ый') || stem.endsWith('ой') || stem.endsWith('ий')) {
-      return stem; // Already masculine
+    // If already masculine, detect ending type and normalize to -ый/-ий
+    if (stem.endsWith('ой')) {
+      stem = stem.slice(0, -2);
+      stressedEnding = true;
+    } else if (stem.endsWith('ый') || stem.endsWith('ий')) {
+      stem = stem.slice(0, -2);
+      stressedEnding = false;
     } else if (stem.endsWith('ая') || stem.endsWith('яя')) {
+      // Extract stem from feminine forms
       stem = stem.slice(0, -2);
     } else if (stem.endsWith('ое') || stem.endsWith('ее')) {
+      // Extract stem from neuter forms
       stem = stem.slice(0, -2);
     }
 
-    // Apply masculine ending - default to "ый"
+    // Apply masculine ending
     // Special case: if stem ends with 'г', 'к', 'х', 'ж', 'ш', 'щ', 'ч' → use "ий"
     const lastChar = stem.charAt(stem.length - 1);
     if ('гкхжшщч'.includes(lastChar)) {
-      return stem + 'ий';
+      return [stem + 'ий', stressedEnding];
     }
 
-    return stem + 'ый';
+    // Default to "ый" (most common)
+    return [stem + 'ый', stressedEnding];
   }
 
   /**
    * Apply gender agreement to adjective
    */
-  private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter'): string {
+  private applyGenderAgreement(adjective: string, gender: 'masculine' | 'feminine' | 'neuter', stressedEnding?: boolean): string {
     const isCapitalized = adjective.charAt(0) === adjective.charAt(0).toUpperCase();
     let stem = adjective;
 
@@ -212,6 +225,9 @@ class FragmentCache {
       // Use "ий" for stems ending in г, к, х, ж, ш, щ, ч
       if ('гкхжшщч'.includes(lastChar)) {
         result = stem + 'ий';
+      } else if (stressedEnding) {
+        // Use stressed ending -ой if specified
+        result = stem + 'ой';
       } else {
         result = stem + 'ый';
       }
@@ -414,7 +430,7 @@ class FragmentCache {
 
     console.log(`[fragment-cache] Learning ${patterns.length} fragments from: "${original}"`);
 
-    patterns.forEach(({ fragment, translation, context, confidence, gender, isAdjective }) => {
+    patterns.forEach(({ fragment, translation, context, confidence, gender, isAdjective, stressedEnding }) => {
       const key = this.normalizeText(fragment);
       const existing = this.fragments.get(key);
 
@@ -449,6 +465,12 @@ class FragmentCache {
         if (isAdjective && !existing.isAdjective) {
           existing.isAdjective = isAdjective;
         }
+        // Update stressedEnding: prefer true over false (if we see -ой, it's stressed)
+        if (stressedEnding !== undefined) {
+          if (existing.stressedEnding === undefined || stressedEnding === true) {
+            existing.stressedEnding = stressedEnding;
+          }
+        }
       } else {
         // New fragment
         this.fragments.set(key, {
@@ -459,7 +481,8 @@ class FragmentCache {
           confidence,
           lastSeen: now,
           gender,
-          isAdjective
+          isAdjective,
+          stressedEnding
         });
         console.log(`[fragment-cache] New fragment: "${fragment}" → "${translation}" (${context}, confidence: ${confidence})`);
       }
@@ -538,7 +561,7 @@ class FragmentCache {
 
           // Apply gender agreement if this is an adjective and we know the noun gender
           if (fragment.isAdjective && nounGender) {
-            translation = this.applyGenderAgreement(translation, nounGender);
+            translation = this.applyGenderAgreement(translation, nounGender, fragment.stressedEnding);
           }
 
           // Capitalize first word, lowercase others
@@ -584,6 +607,7 @@ class FragmentCache {
     confidence: number;
     gender?: 'masculine' | 'feminine' | 'neuter';
     isAdjective?: boolean;
+    stressedEnding?: boolean;
   }> {
     const results: Array<{
       fragment: string;
@@ -592,6 +616,7 @@ class FragmentCache {
       confidence: number;
       gender?: 'masculine' | 'feminine' | 'neuter';
       isAdjective?: boolean;
+      stressedEnding?: boolean;
     }> = [];
 
     const originalWords = original.split(/\s+/);
@@ -616,8 +641,14 @@ class FragmentCache {
           // Detect gender from Russian translation
           const adjectiveGender = this.detectAdjectiveGender(cleanedTranslation);
 
-          // Normalize adjectives to masculine form
-          const normalizedTrans = isAdjective && adjectiveGender ? this.normalizeToMasculine(cleanedTranslation) : cleanedTranslation;
+          // Normalize adjectives to masculine form and detect stressed ending
+          let normalizedTrans = cleanedTranslation;
+          let stressedEnding: boolean | undefined;
+          if (isAdjective && adjectiveGender) {
+            const [normalized, stressed] = this.normalizeToMasculine(cleanedTranslation);
+            normalizedTrans = normalized;
+            stressedEnding = stressed;
+          }
 
           // Infer gender for nouns (non-adjectives)
           let inferredGender: 'masculine' | 'feminine' | 'neuter' | undefined;
@@ -633,7 +664,8 @@ class FragmentCache {
             context: 'word',
             confidence: 80,
             gender: inferredGender,
-            isAdjective
+            isAdjective,
+            stressedEnding
           });
         }
       }
@@ -647,6 +679,18 @@ class FragmentCache {
       // Detect if this is an adjective
       const isAdjective = this.isRussianAdjective(cleanedTranslation);
 
+      // Detect gender from Russian translation
+      const adjectiveGender = this.detectAdjectiveGender(cleanedTranslation);
+
+      // Normalize adjectives to masculine form and detect stressed ending
+      let normalizedTrans = cleanedTranslation;
+      let stressedEnding: boolean | undefined;
+      if (isAdjective && adjectiveGender) {
+        const [normalized, stressed] = this.normalizeToMasculine(cleanedTranslation);
+        normalizedTrans = normalized;
+        stressedEnding = stressed;
+      }
+
       // Infer gender for nouns (non-adjectives)
       let inferredGender: 'masculine' | 'feminine' | 'neuter' | undefined;
       if (!isAdjective) {
@@ -657,11 +701,12 @@ class FragmentCache {
 
       results.push({
         fragment: originalWords[0].trim(),
-        translation: cleanedTranslation,
+        translation: normalizedTrans,
         context: 'word',
         confidence: 85,
         gender: inferredGender,
-        isAdjective
+        isAdjective,
+        stressedEnding
       });
     }
 

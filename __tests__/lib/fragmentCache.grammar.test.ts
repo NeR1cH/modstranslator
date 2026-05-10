@@ -129,20 +129,20 @@ describe('FragmentCache - Grammar Agreement', () => {
       // Should use correct gender for all words
       if (result1) {
         // Both "сырая" and "цинковая" should be feminine (руда - feminine)
-        expect(result1).toMatch(/ая.*ая руда|яя.*яя руда/);
-        expect(result1).not.toMatch(/ый.*руда/);
+        expect(result1).toMatch(/ая.*ая руда|яя.*яя руда/i);
+        expect(result1).not.toMatch(/ый.*руда/i);
       }
 
       if (result2) {
         // Both "измельченная" and "серебряная" should be feminine (пыль - feminine)
-        expect(result2).toMatch(/ая.*ая пыль|яя.*яя пыль/);
-        expect(result2).not.toMatch(/ый.*пыль/);
+        expect(result2).toMatch(/ая.*ая пыль|яя.*яя пыль/i);
+        expect(result2).not.toMatch(/ый.*пыль/i);
       }
 
       if (result3) {
         // Both "очищенный" and "стальной" should be masculine (слиток - masculine)
-        expect(result3).toMatch(/ый.*ый слиток|ой.*ой слиток/);
-        expect(result3).not.toMatch(/ая.*слиток/);
+        expect(result3).toMatch(/ый.*ый слиток|ой.*ой слиток/i);
+        expect(result3).not.toMatch(/ая.*слиток/i);
       }
     });
   });

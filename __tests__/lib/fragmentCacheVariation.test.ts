@@ -9,7 +9,62 @@ import { getTemplateCache } from '../../lib/templateCache';
 import { getTranslationCache, resetTranslationCache } from '../../lib/translationCache';
 
 // Mock fetch globally for OpenRouter
-global.fetch = jest.fn();
+const openRouterTranslations: Record<string, string> = {
+  'Iron Sheet': 'Железный лист',
+  'Iron Block': 'Железный блок',
+  'Iron Ingot': 'Железный слиток',
+  'Iron Gear': 'Железная шестерня',
+  'Iron Rod': 'Железный стержень',
+  'Iron Plate': 'Железная пластина',
+  'Copper Ore': 'Медная руда',
+  'Gold Ore': 'Золотая руда',
+  'Gold Ingot': 'Золотой слиток',
+};
+
+global.fetch = jest.fn((url, options) => {
+  const body = JSON.parse((options as any)?.body || '{}');
+  const userMessage = body.messages?.find((m: any) => m.role === 'user')?.content || '';
+
+  // Handle batch translation (texts joined with ###SPLIT###)
+  if (userMessage.includes('###SPLIT###')) {
+    const texts = userMessage.split('\n###SPLIT###\n');
+    const translations = texts.map((text: string) =>
+      openRouterTranslations[text.trim()] || `UNMOCKED: ${text}`
+    );
+    const result = translations.join('\n###SPLIT###\n');
+
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: result
+            }
+          }
+        ]
+      })
+    } as Response);
+  }
+
+  // Handle single translation
+  const translation = openRouterTranslations[userMessage] || `UNMOCKED: ${userMessage}`;
+
+  return Promise.resolve({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      choices: [
+        {
+          message: {
+            content: translation
+          }
+        }
+      ]
+    })
+  } as Response);
+});
 
 // Mock DeepL API with realistic translations
 jest.mock('../../lib/deepl', () => ({
@@ -24,6 +79,7 @@ jest.mock('../../lib/deepl', () => ({
       'Iron Plate': 'Железная пластина',
       'Copper Ore': 'Медная руда',
       'Gold Ore': 'Золотая руда',
+      'Gold Ingot': 'Золотой слиток', // Add masculine example to learn "Золотой"
 
       // These should NOT be called if FragmentCache works
       'Copper Sheet': 'SHOULD_NOT_BE_CALLED',
@@ -34,7 +90,7 @@ jest.mock('../../lib/deepl', () => ({
       'Copper Plate': 'SHOULD_NOT_BE_CALLED',
       'Gold Sheet': 'SHOULD_NOT_BE_CALLED',
       'Gold Block': 'SHOULD_NOT_BE_CALLED',
-      'Gold Ingot': 'SHOULD_NOT_BE_CALLED',
+      // 'Gold Ingot' is now in base translations
     };
 
     return Promise.resolve(texts.map(text => {
@@ -74,6 +130,7 @@ describe('FragmentCache variation test', () => {
       // Add ONE example with Copper and Gold to learn these materials
       'Copper Ore',
       'Gold Ore',
+      'Gold Ingot', // Add masculine example to learn "Золотой"
     ];
 
     console.log('Translating base items (first time):');
@@ -114,7 +171,7 @@ describe('FragmentCache variation test', () => {
       'Copper Plate',
       'Gold Sheet',
       'Gold Block',
-      'Gold Ingot',
+      // 'Gold Ingot' already translated in base, skip from variations
     ];
 
     console.log('Translating variations:');
@@ -137,7 +194,7 @@ describe('FragmentCache variation test', () => {
       'Copper Plate': 'Медная пластина',
       'Gold Sheet': 'Золотой лист',
       'Gold Block': 'Золотой блок',
-      'Gold Ingot': 'Золотой слиток',
+      // 'Gold Ingot' already translated in base
     };
 
     let correctGender = 0;
