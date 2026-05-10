@@ -5,7 +5,7 @@ import path from 'path';
 jest.mock('fs');
 
 describe('TranslationCache', () => {
-  const mockCacheDir = path.join(process.cwd(), '.translation-cache');
+  const mockCacheDir = path.join(process.cwd(), '.translation-cache-test');
   const mockCacheFile = path.join(mockCacheDir, 'cache-v1.json');
 
   beforeAll(() => {

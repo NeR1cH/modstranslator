@@ -5,7 +5,7 @@
 
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
 import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
-import { getTranslationCache } from '../../lib/translationCache';
+import { getTranslationCache, resetTranslationCache } from '../../lib/translationCache';
 
 // Mock fetch globally for OpenRouter
 global.fetch = jest.fn();
@@ -47,8 +47,9 @@ describe('Words ending with -ь test', () => {
     console.log('\n=== WORDS ENDING WITH -Ь TEST ===\n');
 
     resetFragmentCache(); // Reset singleton before creating test cache
+    resetTranslationCache(); // Reset translation cache singleton
     const fragmentCache = getFragmentCache('.translation-cache-test');
-    const translationCache = getTranslationCache();
+    const translationCache = getTranslationCache('.translation-cache-test');
 
     fragmentCache.clear();
     translationCache.clear();

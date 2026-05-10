@@ -8,7 +8,6 @@ import crypto from 'crypto';
 import { BaseCache } from './BaseCache';
 import { createLogger } from './logger';
 
-const CACHE_DIR = path.join(process.cwd(), '.translation-cache');
 const CACHE_VERSION = 'v1';
 
 interface CacheEntry {
@@ -29,9 +28,14 @@ class TranslationCache extends BaseCache<CacheData> {
   private hits = 0;
   private misses = 0;
 
-  constructor() {
+  constructor(cacheDir?: string) {
+    // Use test cache directory when running tests
+    const defaultDir = process.env.NODE_ENV === 'test'
+      ? path.join(process.cwd(), '.translation-cache-test')
+      : path.join(process.cwd(), '.translation-cache');
+
     super({
-      cacheDir: CACHE_DIR,
+      cacheDir: cacheDir || defaultDir,
       fileName: `cache-${CACHE_VERSION}.json`,
       version: CACHE_VERSION,
       autoSaveDelay: 5000,
@@ -219,9 +223,19 @@ let cacheInstance: TranslationCache | null = null;
 /**
  * Get or create cache instance
  */
-export function getTranslationCache(): TranslationCache {
+export function getTranslationCache(cacheDir?: string): TranslationCache {
   if (!cacheInstance) {
-    cacheInstance = new TranslationCache();
+    cacheInstance = new TranslationCache(cacheDir);
   }
   return cacheInstance;
+}
+
+/**
+ * Reset singleton instance (for testing)
+ */
+export function resetTranslationCache(): void {
+  if (cacheInstance) {
+    cacheInstance.flush();
+  }
+  cacheInstance = null;
 }
