@@ -7,8 +7,6 @@ import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
 import { getFragmentCache, resetFragmentCache } from '../../lib/fragmentCache';
 import { getTemplateCache } from '../../lib/templateCache';
 import { getTranslationCache, resetTranslationCache } from '../../lib/translationCache';
-import fs from 'fs';
-import path from 'path';
 
 // Mock DeepL API
 jest.mock('../../lib/deepl', () => ({
@@ -46,9 +44,28 @@ describe('Real-world translation test', () => {
   it('should translate test file twice and show cache improvement', async () => {
     console.log('\n=== TRANSLATION TEST START ===\n');
 
-    // Load test file
-    const testFile = fs.readFileSync(path.join(process.cwd(), 'test-translation.json'), 'utf-8');
-    const testData = JSON.parse(testFile);
+    // Create test data inline instead of reading from file
+    const testData = {
+      'item.iron.sheet': 'Iron Sheet',
+      'item.copper.sheet': 'Copper Sheet',
+      'item.brass.sheet': 'Brass Sheet',
+      'item.gold.sheet': 'Gold Sheet',
+      'item.iron.ingot': 'Iron Ingot',
+      'item.copper.ingot': 'Copper Ingot',
+      'item.zinc.ingot': 'Zinc Ingot',
+      'item.brass.ingot': 'Brass Ingot',
+      'item.iron.nugget': 'Iron Nugget',
+      'item.copper.nugget': 'Copper Nugget',
+      'item.zinc.nugget': 'Zinc Nugget',
+      'item.iron.ore': 'Iron Ore',
+      'item.copper.ore': 'Copper Ore',
+      'item.zinc.ore': 'Zinc Ore',
+      'item.gold.ore': 'Gold Ore',
+      'item.iron.block': 'Iron Block',
+      'item.copper.block': 'Copper Block',
+      'item.brass.block': 'Brass Block',
+      'item.zinc.block': 'Zinc Block',
+    };
     const texts = Object.values(testData) as string[];
 
     console.log(`Total strings to translate: ${texts.length}`);
