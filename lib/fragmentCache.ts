@@ -48,78 +48,9 @@ class FragmentCache {
     'must', 'shall', 'should', 'would', 'could'
   ]);
 
-  // Gender dictionary for Russian nouns
-  private readonly NOUN_GENDERS: Record<string, 'masculine' | 'feminine' | 'neuter'> = {
-    // Masculine (мужской род)
-    'sword': 'masculine', 'axe': 'masculine', 'helmet': 'masculine',
-    'bow': 'masculine', 'shield': 'masculine', 'dagger': 'masculine',
-    'hammer': 'masculine', 'stiletto': 'masculine', 'cutlass': 'masculine',
-    'claymore': 'masculine', 'greatsword': 'masculine',
-    'ingot': 'masculine', 'block': 'masculine', 'rod': 'masculine',
-    'nugget': 'masculine', 'chunk': 'masculine', 'clump': 'masculine',
-    'shard': 'masculine', 'crystal': 'masculine', 'casing': 'masculine',
-    'casing': 'masculine',
-    'boots': 'masculine', 'sheet': 'masculine',
-    'shaft': 'masculine', 'gearbox': 'masculine', 'pilot': 'masculine',
-    'container': 'masculine', 'cement': 'masculine', 'concrete': 'masculine',
-    'placard': 'masculine', 'gearshift': 'masculine', 'deployer': 'masculine',
-    'mixer': 'masculine', 'press': 'masculine', 'trapdoor': 'masculine',
-    'harvester': 'masculine', 'plough': 'masculine', 'roller': 'masculine',
-    'engine': 'masculine', 'conveyor': 'masculine', 'depot': 'masculine',
-    'fence': 'masculine', 'metal': 'masculine', 'jetpack': 'masculine',
-    'bucket': 'neuter', 'tank': 'masculine',
-
-    // Feminine (женский род)
-    'scythe': 'feminine', 'katana': 'feminine', 'rapier': 'feminine',
-    'saber': 'feminine', 'chestplate': 'feminine', 'leggings': 'feminine',
-    'arrow': 'feminine', 'ore': 'feminine', 'dust': 'feminine',
-    'plate': 'feminine', 'gear': 'feminine', 'wire': 'feminine',
-    'pickaxe': 'feminine', 'shovel': 'feminine', 'hoe': 'feminine',
-    'pike': 'feminine', 'mace': 'feminine', 'coil': 'feminine',
-    'cogwheel': 'feminine', 'stairs': 'feminine', 'slab': 'feminine',
-    'wall': 'feminine', 'lamp': 'feminine', 'door': 'feminine',
-    'drill': 'feminine', 'cloth': 'feminine', 'saw': 'feminine',
-    'pane': 'feminine', 'catwalk': 'feminine', 'coin': 'feminine',
-    'railing': 'feminine', 'support': 'feminine', 'wedge': 'feminine',
-    'frame': 'feminine', 'chain': 'feminine', 'seal': 'feminine',
-    'steel': 'feminine',
-
-    // Neuter (средний род)
-    'spear': 'neuter', 'lance': 'neuter', 'window': 'neuter',
-    'clutch': 'neuter'
-  };
-
-  // Common Minecraft materials (adjectives)
-  private readonly MATERIALS = new Set([
-    'diamond', 'iron', 'gold', 'golden', 'stone', 'wooden', 'wood',
-    'netherite', 'leather', 'chainmail', 'steel', 'bronze', 'silver',
-    'copper', 'tin', 'brass', 'aluminum', 'titanium', 'obsidian',
-    'emerald', 'ruby', 'sapphire', 'amethyst', 'quartz',
-    'zinc', 'lead', 'uranium', 'nickel', 'osmium', 'platinum',
-    'iridium', 'tungsten', 'chromium', 'cobalt', 'invar', 'electrum',
-    'constantan', 'signalum', 'lumium', 'enderium'
-  ]);
-
-  // Common prefixes (adjectives)
-  private readonly PREFIXES = new Set([
-    'raw', 'crushed', 'molten', 'refined', 'processed', 'purified',
-    'enriched', 'compressed', 'dense', 'dirty'
-  ]);
-
-  // Adjectives that use "ой" ending instead of "ый" for masculine (stressed ending)
-  private readonly OJ_ENDING_ADJECTIVES = new Set([
-    'золот', 'больш', 'молод', 'дорог', 'чуж', 'живой'
-  ]);
-
-  // Feminine words ending with soft sign -ь
-  private readonly FEMININE_SOFT = new Set([
-    'дверь', 'цепь', 'ткань', 'пыль', 'сталь', 'соль',
-    'роль', 'боль', 'тень', 'степь', 'мать', 'дочь',
-    'печать', 'панель', 'шестерня', 'кирка', 'лопата',
-    'мотыга', 'пика', 'булава', 'катушка', 'проволока',
-    'дрель', 'пила', 'монета', 'перила', 'опора',
-    'клин', 'рама'
-  ]);
+  // Dynamic noun gender dictionary - learned from translations
+  private nounGenders: Map<string, 'masculine' | 'feminine' | 'neuter'> = new Map();
+  private nounGendersFile: string;
 
   // Minimum word length to consider for fragments
   private readonly MIN_WORD_LENGTH = 3;
@@ -136,7 +67,9 @@ class FragmentCache {
 
     this.cacheDir = cacheDir || defaultDir;
     this.cacheFile = path.join(this.cacheDir, 'fragments-v1.json');
+    this.nounGendersFile = path.join(this.cacheDir, 'noun-genders.json');
     this.loadFromDisk();
+    this.loadNounGenders();
   }
 
   private loadFromDisk(): void {
@@ -151,6 +84,34 @@ class FragmentCache {
       }
     } catch (error) {
       console.error('[fragment-cache] Failed to load from disk:', error);
+    }
+  }
+
+  private loadNounGenders(): void {
+    try {
+      if (!fs.existsSync(this.nounGendersFile)) return;
+      const data: Record<string, 'masculine' | 'feminine' | 'neuter'> = JSON.parse(
+        fs.readFileSync(this.nounGendersFile, 'utf-8')
+      );
+      Object.entries(data).forEach(([noun, gender]) => {
+        this.nounGenders.set(noun, gender);
+      });
+      console.log(`[fragment-cache] Loaded ${this.nounGenders.size} noun genders from disk`);
+    } catch (error) {
+      console.error('[fragment-cache] Failed to load noun genders:', error);
+    }
+  }
+
+  private saveNounGenders(): void {
+    try {
+      if (!fs.existsSync(this.cacheDir)) {
+        fs.mkdirSync(this.cacheDir, { recursive: true });
+      }
+      const data = Object.fromEntries(this.nounGenders);
+      fs.writeFileSync(this.nounGendersFile, JSON.stringify(data, null, 2), 'utf-8');
+      console.log(`[fragment-cache] Saved ${this.nounGenders.size} noun genders to disk`);
+    } catch (error) {
+      console.error('[fragment-cache] Failed to save noun genders:', error);
     }
   }
 
@@ -219,11 +180,13 @@ class FragmentCache {
       stem = stem.slice(0, -2);
     }
 
-    // Apply masculine ending - check if this adjective uses "ой" instead of "ый"
-    const hasOjEnding = this.OJ_ENDING_ADJECTIVES.has(stem.toLowerCase());
-    if (hasOjEnding) {
-      return stem + 'ой';
+    // Apply masculine ending - default to "ый"
+    // Special case: if stem ends with 'г', 'к', 'х', 'ж', 'ш', 'щ', 'ч' → use "ий"
+    const lastChar = stem.charAt(stem.length - 1);
+    if ('гкхжшщч'.includes(lastChar)) {
+      return stem + 'ий';
     }
+
     return stem + 'ый';
   }
 
@@ -243,10 +206,12 @@ class FragmentCache {
 
     // Apply correct ending
     let result: string;
+    const lastChar = stem.charAt(stem.length - 1);
+
     if (gender === 'masculine') {
-      // Check if this adjective uses "ой" instead of "ый"
-      if (this.OJ_ENDING_ADJECTIVES.has(stem.toLowerCase())) {
-        result = stem + 'ой';
+      // Use "ий" for stems ending in г, к, х, ж, ш, щ, ч
+      if ('гкхжшщч'.includes(lastChar)) {
+        result = stem + 'ий';
       } else {
         result = stem + 'ый';
       }
@@ -289,7 +254,7 @@ class FragmentCache {
 
   /**
    * Infer gender of Russian noun from its ending
-   * Used as fallback when noun is not in NOUN_GENDERS dictionary
+   * Used as fallback when noun is not in learned dictionary
    */
   private inferGenderFromRussian(russianWord: string): 'masculine' | 'feminine' | 'neuter' {
     const word = russianWord.toLowerCase().trim();
@@ -304,12 +269,70 @@ class FragmentCache {
       return 'neuter';
     }
 
-    // Rule 3: -ь → check FEMININE_SOFT list first
+    // Rule 3: -ь → check suffix patterns
     if (word.endsWith('ь')) {
-      if (this.FEMININE_SOFT.has(word)) {
+      // Special cases (exceptions):
+      if (word === 'соль') {
         return 'feminine';
       }
-      // Default to masculine for other -ь words (кабель, корень, уголь)
+
+      // Masculine patterns (check first, more specific):
+      // -тель, -арь, -ырь (переключатель, словарь, пузырь)
+      if (word.endsWith('тель') || word.endsWith('арь') || word.endsWith('ырь')) {
+        return 'masculine';
+      }
+      // -ель after б, в, п, м (кабель, корабель, щебель)
+      if (word.endsWith('бель') || word.endsWith('вель') || word.endsWith('пель') || word.endsWith('мель')) {
+        return 'masculine';
+      }
+      // -ень, -онь, -оль (корень, огонь, уголь)
+      if (word.endsWith('ень') || word.endsWith('онь') || word.endsWith('оль')) {
+        return 'masculine';
+      }
+
+      // Feminine patterns:
+      // -ость, -есть, -ность (абстрактные существительные)
+      if (word.endsWith('ость') || word.endsWith('есть') || word.endsWith('ность')) {
+        return 'feminine';
+      }
+      // -овь, -евь (кровь, морковь)
+      if (word.endsWith('овь') || word.endsWith('евь')) {
+        return 'feminine';
+      }
+      // -очь, -ночь (ночь, полночь)
+      if (word.endsWith('очь') || word.endsWith('ночь')) {
+        return 'feminine';
+      }
+      // -ерь (дверь, теперь)
+      if (word.endsWith('ерь')) {
+        return 'feminine';
+      }
+      // -епь (цепь, степь)
+      if (word.endsWith('епь')) {
+        return 'feminine';
+      }
+      // -ань, -знь (ткань, жизнь, болезнь)
+      if (word.endsWith('ань') || word.endsWith('знь')) {
+        return 'feminine';
+      }
+      // -ыль, -иль (пыль, быль)
+      if (word.endsWith('ыль') || word.endsWith('иль')) {
+        return 'feminine';
+      }
+      // -аль (сталь)
+      if (word.endsWith('аль')) {
+        return 'feminine';
+      }
+      // -ель after other consonants (панель, печать)
+      if (word.endsWith('ель')) {
+        return 'feminine';
+      }
+      // -ать (печать, тетрадь, площадь)
+      if (word.endsWith('ать')) {
+        return 'feminine';
+      }
+
+      // Default to masculine for other -ь words
       return 'masculine';
     }
 
@@ -318,8 +341,34 @@ class FragmentCache {
   }
 
   /**
-   * Check if a word should be saved as a fragment
+   * Check if a Russian word is an adjective based on its ending
    */
+  private isRussianAdjective(word: string): boolean {
+    const normalized = word.toLowerCase().trim();
+    return normalized.endsWith('ый') || normalized.endsWith('ой') || normalized.endsWith('ий') ||
+           normalized.endsWith('ая') || normalized.endsWith('яя') ||
+           normalized.endsWith('ое') || normalized.endsWith('ее');
+  }
+
+  /**
+   * Learn noun gender from translation pair
+   */
+  private learnNounGender(englishNoun: string, russianTranslation: string): void {
+    const normalized = this.normalizeText(englishNoun);
+
+    // Skip if already learned
+    if (this.nounGenders.has(normalized)) return;
+
+    // Infer gender from Russian translation
+    const gender = this.inferGenderFromRussian(russianTranslation);
+
+    // Save to dictionary
+    this.nounGenders.set(normalized, gender);
+    console.log(`[fragment-cache] Learned gender: "${englishNoun}" → "${russianTranslation}" = ${gender}`);
+
+    // Save to disk
+    this.saveNounGenders();
+  }
   private isValidWord(word: string): boolean {
     const normalized = this.normalizeText(word);
 
@@ -456,10 +505,10 @@ class FragmentCache {
           break;
         }
 
-        // Check if word is a known noun
-        const knownGender = this.NOUN_GENDERS[wordNormalized];
-        if (knownGender) {
-          nounGender = knownGender;
+        // Check if word is a learned noun
+        const learnedGender = this.nounGenders.get(wordNormalized);
+        if (learnedGender) {
+          nounGender = learnedGender;
           break;
         }
       }
@@ -558,29 +607,25 @@ class FragmentCache {
         if (this.isValidWord(word)) {
           const wordLower = this.normalizeText(word);
 
-          // Detect if this is a material/prefix (adjective)
-          const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
-
-          // Get noun gender if this is a known noun
-          const nounGender = this.NOUN_GENDERS[wordLower];
-
-          // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known/inferred gender)
-          const inferredGender = nounGender || this.inferGenderFromRussian(trans);
-          const isKnownWord = isAdjective || inferredGender !== null;
-
-          if (!isKnownWord) {
-            // Skip arbitrary words like "tree", "fluid", "speed" - context-dependent
-            continue;
-          }
-
           // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
           const cleanedTranslation = trans.replace(/[.,!?;:'"()\-]/g, '').trim();
+
+          // Detect if this is an adjective by checking Russian ending
+          const isAdjective = this.isRussianAdjective(cleanedTranslation);
 
           // Detect gender from Russian translation
           const adjectiveGender = this.detectAdjectiveGender(cleanedTranslation);
 
           // Normalize adjectives to masculine form
           const normalizedTrans = isAdjective && adjectiveGender ? this.normalizeToMasculine(cleanedTranslation) : cleanedTranslation;
+
+          // Infer gender for nouns (non-adjectives)
+          let inferredGender: 'masculine' | 'feminine' | 'neuter' | undefined;
+          if (!isAdjective) {
+            inferredGender = this.inferGenderFromRussian(cleanedTranslation);
+            // Learn this noun gender for future use
+            this.learnNounGender(word, cleanedTranslation);
+          }
 
           results.push({
             fragment: word,
@@ -593,28 +638,31 @@ class FragmentCache {
         }
       }
     } else if (originalWords.length === 1 && this.isValidWord(originalWords[0])) {
-      // Single word - save only if it's a known word
+      // Single word
       const wordLower = this.normalizeText(originalWords[0]);
-      const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
-      const nounGender = this.NOUN_GENDERS[wordLower];
 
-      // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known/inferred gender)
-      const inferredGender = nounGender || this.inferGenderFromRussian(translated);
-      const isKnownWord = isAdjective || inferredGender !== null;
+      // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
+      const cleanedTranslation = translated.replace(/[.,!?;:'"()\-]/g, '').trim();
 
-      if (isKnownWord) {
-        // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
-        const cleanedTranslation = translated.replace(/[.,!?;:'"()\-]/g, '').trim();
+      // Detect if this is an adjective
+      const isAdjective = this.isRussianAdjective(cleanedTranslation);
 
-        results.push({
-          fragment: originalWords[0].trim(),
-          translation: cleanedTranslation,
-          context: 'word',
-          confidence: 85,
-          gender: inferredGender,
-          isAdjective
-        });
+      // Infer gender for nouns (non-adjectives)
+      let inferredGender: 'masculine' | 'feminine' | 'neuter' | undefined;
+      if (!isAdjective) {
+        inferredGender = this.inferGenderFromRussian(cleanedTranslation);
+        // Learn this noun gender for future use
+        this.learnNounGender(originalWords[0].trim(), cleanedTranslation);
       }
+
+      results.push({
+        fragment: originalWords[0].trim(),
+        translation: cleanedTranslation,
+        context: 'word',
+        confidence: 85,
+        gender: inferredGender,
+        isAdjective
+      });
     }
 
     return results;
@@ -659,6 +707,7 @@ class FragmentCache {
     if (this.isDirty) {
       this.saveToDisk();
     }
+    this.saveNounGenders();
   }
 }
 
