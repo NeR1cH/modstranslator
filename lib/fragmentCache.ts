@@ -455,7 +455,8 @@ class FragmentCache {
         const wordNormalized = this.normalizeText(word);
         const fragment = this.fragments.get(wordNormalized);
 
-        if (fragment && fragment.confidence >= 60) {
+        // ИСПРАВЛЕНИЕ 3: Require minimum 2 occurrences for reliability
+        if (fragment && fragment.confidence >= 60 && fragment.count >= 2) {
           let translation = fragment.translation;
 
           // Apply gender agreement if this is an adjective and we know the noun gender
@@ -472,7 +473,7 @@ class FragmentCache {
           totalConfidence += fragment.confidence;
           foundCount++;
         } else {
-          // Word not found - cannot translate
+          // Word not found or insufficient data - cannot translate
           return null;
         }
       }
@@ -528,14 +529,25 @@ class FragmentCache {
           // Detect if this is a material/prefix (adjective)
           const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
 
-          // Detect gender from Russian translation
-          const adjectiveGender = this.detectAdjectiveGender(trans);
-
           // Get noun gender if this is a known noun
           const nounGender = this.NOUN_GENDERS[wordLower];
 
+          // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known gender)
+          const isKnownWord = isAdjective || nounGender !== undefined;
+
+          if (!isKnownWord) {
+            // Skip arbitrary words like "tree", "fluid", "speed" - context-dependent
+            continue;
+          }
+
+          // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
+          const cleanedTranslation = trans.replace(/[.,!?;:'"()\-]/g, '').trim();
+
+          // Detect gender from Russian translation
+          const adjectiveGender = this.detectAdjectiveGender(cleanedTranslation);
+
           // Normalize adjectives to masculine form
-          const normalizedTrans = isAdjective && adjectiveGender ? this.normalizeToMasculine(trans) : trans;
+          const normalizedTrans = isAdjective && adjectiveGender ? this.normalizeToMasculine(cleanedTranslation) : cleanedTranslation;
 
           results.push({
             fragment: word,
@@ -548,19 +560,27 @@ class FragmentCache {
         }
       }
     } else if (originalWords.length === 1 && this.isValidWord(originalWords[0])) {
-      // Single word - save regardless of translation word count
+      // Single word - save only if it's a known word
       const wordLower = this.normalizeText(originalWords[0]);
       const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
       const nounGender = this.NOUN_GENDERS[wordLower];
 
-      results.push({
-        fragment: originalWords[0].trim(),
-        translation: translated.trim(),
-        context: 'word',
-        confidence: 85,
-        gender: nounGender,
-        isAdjective
-      });
+      // ИСПРАВЛЕНИЕ 2: Save only known words
+      const isKnownWord = isAdjective || nounGender !== undefined;
+
+      if (isKnownWord) {
+        // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
+        const cleanedTranslation = translated.replace(/[.,!?;:'"()\-]/g, '').trim();
+
+        results.push({
+          fragment: originalWords[0].trim(),
+          translation: cleanedTranslation,
+          context: 'word',
+          confidence: 85,
+          gender: nounGender,
+          isAdjective
+        });
+      }
     }
 
     return results;

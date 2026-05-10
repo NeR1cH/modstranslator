@@ -238,10 +238,10 @@ describe('fragmentCache', () => {
     it('should count words and phrases separately', () => {
       const cache = getFragmentCache();
 
-      // Learn some words and phrases
+      // Learn some known words (materials and nouns with known gender)
       for (let i = 0; i < 10; i++) {
-        cache.learn('Enable', 'Включить');
-        cache.learn('Armor Status', 'Статус брони');
+        cache.learn('Diamond Sword', 'Алмазный меч');
+        cache.learn('Iron Pickaxe', 'Железная кирка');
       }
 
       const stats = cache.getStats();
