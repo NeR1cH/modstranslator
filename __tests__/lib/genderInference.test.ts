@@ -6,6 +6,9 @@
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
 import { getFragmentCache } from '../../lib/fragmentCache';
 
+// Mock fetch globally for OpenRouter
+global.fetch = jest.fn();
+
 // Mock DeepL API with realistic translations
 jest.mock('../../lib/deepl', () => ({
   translateTexts: jest.fn((texts: string[]) => {
@@ -64,7 +67,7 @@ describe('FragmentCache gender inference test', () => {
       'Device',          // Устройство (UNKNOWN - will infer neuter from "устройство")
     ];
 
-    console.log('Translating base items:');
+    console.log('Translating base items (first time):');
     baseTexts.forEach(t => console.log(`  - ${t}`));
     console.log('');
 
@@ -73,6 +76,14 @@ describe('FragmentCache gender inference test', () => {
     console.log('Base translations:');
     results1.forEach((r, i) => {
       console.log(`  ${baseTexts[i]} → ${r.text} (${r.source})`);
+    });
+
+    // Learn again to meet count >= 2 requirement
+    console.log('\nLearning fragments again (second time for count >= 2):');
+
+    // Manually learn fragments again to increase count
+    results1.forEach((r, i) => {
+      fragmentCache.learn(baseTexts[i], r.text);
     });
 
     const stats1 = fragmentCache.getStats();

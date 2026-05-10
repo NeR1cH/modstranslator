@@ -163,12 +163,18 @@ describe('FragmentCache - Enhanced Patterns', () => {
 
   describe('Fragment Reuse', () => {
     test('should reuse learned fragments for similar items', () => {
-      // Learn base patterns
+      // Learn base patterns (twice each for count >= 2 requirement)
+      cache.learn('Iron Ingot', 'Железный слиток');
       cache.learn('Iron Ingot', 'Железный слиток');
       cache.learn('Copper Ingot', 'Медный слиток');
+      cache.learn('Copper Ingot', 'Медный слиток');
+      cache.learn('Gold Ingot', 'Золотой слиток');
       cache.learn('Gold Ingot', 'Золотой слиток');
       cache.learn('Silver Ingot', 'Серебряный слиток');
+      cache.learn('Silver Ingot', 'Серебряный слиток');
       cache.learn('Bronze Ingot', 'Бронзовый слиток');
+      cache.learn('Bronze Ingot', 'Бронзовый слиток');
+      cache.learn('Steel Ingot', 'Стальной слиток');
       cache.learn('Steel Ingot', 'Стальной слиток');
 
       // Try to translate using fragments
@@ -180,12 +186,18 @@ describe('FragmentCache - Enhanced Patterns', () => {
     });
 
     test('should combine 3-word fragments', () => {
-      // Learn enough patterns to build confidence
+      // Learn enough patterns to build confidence (twice each for count >= 2)
+      cache.learn('Raw Iron Ore', 'Сырая железная руда');
       cache.learn('Raw Iron Ore', 'Сырая железная руда');
       cache.learn('Raw Copper Ore', 'Сырая медная руда');
+      cache.learn('Raw Copper Ore', 'Сырая медная руда');
+      cache.learn('Raw Gold Ore', 'Сырая золотая руда');
       cache.learn('Raw Gold Ore', 'Сырая золотая руда');
       cache.learn('Raw Silver Ore', 'Сырая серебряная руда');
+      cache.learn('Raw Silver Ore', 'Сырая серебряная руда');
       cache.learn('Raw Lead Ore', 'Сырая свинцовая руда');
+      cache.learn('Raw Lead Ore', 'Сырая свинцовая руда');
+      cache.learn('Raw Zinc Ore', 'Сырая цинковая руда');
       cache.learn('Raw Zinc Ore', 'Сырая цинковая руда');
 
       // Try to translate using 3-word fragments

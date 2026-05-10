@@ -8,6 +8,9 @@ import { getFragmentCache } from '../../lib/fragmentCache';
 import { getTemplateCache } from '../../lib/templateCache';
 import { getTranslationCache } from '../../lib/translationCache';
 
+// Mock fetch globally for OpenRouter
+global.fetch = jest.fn();
+
 // Mock DeepL API with realistic translations
 jest.mock('../../lib/deepl', () => ({
   translateTexts: jest.fn((texts: string[]) => {
@@ -71,7 +74,7 @@ describe('FragmentCache variation test', () => {
       'Gold Ore',
     ];
 
-    console.log('Translating base items:');
+    console.log('Translating base items (first time):');
     baseTexts.forEach(t => console.log(`  - ${t}`));
     console.log('');
 
@@ -80,6 +83,13 @@ describe('FragmentCache variation test', () => {
     console.log('Base translations:');
     baseResults.forEach((r, i) => {
       console.log(`  ${baseTexts[i]} → ${r.text} (${r.source})`);
+    });
+
+    console.log('\nLearning fragments again (second time for count >= 2):');
+
+    // Manually learn fragments again to increase count
+    baseResults.forEach((r, i) => {
+      fragmentCache.learn(baseTexts[i], r.text);
     });
 
     const stats1Fragment = fragmentCache.getStats();

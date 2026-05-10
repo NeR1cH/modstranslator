@@ -5,6 +5,9 @@
 import { translateBatchThroughPipeline } from '../../lib/translationPipeline';
 import { getFragmentCache } from '../../lib/fragmentCache';
 
+// Mock fetch globally for OpenRouter
+global.fetch = jest.fn();
+
 // Mock DeepL API
 jest.mock('../../lib/deepl', () => ({
   translateTexts: jest.fn((texts: string[]) => {
@@ -30,13 +33,20 @@ describe('Gender agreement debug test', () => {
     const fragmentCache = getFragmentCache();
     fragmentCache.clear();
 
-    // Phase 1: Learn base translations
-    console.log('Phase 1: Learning base translations\n');
+    // Phase 1: Learn base translations (twice for count >= 2)
+    console.log('Phase 1: Learning base translations (first time)\n');
     const phase1 = ['Iron Sword', 'Advanced Steel Frame'];
     const results1 = await translateBatchThroughPipeline(phase1);
 
     results1.forEach((r, i) => {
       console.log(`  ${phase1[i]} → ${r.text} (${r.source})`);
+    });
+
+    console.log('\nPhase 1b: Learning base translations (second time for count >= 2)\n');
+
+    // Manually learn fragments again to increase count
+    results1.forEach((r, i) => {
+      fragmentCache.learn(phase1[i], r.text);
     });
 
     const stats1 = fragmentCache.getStats();

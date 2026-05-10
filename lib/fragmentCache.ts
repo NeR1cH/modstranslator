@@ -532,8 +532,9 @@ class FragmentCache {
           // Get noun gender if this is a known noun
           const nounGender = this.NOUN_GENDERS[wordLower];
 
-          // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known gender)
-          const isKnownWord = isAdjective || nounGender !== undefined;
+          // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known/inferred gender)
+          const inferredGender = nounGender || this.inferGenderFromRussian(trans);
+          const isKnownWord = isAdjective || inferredGender !== null;
 
           if (!isKnownWord) {
             // Skip arbitrary words like "tree", "fluid", "speed" - context-dependent
@@ -554,7 +555,7 @@ class FragmentCache {
             translation: normalizedTrans,
             context: 'word',
             confidence: 80,
-            gender: nounGender,
+            gender: inferredGender,
             isAdjective
           });
         }
@@ -565,8 +566,9 @@ class FragmentCache {
       const isAdjective = this.MATERIALS.has(wordLower) || this.PREFIXES.has(wordLower);
       const nounGender = this.NOUN_GENDERS[wordLower];
 
-      // ИСПРАВЛЕНИЕ 2: Save only known words
-      const isKnownWord = isAdjective || nounGender !== undefined;
+      // ИСПРАВЛЕНИЕ 2: Save only known words (materials, prefixes, or nouns with known/inferred gender)
+      const inferredGender = nounGender || this.inferGenderFromRussian(translated);
+      const isKnownWord = isAdjective || inferredGender !== null;
 
       if (isKnownWord) {
         // ИСПРАВЛЕНИЕ 1: Clean punctuation from translation
@@ -577,7 +579,7 @@ class FragmentCache {
           translation: cleanedTranslation,
           context: 'word',
           confidence: 85,
-          gender: nounGender,
+          gender: inferredGender,
           isAdjective
         });
       }
