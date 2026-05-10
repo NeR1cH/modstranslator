@@ -70,9 +70,9 @@ describe('TranslationPipeline', () => {
     });
 
     it('should use translation cache on second call', async () => {
-      // First call - goes to word-based or DeepL
+      // First call - goes to word-based, fragment, or DeepL
       const result1 = await translateThroughPipeline('unknown xyz string');
-      expect(['deepl', 'word-based']).toContain(result1.source);
+      expect(['deepl', 'word-based', 'fragment']).toContain(result1.source);
 
       // Second call - should use cache
       const result2 = await translateThroughPipeline('unknown xyz string');
