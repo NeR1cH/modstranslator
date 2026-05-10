@@ -80,6 +80,10 @@ export async function translateBatchThroughPipeline(
   const fragmentCache = getFragmentCache();
   const templateCache = getTemplateCache();
   const progressTracker = getProgressTracker();
+  const rateLimitStats = getRateLimitStatsTracker();
+
+  // Reset rate limit stats at the start of each translation
+  rateLimitStats.reset();
 
   // Initialize progress tracking if fileName provided
   if (options?.fileName && options?.fileContent) {
@@ -147,7 +151,6 @@ export async function translateBatchThroughPipeline(
   // Step 3: Translate uncached texts in batch via API with rate limit handling
   const MAX_RATE_LIMIT_RETRIES = 5;
   let rateLimitRetryCount = 0;
-  const rateLimitStats = getRateLimitStatsTracker();
 
   try {
     while (rateLimitRetryCount <= MAX_RATE_LIMIT_RETRIES) {
