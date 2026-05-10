@@ -106,25 +106,3 @@ export function getAgreementEngine(): AgreementEngine {
   }
   return instance;
 }
-
-/**
- * Helper function: Apply agreement to a word (adjective or noun)
- * @param word - The word to decline/agree
- * @param pos - Part of speech ('adjective' or 'noun')
- * @param gender - Gender of the noun ('m', 'f', 'n')
- * @param isPlural - Whether the word is plural
- * @param count - Optional number for special 2-4 rule
- * @returns The correctly declined/agreed form
- */
-export function applyAgreement(
-  word: string,
-  pos: 'adjective' | 'noun',
-  gender: 'm' | 'f' | 'n',
-  isPlural: boolean,
-  count: number | null
-): string {
-  // For now, return the word as-is
-  // This is a simplified version that doesn't require WordEntry
-  // In full implementation, this would look up the word and apply proper forms
-  return word;
-}

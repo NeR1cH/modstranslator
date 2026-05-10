@@ -111,6 +111,16 @@ class FragmentCache {
     'золот', 'больш', 'молод', 'дорог', 'чуж', 'живой'
   ]);
 
+  // Feminine words ending with soft sign -ь
+  private readonly FEMININE_SOFT = new Set([
+    'дверь', 'цепь', 'ткань', 'пыль', 'сталь', 'соль',
+    'роль', 'боль', 'тень', 'степь', 'мать', 'дочь',
+    'печать', 'панель', 'шестерня', 'кирка', 'лопата',
+    'мотыга', 'пика', 'булава', 'катушка', 'проволока',
+    'дрель', 'пила', 'монета', 'перила', 'опора',
+    'клин', 'рама'
+  ]);
+
   // Minimum word length to consider for fragments
   private readonly MIN_WORD_LENGTH = 3;
 
@@ -294,9 +304,12 @@ class FragmentCache {
       return 'neuter';
     }
 
-    // Rule 3: -ь → usually masculine, but can be feminine (кабель, корень, уголь)
-    // We default to masculine as it's more common
+    // Rule 3: -ь → check FEMININE_SOFT list first
     if (word.endsWith('ь')) {
+      if (this.FEMININE_SOFT.has(word)) {
+        return 'feminine';
+      }
+      // Default to masculine for other -ь words (кабель, корень, уголь)
       return 'masculine';
     }
 
