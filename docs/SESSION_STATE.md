@@ -1,11 +1,84 @@
-# Session State — modstranslator v3.21.0
+# Session State — modstranslator v3.21.1
 
 **Last Updated:** 2026-05-10  
-**Status:** Release v3.21.0 готов
+**Status:** Production Ready
 
 ---
 
 ## Recent Changes (2026-05-10)
+
+### Rate Limit Handling Improvements (v3.21.1)
+
+**Problem:** OpenRouter rate limit (429) triggered immediate DeepL fallback instead of retry
+
+**Root Causes:**
+1. `translator.ts` caught RateLimitError and fell back to DeepL
+2. No explicit logging for retry attempts
+3. No statistics tracking for rate limit events
+4. Statistics not displayed when translation failed
+
+**Solutions Implemented:**
+
+#### 1. Fixed RateLimitError Propagation ✅
+- Modified `translator.ts` to check error type before fallback
+- RateLimitError now propagates up to pipeline for retry
+- DeepL fallback only for non-rate-limit errors
+- Files: `lib/translator.ts:48-54, 73-79`
+
+#### 2. Enhanced Retry Logging ✅
+- Added explicit retry attempt logging in `openrouter.ts`
+- Shows: attempt number, wait time, success/failure status
+- Format: `⏳ OpenRouter rate limit. Waiting 60s (attempt 2/3)...`
+- Files: `lib/openrouter.ts:100-123`
+
+#### 3. Rate Limit Statistics System ✅
+- New module: `lib/rateLimitStats.ts` (singleton tracker)
+- Tracks: totalPauses, totalWaitTime, successfulRetries, failedAttempts, stopReason
+- Auto-reset at start of each translation
+- Only displays when rate limit events occurred
+- Files: `lib/rateLimitStats.ts` (new), `lib/translationPipeline.ts:86, 152-224`
+
+#### 4. Guaranteed Statistics Display ✅
+- Used try-finally block in pipeline
+- Statistics printed even if translation fails
+- Integrated into shutdown display
+- Files: `lib/translationPipeline.ts:221-224`, `lib/serverShutdown.ts:47-53`
+
+**Multi-Level Retry Strategy:**
+- OpenRouter level: 3 retries with wait
+- Pipeline level: 6 retry attempts
+- Total: Up to 18 retry attempts before giving up
+
+**Test Results:**
+- ✅ 447/447 tests passing (100%)
+- ✅ Added 4 new tests in `translator.test.ts`
+- ✅ New test file: `rateLimitStats.test.ts` (16 tests)
+- ✅ Fixed mock to preserve RateLimitError class
+
+**Modified Files:**
+- `lib/translator.ts` - RateLimitError propagation
+- `lib/openrouter.ts` - Enhanced logging and statistics
+- `lib/translationPipeline.ts` - Retry loop with statistics
+- `lib/serverShutdown.ts` - Added rate limit stats display
+- `lib/rateLimitStats.ts` - NEW: Statistics tracking module
+- `__tests__/lib/rateLimitStats.test.ts` - NEW: Unit tests
+- `__tests__/lib/translator.test.ts` - Added RateLimitError tests
+- `scripts/testRateLimit.ts` - Added statistics verification
+
+**Documentation:**
+- `docs/releases/v3.21.1.md` - Release notes
+- `docs/releases/README.md` - Updated version table
+- `docs/CHANGELOG.md` - Added v3.21.1 entry
+- `package.json` - Version 3.21.1
+
+**Commits Ready to Push:**
+- `0ebd9a2`: fix: correct RateLimitError handling - retry instead of fallback to DeepL
+- `b8fcac2`: feat: add rate limit statistics tracking and display
+- `0bf2ac5`: fix: reset rate limit stats at start of each translation
+
+---
+
+## Previous Changes (2026-05-10)
 
 ### Исправление обработки прилагательных с ударным окончанием
 
