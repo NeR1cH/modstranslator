@@ -1,11 +1,51 @@
-# Session State — modstranslator v3.19.0
+# Session State — modstranslator v3.21.0
 
-**Last Updated:** 2026-05-09  
-**Status:** Release v3.19.0 готов
+**Last Updated:** 2026-05-10  
+**Status:** Release v3.21.0 готов
 
 ---
 
-## Recent Changes (2026-05-09)
+## Recent Changes (2026-05-10)
+
+### Исправление обработки прилагательных с ударным окончанием
+
+**Проблема:** Система неправильно обрабатывала прилагательные типа "золотой", "большой", "молодой"
+
+**Причины:**
+1. `normalizeToMasculine()` возвращала "Золотой" вместо нормализации к "Золотый"
+2. `stressedEnding` не обновлялся при повторном обучении (false не перезаписывался на true)
+3. `fragmentCacheVariation.test.ts` падал из-за отсутствия мока для OpenRouter
+4. `fragmentCache.grammar.test.ts` использовал case-sensitive regex
+
+**Исправления:**
+1. `normalizeToMasculine()` теперь всегда нормализует к -ый/-ий, но сохраняет флаг `stressedEnding`
+2. При обновлении фрагмента `stressedEnding = true` перезаписывает `false`
+3. Добавлен полный мок для OpenRouter с поддержкой батчей через `###SPLIT###`
+4. Regex в тестах теперь case-insensitive (флаг `/i`)
+
+**Результаты:**
+- ✅ 427/427 тестов проходят (100%)
+- ✅ "Gold Sheet" → "Золотой лист" (правильно)
+- ✅ "Gold Block" → "Золотой блок" (правильно)
+- ✅ FragmentCache правильно согласует прилагательные с ударным окончанием
+
+**Изменённые файлы:**
+- `lib/fragmentCache.ts` - исправлена логика нормализации и обновления
+- `__tests__/lib/fragmentCacheVariation.test.ts` - добавлен мок OpenRouter
+- `__tests__/lib/fragmentCache.grammar.test.ts` - исправлены regex
+
+**Коммиты:**
+- `331b088` - fix: correct stressed ending handling for adjectives like "золотой"
+
+**Релиз:**
+- `docs/releases/v3.21.0.md` - release notes
+- `package.json` - версия 3.21.0
+- `CLAUDE.md` - версия 3.21.0
+- `docs/CHANGELOG.md` - добавлена секция v3.21.0
+
+---
+
+## Previous Changes (2026-05-09)
 
 ### Удаление Word-Based системы перевода
 
