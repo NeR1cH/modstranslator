@@ -1,13 +1,14 @@
 # 🟩 MOD_TRANSLATOR — Minecraft Localization Engine
 
-> Автоматический переводчик модов и модпаков Minecraft с английского на русский язык через DeepL API.  
+> Автоматический переводчик модов и модпаков Minecraft с английского на русский язык через OpenRouter (бесплатно) или DeepL API.  
 > Работает прямо в браузере — просто перетащи файл, нажми кнопку, скачай готовый результат.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](./LICENSE)
 [![DeepL](https://img.shields.io/badge/DeepL-API-0F2B46?logo=deepl)](https://www.deepl.com/pro-api)
-[![Version](https://img.shields.io/badge/version-3.17.0-brightgreen)](https://github.com/NeR1cH/modstranslator/releases/tag/v3.17.0)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-API-5865F2)](https://openrouter.ai/)
+[![Version](https://img.shields.io/badge/version-3.21.2-brightgreen)](https://github.com/NeR1cH/modstranslator/releases/tag/v3.21.2)
 
 ---
 
@@ -37,7 +38,11 @@
 | 💾 **Кэширование переводов** | Повторные переводы используют кэш — экономия до 70% API лимита |
 | 🧩 **Кэш фрагментов** | Умное переиспользование частей переводов (материалы, типы предметов) |
 | 🧠 **Word-Based система** | Пословный перевод с обучением и морфологией — v3.16.0 ✨ |
-| 🔄 **Ротация API ключей** | Поддержка нескольких DeepL ключей с автоматическим переключением — **НОВОЕ в v3.17.0** ✨ |
+| 🤖 **Гибридная система перевода** | OpenRouter (бесплатно) + DeepL fallback — **НОВОЕ в v3.21.0** ✨ |
+| 🔄 **Авто-retry при перегрузке** | Автоматический повтор с паузой 30с при `content: null` от OpenRouter |
+| 🛡️ **Умный fallback** | При исчерпании DeepL квоты продолжает через OpenRouter без остановки |
+| 📊 **Статистика rate limit** | Детальная статистика пауз, retry и причин остановки |
+| 🔄 **Ротация API ключей** | Поддержка нескольких DeepL ключей с автоматическим переключением |
 | 📝 **Грамматическое согласование** | Автоматическое согласование прилагательных с существительными по роду |
 | 🔤 **Морфология** | Правильное склонение существительных (1/2-4/5+ правило) |
 | 📊 **Детальные отчеты** | Показывает что именно было переведено с примерами |
@@ -83,14 +88,22 @@ node --version   # должно быть v18.x.x или выше
 npm --version
 ```
 
-### 2. Получи DeepL API ключ
+### 2. Получи API ключ (OpenRouter или DeepL)
+
+**Вариант 1: OpenRouter (рекомендуется, бесплатно)**
+
+Зарегистрируйся на [openrouter.ai](https://openrouter.ai):
+- **Бесплатные модели** — `openai/gpt-oss-120b:free`, `google/gemma-4-31b-it:free`
+- Без ограничений по символам
+- Может возвращать пустой ответ при перегрузке (система автоматически повторит через 30с)
+
+**Вариант 2: DeepL API**
 
 Зарегистрируйся на [deepl.com/pro-api](https://www.deepl.com/pro-api):
-
 - **Бесплатный план** — 500 000 символов/месяц. Ключ оканчивается на `:fx`
 - **Pro план** — без ограничений по символам
 
-**💡 НОВОЕ в v3.17.0:** Можно использовать несколько ключей одновременно!
+**💡 Гибридный режим (v3.21.0+):** Можно использовать оба провайдера одновременно!
 
 ### 3. Установи зависимости и настрой окружение
 
@@ -108,12 +121,28 @@ copy .env.example .env     # Windows
 
 Открой `.env` и вставь свой ключ:
 
-**Один ключ:**
+**OpenRouter (гибридный режим, рекомендуется):**
 ```env
-DEEPL_API_KEY=твой_ключ_deepl_здесь
+TRANSLATION_PROVIDER=hybrid
+OPENROUTER_API_KEY=твой_ключ_openrouter
+OPENROUTER_MODEL=openai/gpt-oss-120b:free
+DEEPL_API_KEY=твой_ключ_deepl  # опционально, для fallback
 ```
 
-**Несколько ключей (v3.17.0+):**
+**Только DeepL:**
+```env
+TRANSLATION_PROVIDER=deepl
+DEEPL_API_KEY=твой_ключ_deepl
+```
+
+**Только OpenRouter:**
+```env
+TRANSLATION_PROVIDER=openrouter
+OPENROUTER_API_KEY=твой_ключ_openrouter
+OPENROUTER_MODEL=openai/gpt-oss-120b:free
+```
+
+**Несколько DeepL ключей (v3.17.0+):**
 ```env
 DEEPL_API_KEY=ключ1:fx,ключ2:fx,ключ3:fx
 ```
@@ -292,6 +321,29 @@ modstranslator/
 
 ## 🔬 Архитектура
 
+### Гибридная система перевода (v3.21.0+)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Translator (Hybrid Mode)                               │
+│                                                          │
+│  1. Попытка OpenRouter                                  │
+│     ├─ Успех → возврат результата                       │
+│     ├─ content: null → пауза 30s → retry (до 3 раз)    │
+│     └─ Другая ошибка → fallback на DeepL               │
+│                                                          │
+│  2. Fallback на DeepL                                   │
+│     ├─ Успех → возврат результата                       │
+│     ├─ QuotaExceededError → сброс флага → retry OpenRouter │
+│     └─ Другая ошибка → shutdown сервера                │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Умная обработка ошибок:**
+- `content: null` от OpenRouter = перегрузка сервера → пауза 30s + retry
+- DeepL квота исчерпана → продолжение через OpenRouter без остановки
+- Rate limit статистика выводится после каждого перевода
+
 ### Поток данных
 
 ```
@@ -314,11 +366,15 @@ POST /api/translate-stream  →  перевод с прогрессом
         ↓
   fragmentCache.tryTranslate() — умное переиспользование
         ↓
-  DeepL API (только для новых строк)
+  Translator (Hybrid Mode)
+    ├─ OpenRouter (primary) — бесплатные LLM модели
+    │   └─ content: null → retry 30s (до 3 раз)
+    └─ DeepL (fallback) — при ошибках OpenRouter
+        └─ QuotaExceededError → retry OpenRouter
         ↓
   Сохранение в кэш
         ↓
-  Генерация отчета
+  Генерация отчета + статистика rate limit
         ↓
 Пользователь скачивает результат
 ```
@@ -387,10 +443,21 @@ POST /api/translate-stream  →  перевод с прогрессом
 
 ## 🛠️ Устранение неполадок
 
-### ❌ `DEEPL_API_KEY не задан`
+### ❌ `OPENROUTER_API_KEY не задан` или `DEEPL_API_KEY не задан`
 - Проверь наличие файла `.env` в корне проекта
 - Убедись, что ключ вставлен без лишних пробелов и кавычек
+- Установи `TRANSLATION_PROVIDER` (hybrid/openrouter/deepl)
 - Перезапусти сервер после изменения `.env` (`Ctrl+C` → `npm run dev`)
+
+### ⚠️ OpenRouter возвращает пустой ответ (`content: null`)
+- Это нормально — сервер перегружен
+- Система автоматически повторит через 30 секунд (до 3 раз)
+- Если проблема сохраняется — переключится на DeepL fallback
+
+### ❌ DeepL квота исчерпана (`QuotaExceededError`)
+- Система автоматически продолжит через OpenRouter
+- Сервер НЕ остановится
+- Проверь остаток символов на [deepl.com/account/usage](https://www.deepl.com/account/usage)
 
 ### ❌ `Нет английских lang файлов в JAR`
 - Мод может не содержать локализацию вовсе
@@ -439,7 +506,8 @@ npm start
 | [Next.js](https://nextjs.org/) | 14.2.0 | React-фреймворк с серверными API Routes |
 | [TypeScript](https://www.typescriptlang.org/) | 5.x | Типизация всего проекта |
 | [JSZip](https://stuk.github.io/jszip/) | 3.10.1 | Работа с ZIP/JAR архивами |
-| [DeepL API](https://www.deepl.com/pro-api) | v2 | Машинный перевод EN→RU |
+| [OpenRouter API](https://openrouter.ai/) | v1 | Бесплатные LLM модели для перевода |
+| [DeepL API](https://www.deepl.com/pro-api) | v2 | Машинный перевод EN→RU (fallback) |
 | [Tailwind CSS](https://tailwindcss.com/) | 3.3.x | Утилитарные CSS-стили |
 
 ---
@@ -448,13 +516,13 @@ npm start
 
 См. [CHANGELOG.md](./CHANGELOG.md) для полной истории изменений.
 
-**Последняя версия: 3.17.0** (Minor Feature Release)
-- 🔄 Система ротации API ключей DeepL
-- ✨ Поддержка нескольких DeepL API ключей одновременно
-- ✨ Автоматическое переключение при исчерпании лимита
-- ✨ UI с детальной статистикой по каждому ключу
-- ✨ Маскирование ключей для безопасности
-- 🐛 Обновлены все тесты (452 passing)
+**Последняя версия: 3.21.2** (Patch Release)
+- 🤖 Гибридная система перевода: OpenRouter (primary) + DeepL (fallback)
+- 🔄 Авто-retry при `content: null` от OpenRouter (пауза 30s, до 3 попыток)
+- 🛡️ Умная обработка DeepL QuotaExceededError — продолжение через OpenRouter без остановки
+- 📊 Статистика rate limit выводится всегда (даже при 0 пауз)
+- 🐛 Исправлена обработка ошибок в translator.ts (добавлен try-catch для прямых вызовов DeepL)
+- ✨ Debug-логи `🔴 CATCH TRIGGERED` для отладки retry-логики
 
 ---
 
@@ -471,5 +539,5 @@ GitHub: [NeR1cH/modstranslator](https://github.com/NeR1cH/modstranslator)
 
 ---
 
-**Версия:** 3.17.0  
-**Дата обновления:** 08.05.2026
+**Версия:** 3.21.2  
+**Дата обновления:** 11.05.2026

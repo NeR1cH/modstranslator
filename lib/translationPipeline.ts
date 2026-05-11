@@ -186,6 +186,7 @@ export async function translateBatchThroughPipeline(
         break; // Success, exit retry loop
 
       } catch (error) {
+        console.log('🔴 CATCH TRIGGERED:', (error as Error).name, (error as Error).message);
         // Handle rate limit error with retry
         if (error instanceof RateLimitError) {
           rateLimitRetryCount++;

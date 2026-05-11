@@ -84,6 +84,7 @@ export class OpenRouterTranslator {
           });
         } catch (fetchError) {
           // Network error or fetch failure
+          console.log('🔴 CATCH TRIGGERED:', (fetchError as Error).name, (fetchError as Error).message);
           console.error(`❌ [OpenRouter] Fetch error (attempt ${attempt}/${MAX_RETRIES}):`, fetchError);
 
           if (attempt < MAX_RETRIES) {
@@ -138,9 +139,21 @@ export class OpenRouterTranslator {
           throw new Error('Invalid response: no choices array');
         }
 
+        // Handle null content (OpenRouter overloaded) - treat as rate limit
         if (!data.choices[0].message || !data.choices[0].message.content) {
-          console.error('❌ [OpenRouter] Invalid message structure:', JSON.stringify(data.choices[0]).substring(0, 200));
-          throw new Error('Invalid response: no message content');
+          console.warn('⚠️ [OpenRouter] Empty content (server overloaded), treating as rate limit');
+
+          if (attempt < MAX_RETRIES) {
+            const waitTime = 30; // 30 seconds wait
+            console.warn(`⏳ [OpenRouter] Waiting ${waitTime}s before retry ${attempt}/${MAX_RETRIES}...`);
+            await this.sleep(waitTime * 1000);
+            console.log(`🔄 [OpenRouter] Retrying after ${waitTime}s wait...`);
+            continue; // Retry
+          } else {
+            // Max retries reached
+            console.error('❌ [OpenRouter] Empty content persists after all retries');
+            throw new Error('OpenRouter returned empty content after all retries (server overloaded)');
+          }
         }
 
         const translated = data.choices[0].message.content;
@@ -150,6 +163,7 @@ export class OpenRouterTranslator {
 
         return translated.trim();
       } catch (error) {
+        console.log('🔴 CATCH TRIGGERED:', (error as Error).name, (error as Error).message);
         lastError = error as Error;
 
         // If it's a RateLimitError, rethrow immediately (already retried)

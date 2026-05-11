@@ -118,7 +118,23 @@ class UniversalTranslator {
     if (this.provider === 'hybrid') {
       // Если OpenRouter недоступен с самого начала, используем DeepL напрямую
       if (this.currentProvider === 'deepl') {
-        translatedUncached = await deeplTranslate(uncachedTexts, targetLang);
+        try {
+          translatedUncached = await deeplTranslate(uncachedTexts, targetLang);
+        } catch (error: any) {
+          console.log('🔴 CATCH TRIGGERED:', error.name, error.message);
+
+          // Если DeepL квота исчерпана - сбрасываем флаг и пробуем OpenRouter
+          if (error.name === 'QuotaExceededError') {
+            console.warn('⚠️ [Translator] DeepL квота исчерпана, используем только OpenRouter');
+            console.warn('   Сбрасываем флаг openrouterFailed и пробуем OpenRouter снова');
+            this.openrouterFailed = false;
+            this.currentProvider = 'openrouter';
+            // Пробуем через OpenRouter
+            translatedUncached = await this.translateBatchWithFallback(uncachedTexts, targetLang, preserveFormatting);
+          } else {
+            throw error;
+          }
+        }
       } else {
         translatedUncached = await this.translateBatchWithFallback(uncachedTexts, targetLang, preserveFormatting);
       }
@@ -176,6 +192,19 @@ class UniversalTranslator {
         cancelShutdown();
         return results[0];
       } catch (error: any) {
+        console.log('🔴 CATCH TRIGGERED:', error.name, error.message);
+
+        // Если DeepL квота исчерпана - не останавливаем сервер
+        if (error.name === 'QuotaExceededError') {
+          console.warn('⚠️ [Translator] DeepL квота исчерпана, используем только OpenRouter');
+          console.warn('   Сбрасываем флаг openrouterFailed и пробуем OpenRouter снова');
+          // Сбрасываем флаг и пробуем OpenRouter
+          this.openrouterFailed = false;
+          this.currentProvider = 'openrouter';
+          // Пробуем перевести через OpenRouter
+          return await this.translateWithFallback(text, targetLang, preserveFormatting);
+        }
+
         console.error('❌ [Translator] DeepL also failed:', error.message);
         // Оба провайдера недоступны - планируем shutdown
         scheduleShutdown(`OpenRouter недоступен, DeepL ошибка: ${error.message}`);
@@ -194,6 +223,7 @@ class UniversalTranslator {
       console.log('✅ [Translator] OpenRouter translation successful');
       return result;
     } catch (error: any) {
+      console.log('🔴 CATCH TRIGGERED:', error.name, error.message);
       // Если это RateLimitError — пробрасываем выше (не fallback)
       if (error.name === 'RateLimitError') {
         console.error('❌ [Translator] OpenRouter rate limit exhausted, rethrowing');
@@ -214,6 +244,16 @@ class UniversalTranslator {
         console.log('✅ [Translator] DeepL translation successful');
         return results[0];
       } catch (deeplError: any) {
+        console.log('🔴 CATCH TRIGGERED:', deeplError.name, deeplError.message);
+
+        // Если DeepL квота исчерпана - не останавливаем сервер, продолжаем через OpenRouter
+        if (deeplError.name === 'QuotaExceededError') {
+          console.warn('⚠️ [Translator] DeepL квота исчерпана, используем только OpenRouter');
+          console.warn('   Продолжаем работу без DeepL fallback');
+          // Не планируем shutdown, просто пробрасываем ошибку выше
+          throw error; // Пробрасываем ОРИГИНАЛЬНУЮ ошибку OpenRouter
+        }
+
         console.error('❌ [Translator] DeepL also failed:', deeplError.message);
         // Оба провайдера недоступны - планируем shutdown
         scheduleShutdown(`OpenRouter: ${error.message}, DeepL: ${deeplError.message}`);
@@ -239,6 +279,19 @@ class UniversalTranslator {
         cancelShutdown();
         return results;
       } catch (error: any) {
+        console.log('🔴 CATCH TRIGGERED:', error.name, error.message);
+
+        // Если DeepL квота исчерпана - не останавливаем сервер
+        if (error.name === 'QuotaExceededError') {
+          console.warn('⚠️ [Translator] DeepL квота исчерпана, используем только OpenRouter');
+          console.warn('   Сбрасываем флаг openrouterFailed и пробуем OpenRouter снова');
+          // Сбрасываем флаг и пробуем OpenRouter
+          this.openrouterFailed = false;
+          this.currentProvider = 'openrouter';
+          // Пробуем перевести через OpenRouter
+          return await this.translateBatchWithFallback(texts, targetLang, preserveFormatting);
+        }
+
         console.error('❌ [Translator] DeepL batch failed:', error.message);
         // Оба провайдера недоступны - планируем shutdown
         scheduleShutdown(`OpenRouter недоступен, DeepL ошибка: ${error.message}`);
@@ -257,6 +310,7 @@ class UniversalTranslator {
       console.log(`✅ [Translator] OpenRouter batch translation successful (${results.length} results)`);
       return results;
     } catch (error: any) {
+      console.log('🔴 CATCH TRIGGERED:', error.name, error.message);
       // Если это RateLimitError — пробрасываем выше (не fallback)
       if (error.name === 'RateLimitError') {
         console.error('❌ [Translator] OpenRouter rate limit exhausted, rethrowing');
@@ -277,6 +331,16 @@ class UniversalTranslator {
         console.log(`✅ [Translator] DeepL batch translation successful (${results.length} results)`);
         return results;
       } catch (deeplError: any) {
+        console.log('🔴 CATCH TRIGGERED:', deeplError.name, deeplError.message);
+
+        // Если DeepL квота исчерпана - не останавливаем сервер, продолжаем через OpenRouter
+        if (deeplError.name === 'QuotaExceededError') {
+          console.warn('⚠️ [Translator] DeepL квота исчерпана, используем только OpenRouter');
+          console.warn('   Продолжаем работу без DeepL fallback');
+          // Не планируем shutdown, просто пробрасываем ошибку выше
+          throw error; // Пробрасываем ОРИГИНАЛЬНУЮ ошибку OpenRouter
+        }
+
         console.error('❌ [Translator] DeepL batch also failed:', deeplError.message);
         // Оба провайдера недоступны - планируем shutdown
         scheduleShutdown(`OpenRouter: ${error.message}, DeepL: ${deeplError.message}`);

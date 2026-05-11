@@ -34,7 +34,7 @@
 - `lib/modpackProcessor.ts` - обработка ZIP модпаков
 - `lib/queueLimits.ts` - лимиты очереди (50 файлов, 1000 MB)
 
-**Текущая версия:** 3.21.1
+**Текущая версия:** 3.21.2
 
 **Статус:** ✅ Стабильный, безопасный, готов к использованию
 
@@ -42,7 +42,89 @@
 
 ---
 
-## [3.21.1] - 2026-05-10 (Rate Limit Retry Fix)
+## [3.21.2] - 2026-05-11 (Documentation Release)
+
+### 📝 Изменения
+
+**Документация:**
+- Обновлена версия в `package.json` до 3.21.2
+- Обновлены версионные бейджи в README.md
+- Синхронизированы версии во всех документах
+
+**Причина релиза:**
+- Пересоздание GitHub Release с корректными release notes
+- Все функциональные изменения из v3.21.1 сохранены
+
+---
+
+## [3.21.1] - 2026-05-11 (Hybrid Translation System)
+
+### 🤖 Новые возможности
+
+**Гибридная система перевода:**
+- OpenRouter как primary провайдер (бесплатные LLM модели)
+- DeepL как fallback при ошибках OpenRouter
+- Умная обработка `content: null` от OpenRouter (перегрузка сервера)
+- Автоматический retry с паузой 30 секунд (до 3 попыток)
+
+**Умная обработка ошибок:**
+- `content: null` от OpenRouter → пауза 30s + retry (до 3 раз)
+- DeepL `QuotaExceededError` → сброс флага + продолжение через OpenRouter
+- Сервер НЕ останавливается при исчерпании DeepL квоты
+
+**Статистика rate limit:**
+- Выводится всегда после каждого перевода (даже при 0 пауз)
+- Показывает: паузы, время ожидания, успешные retry, причину остановки
+
+### 🐛 Исправления
+
+**Обработка `content: null` в openrouter.ts:**
+- Теперь обрабатывается как перегрузка сервера (не ошибка)
+- Автоматическая пауза 30 секунд + retry (до 3 раз)
+- Только после 3 неудач бросает ошибку
+
+**Обработка DeepL квоты в translator.ts:**
+- Добавлен try-catch для прямых вызовов DeepL (строка 121)
+- При `QuotaExceededError` сбрасывает флаг `openrouterFailed`
+- Продолжает работу через OpenRouter без остановки сервера
+
+**Статистика rate limit в rateLimitStats.ts:**
+- Убрана проверка `if (totalPauses === 0) return;`
+- Теперь выводится всегда (0 пауз = хорошая новость)
+
+### 🔧 Технические изменения
+
+**Файлы:**
+- `lib/openrouter.ts` — обработка `content: null` (строки 142-158)
+- `lib/translator.ts` — try-catch для DeepL + QuotaExceededError handling (строки 120-138, 173-189, 236-252)
+- `lib/rateLimitStats.ts` — убрана silent exit при пустой статистике (строки 75-79)
+- `app/api/translate-stream/route.ts` — вывод rate limit stats после обработки файлов (строки 336-339)
+
+**Debug-логи:**
+- Добавлены `🔴 CATCH TRIGGERED` во все catch блоки для отладки
+- Показывают `error.name` и `error.message` при срабатывании
+
+### ✅ Тесты
+
+**Проверено:**
+- Тестовый скрипт `scripts/testRateLimit.ts` показывает корректную статистику (2 паузы, 4s ожидания)
+- UI выводит статистику rate limit после каждого перевода
+- Debug-логи `🔴 CATCH TRIGGERED` работают корректно
+- 47 срабатываний catch блоков при реальном переводе (6× `content: null`, 41× `QuotaExceededError`)
+
+### 📝 Конфигурация
+
+**Новые переменные окружения:**
+```env
+TRANSLATION_PROVIDER=hybrid  # hybrid/openrouter/deepl
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=openai/gpt-oss-120b:free
+DEEPL_API_KEY=...  # опционально для fallback
+```
+
+---
+
+## [3.21.0] - 2026-05-10 (Rate Limit Retry Fix)
 
 ### 🐛 Исправления
 
