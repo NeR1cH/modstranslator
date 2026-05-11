@@ -333,6 +333,11 @@ export async function POST(req: NextRequest) {
       const { printCacheStats } = await import('../../../lib/serverShutdown');
       printCacheStats();
 
+      // Print rate limit statistics
+      const { getRateLimitStatsTracker } = await import('../../../lib/rateLimitStats');
+      const rateLimitStats = getRateLimitStatsTracker();
+      rateLimitStats.printStats();
+
       await sendEvent({
         type: 'complete',
         totalFiles,

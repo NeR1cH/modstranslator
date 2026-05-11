@@ -73,11 +73,6 @@ class RateLimitStatsTracker {
    * Print statistics to console
    */
   printStats(): void {
-    // Only print if there were any rate limit events
-    if (this.stats.totalPauses === 0 && this.stats.failedAttempts === 0) {
-      return;
-    }
-
     console.log('\n' + '='.repeat(60));
     console.log('📊 СТАТИСТИКА RATE LIMIT');
     console.log('='.repeat(60));
